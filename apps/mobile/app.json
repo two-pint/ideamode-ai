@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "IdeaMode",
+    "slug": "ideamode",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "ideamode",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#fafafa"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ai.ideamode.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#fafafa"
+      },
+      "package": "ai.ideamode.app"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

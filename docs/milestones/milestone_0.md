@@ -15,13 +15,13 @@
 
 **Tasks:**
 
-- [ ] Initialize a new Turborepo at the repo root (e.g. `pnpm dlx create-turbo@latest` or manual `turbo` setup). Use pnpm as the package manager.
-- [ ] Configure `turbo.json` with a pipeline that defines build/dev/lint/test for each workspace.
-- [ ] Add `apps/api`, `apps/web`, and `apps/mobile` to `pnpm-workspace.yaml`; add `packages/*` so shared packages (e.g. assets) are in the workspace.
-- [ ] Add a root `package.json` with scripts: `build`, `dev`, `lint`, `test` that run via Turbo.
-- [ ] Add a root `.gitignore` covering all three apps (node_modules, .next, dist, build, .expo, tmp, log, .env\*).
-- [ ] Create `packages/assets` (or `packages/brand`) as the shared-assets package; move `ideamode_icon.svg` and `ideamode_logo.svg` from repo root into it. Add a short README listing each file and where it’s used (see [Shared assets plan](../shared-assets-plan.md)).
-- [ ] Document in root README how to install dependencies and run all apps from the repo root, and that brand assets live in `packages/assets`.
+- [x] Initialize a new Turborepo at the repo root (e.g. `pnpm dlx create-turbo@latest` or manual `turbo` setup). Use pnpm as the package manager.
+- [x] Configure `turbo.json` with a pipeline that defines build/dev/lint/test for each workspace.
+- [x] Add `apps/api`, `apps/web`, and `apps/mobile` to `pnpm-workspace.yaml`; add `packages/*` so shared packages (e.g. assets) are in the workspace.
+- [x] Add a root `package.json` with scripts: `build`, `dev`, `lint`, `test` that run via Turbo.
+- [x] Add a root `.gitignore` covering all three apps (node_modules, .next, dist, build, .expo, tmp, log, .env\*).
+- [x] Create `packages/assets` (or `packages/brand`) as the shared-assets package; move `ideamode_icon.svg` and `ideamode_logo.svg` from repo root into it. Add a short README listing each file and where it’s used (see [Shared assets plan](../shared-assets-plan.md)).
+- [x] Document in root README how to install dependencies and run all apps from the repo root, and that brand assets live in `packages/assets`.
 
 **Acceptance criteria:**
 
@@ -45,12 +45,12 @@
 
 **Tasks:**
 
-- [ ] Create a new Rails 8 application in `apps/api` with API-only mode (`--api`).
-- [ ] Configure PostgreSQL as the database (database.yml and env-based URL if needed).
-- [ ] Add a health check route (e.g. `GET /health` or `GET /up`) that returns 200 and a simple payload (e.g. `{ "status": "ok" }`).
-- [ ] Ensure CORS is configured to allow requests from the Next.js origin (and optionally Expo dev) in development.
-- [ ] Add a root route or minimal readme in the API app describing how to run it (`bin/rails s`, port, etc.).
-- [ ] Wire the API into the Turborepo pipeline (e.g. script that runs `bundle install` and `bin/rails db:prepare` for build, and `bin/rails s` for dev if desired, or document manual steps).
+- [x] Create a new Rails 8 application in `apps/api` with API-only mode (`--api`).
+- [x] Configure PostgreSQL as the database (database.yml and env-based URL if needed).
+- [x] Add a health check route (e.g. `GET /health` or `GET /up`) that returns 200 and a simple payload (e.g. `{ "status": "ok" }`).
+- [x] Ensure CORS is configured to allow requests from the Next.js origin (and optionally Expo dev) in development.
+- [x] Add a root route or minimal readme in the API app describing how to run it (`bin/rails s`, port, etc.).
+- [x] Wire the API into the Turborepo pipeline (e.g. script that runs `bundle install` and `bin/rails db:prepare` for build, and `bin/rails s` for dev if desired, or document manual steps).
 
 **Acceptance criteria:**
 
@@ -74,12 +74,12 @@
 
 **Tasks:**
 
-- [ ] Create a new Next.js app in `apps/web` with App Router and TypeScript.
-- [ ] Install and configure Tailwind CSS.
-- [ ] Apply global styles: background `zinc-50`, primary text `zinc-900`, light mode only (no dark mode or theme toggle).
-- [ ] Add a minimal root layout and a home or placeholder page that renders with the correct background and text color.
-- [ ] Configure the app to use the API base URL via environment variable (e.g. `NEXT_PUBLIC_API_URL`) and document it in README or .env.example.
-- [ ] Integrate the web app into the Turborepo pipeline (build and dev scripts). Add dependency on `@ideamode/assets` (or `@repo/assets`); use `ideamode_icon.svg` for favicon and `ideamode_logo.svg` for header/login/marketing as needed.
+- [x] Create a new Next.js app in `apps/web` with App Router and TypeScript.
+- [x] Install and configure Tailwind CSS.
+- [x] Apply global styles: background `zinc-50`, primary text `zinc-900`, light mode only (no dark mode or theme toggle).
+- [x] Add a minimal root layout and a home or placeholder page that renders with the correct background and text color.
+- [x] Configure the app to use the API base URL via environment variable (e.g. `NEXT_PUBLIC_API_URL`) and document it in README or .env.example.
+- [x] Integrate the web app into the Turborepo pipeline (build and dev scripts). Add dependency on `@ideamode/assets` (or `@repo/assets`); use `ideamode_icon.svg` for favicon and `ideamode_logo.svg` for header/login/marketing as needed.
 
 **Acceptance criteria:**
 
@@ -103,12 +103,12 @@
 
 **Tasks:**
 
-- [ ] Create a new Expo app in `apps/mobile` (e.g. `pnpm dlx create-expo-app` or equivalent) with TypeScript.
-- [ ] Configure the app to read the API base URL from environment (e.g. `EXPO_PUBLIC_API_URL` or app config) so it can call the same Rails API as the web app.
-- [ ] Add a minimal screen that displays a message (e.g. "IdeaMode Mobile") and optionally calls the API health endpoint to verify connectivity.
-- [ ] Document how to run the app (Expo Go, dev build) and how to set the API URL for local and staging.
-- [ ] Add dependency on `@ideamode/assets`; use icon for app icon (and export PNG for native if needed) and logo for splash/auth/header.
-- [ ] Integrate the mobile app into the Turborepo pipeline (e.g. build script that runs `pnpm exec expo prebuild` or equivalent if needed; at minimum document `pnpm exec expo start` from `apps/mobile`).
+- [x] Create a new Expo app in `apps/mobile` (e.g. `pnpm dlx create-expo-app` or equivalent) with TypeScript.
+- [x] Configure the app to read the API base URL from environment (e.g. `EXPO_PUBLIC_API_URL` or app config) so it can call the same Rails API as the web app.
+- [x] Add a minimal screen that displays a message (e.g. "IdeaMode Mobile") and optionally calls the API health endpoint to verify connectivity.
+- [x] Document how to run the app (Expo Go, dev build) and how to set the API URL for local and staging.
+- [x] Add dependency on `@ideamode/assets`; use icon for app icon (and export PNG for native if needed) and logo for splash/auth/header.
+- [x] Integrate the mobile app into the Turborepo pipeline (e.g. build script that runs `pnpm exec expo prebuild` or equivalent if needed; at minimum document `pnpm exec expo start` from `apps/mobile`).
 
 **Acceptance criteria:**
 
@@ -127,7 +127,11 @@
 
 ## Milestone 0 completion checklist
 
-- [ ] All four tickets (0.1–0.4) are implemented and accepted.
-- [ ] From a fresh clone, a developer can run `pnpm install` at root, start the API and web app, and open the web app with correct theme and API connectivity.
-- [ ] Mobile app runs and can be pointed at the same API.
-- [ ] Root README describes the monorepo layout and how to run each app.
+- [x] All four tickets (0.1–0.4) are implemented and accepted.
+- [x] From a fresh clone, a developer can run `pnpm install` at root, start the API and web app, and open the web app with correct theme and API connectivity.
+- [x] Mobile app runs and can be pointed at the same API.
+- [x] Root README describes the monorepo layout and how to run each app.
+
+---
+
+**Status: Complete** (built March 2026)
