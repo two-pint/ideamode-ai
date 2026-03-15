@@ -30,7 +30,7 @@ Monorepo for [IdeaMode](https://ideamode.ai): Rails API, Next.js web app, and Ex
    cd apps/web
    pnpm run dev
    ```
-   Default: http://localhost:3001. Set `NEXT_PUBLIC_API_URL` (e.g. `http://localhost:3000`) in `.env.local` to point at the API.
+   Default: http://localhost:8080. Set `NEXT_PUBLIC_API_URL` (e.g. `http://localhost:3000`) in `.env.local` to point at the API.
 
 4. **Mobile:**
    ```bash

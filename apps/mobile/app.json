@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "scheme": "ideamode",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "backgroundColor": "#fafafa"
     },

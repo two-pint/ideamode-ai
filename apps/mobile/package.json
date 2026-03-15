@@ -4,26 +4,27 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "dev": "expo start",
-    "build": "echo 'Mobile: run pnpm exec expo start for dev, pnpm exec expo export for production bundle'",
-    "lint": "expo lint",
-    "start": "expo start"
+    "dev": "node ../../node_modules/expo/bin/cli start",
+    "build": "echo 'Mobile: run pnpm dev for dev; from repo root: node node_modules/expo/bin/cli export --project-root apps/mobile'",
+    "lint": "node ../../node_modules/expo/bin/cli lint",
+    "start": "node ../../node_modules/expo/bin/cli start"
   },
   "dependencies": {
     "@ideamode/assets": "workspace:*",
-    "expo": "~52.0.0",
-    "expo-router": "~4.0.0",
+    "expo": "^55.0.0",
+    "expo-router": "~55.0.0",
     "expo-status-bar": "~2.0.0",
-    "react": "18.3.1",
-    "react-native": "0.76.5",
-    "react-native-safe-area-context": "4.12.0",
-    "react-native-screens": "~4.4.0",
+    "react": "19.2.0",
+    "react-native": "0.83.0",
+    "react-native-safe-area-context": "~5.0.0",
+    "react-native-screens": "~4.10.0",
     "@babel/runtime": "^7.26.0",
+    "lucide-react-native": "^0.460.0",
     "react-native-web": "~0.19.13"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/react": "~18.3.12",
+    "@types/react": "~19.0.0",
     "typescript": "~5.3.0"
   }
 }

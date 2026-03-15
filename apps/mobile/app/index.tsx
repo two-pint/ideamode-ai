@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { Lightbulb } from "lucide-react-native";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "";
 
@@ -16,6 +17,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <Lightbulb size={32} color="#18181b" style={styles.icon} />
       <Text style={styles.title}>IdeaMode Mobile</Text>
       <Text style={styles.subtitle}>Capture, develop, and validate ideas.</Text>
       {API_URL ? (
@@ -39,6 +41,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
+  },
+  icon: {
+    marginBottom: 16,
   },
   title: {
     fontSize: 24,

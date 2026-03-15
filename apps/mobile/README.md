@@ -1,6 +1,8 @@
 # IdeaMode Mobile
 
-Expo (React Native) app for IdeaMode. Connects to the same Rails API as the web app.
+Expo (React Native) app for IdeaMode, **SDK 55**. Connects to the same Rails API as the web app.
+
+After pulling or if you see peer dependency warnings, run from this directory: `pnpm exec expo install --fix` to align SDK 55–compatible versions.
 
 ## Run
 

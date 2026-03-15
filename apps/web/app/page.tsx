@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { Lightbulb } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
@@ -13,11 +15,15 @@ export default function Home() {
         priority
         unoptimized
       />
-      <p className="text-center text-zinc-900">
+      <p className="flex items-center gap-2 text-center text-zinc-900">
+        <Lightbulb className="size-5 shrink-0" aria-hidden />
         Capture, develop, and validate ideas.
       </p>
+      <Button variant="outline" size="sm" asChild>
+        <a href="#">{apiUrl ? "API connected" : "Get started"}</a>
+      </Button>
       {apiUrl && (
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-muted-foreground">
           API: {apiUrl}
         </p>
       )}
