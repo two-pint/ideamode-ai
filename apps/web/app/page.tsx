@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,10 +43,10 @@ export default function Home() {
       </p>
       <div className="flex gap-3">
         <Button asChild>
-          <a href="/register">Get started</a>
+          <Link href="/register">Get started</Link>
         </Button>
         <Button variant="outline" asChild>
-          <a href="/login">Sign in</a>
+          <Link href="/login">Sign in</Link>
         </Button>
       </div>
     </main>

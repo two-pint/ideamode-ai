@@ -100,6 +100,13 @@ export const authApi = {
     );
   },
 
+  exchangeCode(code: string) {
+    return apiFetch<AuthResponse>("/auth/exchange_code", {
+      method: "POST",
+      body: { code },
+    });
+  },
+
   googleAuthUrl() {
     return `${API_URL}/auth/google`;
   },

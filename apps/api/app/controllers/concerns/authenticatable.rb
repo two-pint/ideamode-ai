@@ -10,7 +10,10 @@ module Authenticatable
   end
 
   def require_authentication!
-    render json: { error: "Unauthorized" }, status: :unauthorized unless current_user
+    unless current_user
+      render json: { error: "Unauthorized" }, status: :unauthorized
+      return
+    end
   end
 
   def authenticate_from_token

@@ -16,4 +16,5 @@ Rails.application.routes.draw do
   get "auth/google", to: "oauth#google"
   get "auth/google/callback", to: "oauth#google_callback"
   get "auth/google/failure", to: "oauth#google_failure"
+  post "auth/exchange_code", to: "oauth#exchange_code"
 end

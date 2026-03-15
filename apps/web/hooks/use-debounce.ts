@@ -9,7 +9,6 @@ export function useDebounce(
   callbackRef.current = callback;
 
   useEffect(() => {
-    if (!value) return;
     const id = setTimeout(() => callbackRef.current(value), delay);
     return () => clearTimeout(id);
   }, [value, delay]);

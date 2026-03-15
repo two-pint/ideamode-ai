@@ -15,7 +15,7 @@ function CallbackHandler() {
     if (handled.current) return;
     handled.current = true;
 
-    const token = searchParams.get("token");
+    const code = searchParams.get("code");
     const error = searchParams.get("error");
 
     if (error) {
@@ -23,19 +23,19 @@ function CallbackHandler() {
       return;
     }
 
-    if (!token) {
+    if (!code) {
       router.replace("/login");
       return;
     }
 
     authApi
-      .me(token)
-      .then(({ user }) => {
+      .exchangeCode(code)
+      .then(({ token, user }) => {
         setAuth(token, user);
         router.replace(user.username ? "/dashboard" : "/auth/set-username");
       })
       .catch(() => {
-        router.replace("/login?error=Invalid+token");
+        router.replace("/login?error=Invalid+code");
       });
   }, [searchParams, setAuth, router]);
 
