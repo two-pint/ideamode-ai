@@ -26,12 +26,21 @@ export async function apiFetch<T = unknown>(
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  const data = await res.json();
+  let data: Record<string, unknown> = {};
+  try {
+    data = (await res.json()) as Record<string, unknown>;
+  } catch {
+    data = {};
+  }
 
   if (!res.ok) {
-    const message =
-      data.error || data.errors?.join(", ") || "Something went wrong";
-    throw new ApiError(message, res.status, data);
+    const errorMessage =
+      typeof data.error === "string"
+        ? data.error
+        : Array.isArray(data.errors)
+          ? data.errors.join(", ")
+          : "Something went wrong";
+    throw new ApiError(errorMessage, res.status, data);
   }
 
   return data as T;
@@ -73,6 +82,25 @@ export type CheckUsernameResponse = {
   error?: string;
 };
 
+export type IdeaStatus = "brainstorm" | "validating" | "validated" | "shelved";
+export type IdeaVisibility = "private" | "shared";
+
+export type Idea = {
+  id: number;
+  title: string;
+  description: string | null;
+  slug: string;
+  status: IdeaStatus;
+  visibility: IdeaVisibility;
+  owner?: {
+    id: number;
+    username: string | null;
+    name: string | null;
+    avatar_url: string | null;
+  };
+  updated_at: string;
+};
+
 export const authApi = {
   register(data: { email: string; username: string; password: string; name?: string }) {
     return apiFetch<AuthResponse>("/auth/register", { method: "POST", body: data });
@@ -109,5 +137,76 @@ export const authApi = {
 
   googleAuthUrl() {
     return `${API_URL}/auth/google`;
+  },
+};
+
+export type IdeasResponse = {
+  ideas: Idea[];
+};
+
+export type IdeaResponse = {
+  idea: Idea;
+};
+
+export type ProfileResponse = {
+  user: Pick<User, "id" | "username" | "name" | "avatar_url" | "bio">;
+};
+
+export const ideasApi = {
+  listMine(token: string) {
+    return apiFetch<IdeasResponse>("/ideas", { token });
+  },
+
+  listShared(token: string) {
+    return apiFetch<IdeasResponse>("/ideas/shared", { token });
+  },
+
+  create(
+    token: string,
+    data: { title: string; description?: string; slug?: string }
+  ) {
+    return apiFetch<IdeaResponse>("/ideas", {
+      method: "POST",
+      token,
+      body: data,
+    });
+  },
+
+  getByOwnerAndSlug(token: string, username: string, slug: string) {
+    return apiFetch<IdeaResponse>(
+      `/ideas/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+      { token }
+    );
+  },
+
+  updateByOwnerAndSlug(
+    token: string,
+    username: string,
+    slug: string,
+    data: Partial<Pick<Idea, "title" | "description" | "status" | "visibility" | "slug">>
+  ) {
+    return apiFetch<IdeaResponse>(
+      `/ideas/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+      {
+        method: "PATCH",
+        token,
+        body: data as Record<string, unknown>,
+      }
+    );
+  },
+};
+
+export const usersApi = {
+  getProfile(token: string, username: string) {
+    return apiFetch<ProfileResponse>(`/users/${encodeURIComponent(username)}`, {
+      token,
+    });
+  },
+
+  getIdeas(token: string, username: string) {
+    return apiFetch<IdeasResponse>(
+      `/users/${encodeURIComponent(username)}/ideas`,
+      { token }
+    );
   },
 };

@@ -1,25 +1,57 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { Plus } from "lucide-react";
+import { AppShell } from "@/components/app-shell";
+import { IdeaCard } from "@/components/idea-card";
+import { NewIdeaModal } from "@/components/new-idea-modal";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth-context";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { type Idea, ideasApi } from "@/lib/api";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, loading, logout } = useAuth();
+  const { user, token, ready } = useRequireAuth();
+  const [loadingIdeas, setLoadingIdeas] = useState(true);
+  const [myIdeas, setMyIdeas] = useState<Idea[]>([]);
+  const [sharedIdeas, setSharedIdeas] = useState<Idea[]>([]);
+  const [isModalOpen, setModalOpen] = useState(false);
+
+  const groupedIdeas = useMemo(() => {
+    const groups: Record<Idea["status"], Idea[]> = {
+      brainstorm: [],
+      validating: [],
+      validated: [],
+      shelved: [],
+    };
+
+    myIdeas.forEach((idea) => groups[idea.status].push(idea));
+    return groups;
+  }, [myIdeas]);
+
+  const loadIdeas = useCallback(async () => {
+    if (!token) return;
+    setLoadingIdeas(true);
+    try {
+      const [mine, shared] = await Promise.all([
+        ideasApi.listMine(token),
+        ideasApi.listShared(token),
+      ]);
+      setMyIdeas(mine.ideas);
+      setSharedIdeas(shared.ideas);
+    } finally {
+      setLoadingIdeas(false);
+    }
+  }, [token]);
 
   useEffect(() => {
-    if (loading) return;
-    if (!user) {
-      router.replace("/login");
-    } else if (!user.username) {
-      router.replace("/auth/set-username");
-    }
-  }, [user, loading, router]);
+    if (!ready) return;
+    loadIdeas();
+  }, [ready, loadIdeas]);
 
-  if (loading || !user) {
+  if (!ready || !user || !token) {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
@@ -28,32 +60,79 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8">
-      <h1 className="text-2xl font-semibold">
-        Welcome, {user.name || user.username}
-      </h1>
-      <p className="text-muted-foreground">@{user.username}</p>
-      {user.avatar_url && (
-        <img
-          src={user.avatar_url}
-          alt=""
-          className="size-16 rounded-full"
-        />
-      )}
-      <p className="text-sm text-muted-foreground">
-        Dashboard coming in Ticket 1.2
-      </p>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => {
-          logout();
-          router.push("/login");
-        }}
+    <>
+      <AppShell
+        title="Dashboard"
+        subtitle={`Welcome back, ${user.name || `@${user.username}`}`}
+        active="dashboard"
       >
-        <LogOut className="size-4" />
-        Sign out
-      </Button>
-    </main>
+        <div className="mb-6 flex justify-end">
+          <Button onClick={() => setModalOpen(true)}>
+            <Plus className="size-4" />
+            New Idea
+          </Button>
+        </div>
+
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">My Ideas</h2>
+          {loadingIdeas ? (
+            <p className="text-sm text-zinc-500">Loading your ideas...</p>
+          ) : (
+            <div className="grid gap-4 xl:grid-cols-4">
+              {(["brainstorm", "validating", "validated", "shelved"] as const).map((status) => (
+                <Card key={status} className="h-fit">
+                  <CardHeader>
+                    <CardTitle className="capitalize">
+                      {status} ({groupedIdeas[status].length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {groupedIdeas[status].length === 0 ? (
+                      <p className="text-sm text-zinc-500">No ideas in this lane.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {groupedIdeas[status].map((idea) => (
+                          <IdeaCard key={idea.id} idea={idea} ownerUsername={user.username} />
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-8 space-y-3">
+          <h2 className="text-lg font-semibold">Shared With Me</h2>
+          {loadingIdeas ? (
+            <p className="text-sm text-zinc-500">Loading shared ideas...</p>
+          ) : sharedIdeas.length === 0 ? (
+            <p className="text-sm text-zinc-500">
+              No shared ideas yet. You will see collaborator and viewer ideas here.
+            </p>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {sharedIdeas.map((idea) => (
+                <IdeaCard key={idea.id} idea={idea} />
+              ))}
+            </div>
+          )}
+        </section>
+      </AppShell>
+
+      <NewIdeaModal
+        open={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreate={async ({ title, description, slug }) => {
+          const created = await ideasApi.create(token, { title, description, slug });
+          setModalOpen(false);
+          setMyIdeas((current) => [created.idea, ...current]);
+          if (user.username) {
+            router.push(`/${user.username}/${created.idea.slug}`);
+          }
+        }}
+      />
+    </>
   );
 }

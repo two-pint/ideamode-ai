@@ -17,4 +17,15 @@ Rails.application.routes.draw do
   get "auth/google/callback", to: "oauth#google_callback"
   get "auth/google/failure", to: "oauth#google_failure"
   post "auth/exchange_code", to: "oauth#exchange_code"
+
+  # Ideas
+  get "ideas", to: "ideas#index"
+  get "ideas/shared", to: "ideas#shared"
+  post "ideas", to: "ideas#create"
+  get "ideas/:username/:slug", to: "ideas#show"
+  patch "ideas/:username/:slug", to: "ideas#update"
+
+  # Public profile scoped by username
+  get "users/:username", to: "users#show"
+  get "users/:username/ideas", to: "users#ideas"
 end

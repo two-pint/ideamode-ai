@@ -94,7 +94,7 @@ export default function SetUsernamePage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
           <Image
-            src="/ideamode_logo.svg"
+            src="/ideamode_logo_1.svg"
             alt="IdeaMode"
             width={140}
             height={21}

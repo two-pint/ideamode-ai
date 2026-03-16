@@ -85,14 +85,16 @@ export default function RegisterPage() {
     <main className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
-          <Image
-            src="/ideamode_logo.svg"
-            alt="IdeaMode"
-            width={140}
-            height={21}
-            priority
-            unoptimized
-          />
+          <div className="flex w-full justify-center">
+            <Image
+              src="/ideamode_logo_1.svg"
+              alt="IdeaMode"
+              width={140}
+              height={21}
+              priority
+              unoptimized
+            />
+          </div>
           <CardTitle className="mt-2">Create your account</CardTitle>
           <CardDescription>Start capturing and validating ideas</CardDescription>
         </CardHeader>
