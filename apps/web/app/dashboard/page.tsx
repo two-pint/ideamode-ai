@@ -78,17 +78,19 @@ export default function DashboardPage() {
           {loadingIdeas ? (
             <p className="text-sm text-zinc-500">Loading your ideas...</p>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4 xl:grid-cols-4">
               {(["brainstorm", "validating", "validated", "shelved"] as const).map((status) => (
-                <Card key={status}>
+                <Card key={status} className="h-fit">
                   <CardHeader>
-                    <CardTitle className="capitalize">{status}</CardTitle>
+                    <CardTitle className="capitalize">
+                      {status} ({groupedIdeas[status].length})
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {groupedIdeas[status].length === 0 ? (
-                      <p className="text-sm text-zinc-500">No ideas in this status yet.</p>
+                      <p className="text-sm text-zinc-500">No ideas in this lane.</p>
                     ) : (
-                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      <div className="space-y-3">
                         {groupedIdeas[status].map((idea) => (
                           <IdeaCard key={idea.id} idea={idea} ownerUsername={user.username} />
                         ))}
