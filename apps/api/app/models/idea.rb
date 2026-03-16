@@ -6,6 +6,9 @@ class Idea < ApplicationRecord
 
   belongs_to :user
 
+  # Ownership is immutable after creation (no transfer in v1).
+  attr_readonly :user_id
+
   validates :title, presence: true, length: { maximum: 120 }
   validates :slug, presence: true, uniqueness: { scope: :user_id },
     length: { maximum: 80 },

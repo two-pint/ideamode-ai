@@ -24,6 +24,7 @@ Rails.application.routes.draw do
   post "ideas", to: "ideas#create"
   get "ideas/:username/:slug", to: "ideas#show"
   patch "ideas/:username/:slug", to: "ideas#update"
+  delete "ideas/:username/:slug", to: "ideas#destroy"
 
   # Public profile scoped by username
   get "users/:username", to: "users#show"
