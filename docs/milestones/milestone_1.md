@@ -9,20 +9,20 @@
 
 ## Tickets
 
-### Ticket 1.1 — Authentication (username/password, Google OAuth, JWT, account linking, User model)
+### Ticket 1.1 — Authentication (username/password, Google OAuth, JWT, account linking, User model) ✅
 
 **Description:** Implement user registration and sign-in via username/password and Google OAuth, with JWT-based auth and account linking. When a user signs in with Google and their email matches an existing account, link the Google identity to that account instead of creating a duplicate. User model includes username so every user has a stable identity and URL namespace. This matters because ownership and idea URLs (`/:username/:idea-slug`) depend on it; without auth and usernames, the rest of the product cannot function.
 
 **Tasks:**
 
-- [ ] Add JWT handling to the Rails API (e.g. `jwt` gem or `devise-jwt`); configure secret, algorithm, and token expiry (e.g. 24h access token, optional refresh token strategy if desired for MVP).
-- [ ] Create User model with: `id`, `email`, `username`, `password_digest`, `name`, `avatar_url`, `google_uid`, `bio`, timestamps. Add unique index on `email` and `username`; unique index on `google_uid` (nullable). Use `has_secure_password` (bcrypt) for password storage; allow `password_digest` to be nullable so Google-only users are supported.
-- [ ] Implement registration: `POST /auth/register` — accept `email`, `username`, `password`, optional `name`; validate uniqueness of email and username (URL-safe, 3–30 chars); create user and return JWT + user payload (or require separate login after register).
-- [ ] Implement login: `POST /auth/login` — accept `email` (or username) and `password`; validate credentials; return JWT (and user payload). Return 401 on invalid credentials.
-- [ ] Add OmniAuth and Google OAuth 2.0 (e.g. `omniauth-google-oauth2`); configure OAuth client ID, secret, and callback URL. Implement `GET /auth/google` (redirect to Google) and `GET /auth/google/callback`. In callback: (1) find user by `google_uid` — if found, issue JWT and redirect to app with token; (2) else find user by email — if found, set `google_uid` on that user (account linking), then issue JWT and redirect; (3) else create new user with email, name, avatar_url from Google, set `google_uid`, leave username null and password_digest null. New Google users must set username before full access (see next bullet).
-- [ ] For users without a username (first-time Google sign-in): support flow where client calls `GET /auth/me`, sees `username` null, shows username-selection screen; client submits username via `PATCH /auth/me` or `POST /auth/set_username` (validated via `check_username`); persist and then allow access to dashboard. Require username at registration for email/password; require username (set after first sign-in) for Google-only users.
-- [ ] Expose endpoints: `POST /auth/register`, `POST /auth/login`, `GET /auth/google`, `GET /auth/google/callback`, `GET /auth/me` (requires valid JWT; returns current user), `PATCH /auth/me` or `POST /auth/set_username` (set username when null, validated), `GET /auth/check_username?username=foo` (unauthenticated; returns availability). Sign-out is client-side (discard token); optional `POST /auth/logout` for server-side invalidation if using token blocklist.
-- [ ] Next.js app: send JWT in `Authorization: Bearer <token>` header for API requests; store token (e.g. httpOnly cookie or secure storage); call `GET /auth/me` on load to resolve current user. Provide "Sign in with Google" button that redirects to API Google auth URL; handle callback redirect that returns token (e.g. query param or cookie) and store it like login.
+- [x] Add JWT handling to the Rails API (e.g. `jwt` gem or `devise-jwt`); configure secret, algorithm, and token expiry (e.g. 24h access token, optional refresh token strategy if desired for MVP).
+- [x] Create User model with: `id`, `email`, `username`, `password_digest`, `name`, `avatar_url`, `google_uid`, `bio`, timestamps. Add unique index on `email` and `username`; unique index on `google_uid` (nullable). Use `has_secure_password` (bcrypt) for password storage; allow `password_digest` to be nullable so Google-only users are supported.
+- [x] Implement registration: `POST /auth/register` — accept `email`, `username`, `password`, optional `name`; validate uniqueness of email and username (URL-safe, 3–30 chars); create user and return JWT + user payload (or require separate login after register).
+- [x] Implement login: `POST /auth/login` — accept `email` (or username) and `password`; validate credentials; return JWT (and user payload). Return 401 on invalid credentials.
+- [x] Add OmniAuth and Google OAuth 2.0 (e.g. `omniauth-google-oauth2`); configure OAuth client ID, secret, and callback URL. Implement `GET /auth/google` (redirect to Google) and `GET /auth/google/callback`. In callback: (1) find user by `google_uid` — if found, issue JWT and redirect to app with token; (2) else find user by email — if found, set `google_uid` on that user (account linking), then issue JWT and redirect; (3) else create new user with email, name, avatar_url from Google, set `google_uid`, leave username null and password_digest null. New Google users must set username before full access (see next bullet).
+- [x] For users without a username (first-time Google sign-in): support flow where client calls `GET /auth/me`, sees `username` null, shows username-selection screen; client submits username via `PATCH /auth/me` or `POST /auth/set_username` (validated via `check_username`); persist and then allow access to dashboard. Require username at registration for email/password; require username (set after first sign-in) for Google-only users.
+- [x] Expose endpoints: `POST /auth/register`, `POST /auth/login`, `GET /auth/google`, `GET /auth/google/callback`, `GET /auth/me` (requires valid JWT; returns current user), `PATCH /auth/me` or `POST /auth/set_username` (set username when null, validated), `GET /auth/check_username?username=foo` (unauthenticated; returns availability). Sign-out is client-side (discard token); optional `POST /auth/logout` for server-side invalidation if using token blocklist.
+- [x] Next.js app: send JWT in `Authorization: Bearer <token>` header for API requests; store token (e.g. httpOnly cookie or secure storage); call `GET /auth/me` on load to resolve current user. Provide "Sign in with Google" button that redirects to API Google auth URL; handle callback redirect that returns token (e.g. query param or cookie) and store it like login.
 
 **Acceptance criteria:**
 
@@ -47,18 +47,18 @@
 
 ---
 
-### Ticket 1.2 — Dashboard & Navigation
+### Ticket 1.2 — Dashboard & Navigation ✅
 
 **Description:** Build the Next.js app shell (sidebar, user avatar, route slots), dashboard with "My Ideas" and "Shared With Me," idea cards, new-idea modal, and user profile page so users have a home and can navigate to ideas and profiles. This ties together auth and ideas into a usable product surface.
 
 **Tasks:**
 
-- [ ] Implement app shell: sidebar navigation, user avatar (and name), route slots for `/dashboard`, `/:username`, `/:username/:slug` (and children). Use design: zinc-50 background, zinc-900 text.
-- [ ] Dashboard at `/dashboard`: "My Ideas" section — grid of idea cards grouped by status (brainstorm, validating, validated, shelved). Each card: title, status badge, score ring if analysis exists, member avatars, last updated.
-- [ ] Dashboard: "Shared With Me" section — ideas where current user is collaborator or viewer, with owner avatar and username.
-- [ ] "New Idea" button opens modal: title, optional description, slug preview (auto-generated from title, editable). Submit creates idea via API and navigates to idea detail.
-- [ ] User profile page at `/:username`: show avatar, display name, @username, bio, and list of ideas (visibility rules: owner sees all; others see only ideas shared with them).
-- [ ] Idea detail: placeholder or minimal shell at `/:username/:slug` with tabs (Overview, Brainstorm, Analysis, Wireframes, PRD, Notes, Tasks); Overview tab shows editable title/description for owner/collaborator, read-only for viewer. Implement 404 when API returns 404.
+- [x] Implement app shell: sidebar navigation, user avatar (and name), route slots for `/dashboard`, `/:username`, `/:username/:slug` (and children). Use design: zinc-50 background, zinc-900 text.
+- [x] Dashboard at `/dashboard`: "My Ideas" section — grid of idea cards grouped by status (brainstorm, validating, validated, shelved). Each card: title, status badge, score ring if analysis exists, member avatars, last updated.
+- [x] Dashboard: "Shared With Me" section — ideas where current user is collaborator or viewer, with owner avatar and username.
+- [x] "New Idea" button opens modal: title, optional description, slug preview (auto-generated from title, editable). Submit creates idea via API and navigates to idea detail.
+- [x] User profile page at `/:username`: show avatar, display name, @username, bio, and list of ideas (visibility rules: owner sees all; others see only ideas shared with them).
+- [x] Idea detail: placeholder or minimal shell at `/:username/:slug` with tabs (Overview, Brainstorm, Analysis, Wireframes, PRD, Notes, Tasks); Overview tab shows editable title/description for owner/collaborator, read-only for viewer. Implement 404 when API returns 404.
 
 **Acceptance criteria:**
 
