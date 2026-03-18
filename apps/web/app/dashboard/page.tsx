@@ -14,6 +14,7 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { DraggableIdeaCard } from "@/components/draggable-idea-card";
 import { DroppableLane } from "@/components/droppable-lane";
+import { IdeaCard } from "@/components/idea-card";
 import { NewIdeaModal } from "@/components/new-idea-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

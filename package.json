@@ -18,9 +18,6 @@
     "overrides": {
       "react": "19.2.0",
       "react-native": "0.83.0"
-    },
-    "patchedDependencies": {
-      "expo-router": "patches/expo-router.patch"
     }
   }
 }

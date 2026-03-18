@@ -7,6 +7,13 @@ import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { type Idea, type IdeaStatus, type IdeaVisibility, ApiError, ideasApi } from "@/lib/api";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 
@@ -137,31 +144,39 @@ export default function IdeaDetailPage() {
                 <>
                   <div className="space-y-1">
                     <p className="text-sm font-medium">Status</p>
-                    <select
+                    <Select
                       value={status}
-                      onChange={(e) => setStatus(e.target.value as IdeaStatus)}
-                      className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20"
+                      onValueChange={(value) => setStatus(value as IdeaStatus)}
                     >
-                      {STATUS_OPTIONS.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUS_OPTIONS.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-medium">Visibility</p>
-                    <select
+                    <Select
                       value={visibility}
-                      onChange={(e) => setVisibility(e.target.value as IdeaVisibility)}
-                      className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20"
+                      onValueChange={(value) => setVisibility(value as IdeaVisibility)}
                     >
-                      {VISIBILITY_OPTIONS.map((v) => (
-                        <option key={v} value={v}>
-                          {v}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Visibility" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {VISIBILITY_OPTIONS.map((v) => (
+                          <SelectItem key={v} value={v}>
+                            {v}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </>
               ) : (
@@ -217,7 +232,7 @@ export default function IdeaDetailPage() {
                   type="button"
                   variant="outline"
                   className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                  disabled={deleting}
+                  disabled={deleting || saving}
                   onClick={async () => {
                     if (!confirm("Delete this idea? This cannot be undone.")) return;
                     setDeleting(true);
