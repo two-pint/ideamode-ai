@@ -5,6 +5,6 @@
     "build": "echo 'Rails API: run bundle install and bin/rails db:prepare in apps/api'",
     "dev": "rm -f tmp/pids/server.pid && bin/rails s",
     "lint": "echo 'Optional: bin/rubocop'",
-    "test": "echo 'Optional: bin/rails test'"
+    "test": "bin/rails test"
   }
 }
