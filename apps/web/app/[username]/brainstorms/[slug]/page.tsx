@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, Share2, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { ResourceAccessList } from "@/components/resource-access-list";
 import { ShareDialog } from "@/components/share-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,122 +151,113 @@ export default function BrainstormDetailPage() {
         ))}
       </div>
 
-      {activeTab !== "Overview" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{activeTab}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-zinc-500">{activeTab} content ships in a follow-up milestone.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Title</p>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                readOnly={!canEditOverview}
-              />
-            </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
+        <div className="min-w-0">
+          {activeTab !== "Overview" ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>{activeTab}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-zinc-500">{activeTab} content ships in a follow-up milestone.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Title</p>
+                  <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    readOnly={!canEditOverview}
+                  />
+                </div>
 
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Description</p>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                readOnly={!canEditOverview}
-                className="min-h-32 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 read-only:bg-zinc-50"
-              />
-            </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Description</p>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    readOnly={!canEditOverview}
+                    className="min-h-32 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 read-only:bg-zinc-50"
+                  />
+                </div>
 
-            {canEditOverview && (
-              <div className="space-y-1">
-                <p className="text-sm font-medium">Slug</p>
-                <Input
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder="url-friendly-slug"
-                />
-                <p className="text-xs text-zinc-500">
-                  URL: /{params.username}/brainstorms/{slug || brainstorm.slug}
-                </p>
-              </div>
-            )}
-
-            <div className="flex flex-wrap items-center gap-2">
-              {canEditOverview ? (
-                <>
+                {canEditOverview && (
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">Status</p>
-                    <Select value={status} onValueChange={(v) => setStatus(v as BrainstormStatus)}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUS_OPTIONS.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <p className="text-sm font-medium">Slug</p>
+                    <Input
+                      value={slug}
+                      onChange={(e) => setSlug(e.target.value)}
+                      placeholder="url-friendly-slug"
+                    />
+                    <p className="text-xs text-zinc-500">
+                      URL: /{params.username}/brainstorms/{slug || brainstorm.slug}
+                    </p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Visibility</p>
-                    <Select
-                      value={visibility}
-                      onValueChange={(v) => setVisibility(v as BrainstormVisibility)}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Visibility" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {VISIBILITY_OPTIONS.map((v) => (
-                          <SelectItem key={v} value={v}>
-                            {v}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <span className="rounded bg-zinc-100 px-2 py-1 text-xs uppercase">
-                    {brainstorm.status}
-                  </span>
-                  <span className="rounded bg-zinc-100 px-2 py-1 text-xs uppercase">
-                    {brainstorm.visibility}
-                  </span>
-                </>
-              )}
-            </div>
+                )}
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+                <div className="flex flex-wrap items-center gap-2">
+                  {canEditOverview ? (
+                    <>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Status</p>
+                        <Select value={status} onValueChange={(v) => setStatus(v as BrainstormStatus)}>
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STATUS_OPTIONS.map((s) => (
+                              <SelectItem key={s} value={s}>
+                                {s}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Visibility</p>
+                        <Select
+                          value={visibility}
+                          onValueChange={(v) => setVisibility(v as BrainstormVisibility)}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Visibility" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {VISIBILITY_OPTIONS.map((v) => (
+                              <SelectItem key={v} value={v}>
+                                {v}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="rounded bg-zinc-100 px-2 py-1 text-xs uppercase">
+                        {brainstorm.status}
+                      </span>
+                      <span className="rounded bg-zinc-100 px-2 py-1 text-xs uppercase">
+                        {brainstorm.visibility}
+                      </span>
+                    </>
+                  )}
+                </div>
 
-            {canEditOverview ? (
+                {error && <p className="text-sm text-red-600">{error}</p>}
+
+                {canEditOverview ? (
               <div className="flex flex-wrap items-center gap-2">
                 <Button disabled={saving} onClick={handleSave}>
                   {saving ? <Loader2 className="size-4 animate-spin" /> : null}
                   Save changes
                 </Button>
-                {user.username === params.username && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShareDialogOpen(true)}
-                    disabled={saving}
-                  >
-                    <Share2 className="size-4" />
-                    Share
-                  </Button>
-                )}
                 <Button
                   type="button"
                   variant="outline"
@@ -280,9 +272,39 @@ export default function BrainstormDetailPage() {
             ) : (
               <p className="text-sm text-zinc-500">You have read-only access.</p>
             )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <Card className="h-fit">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle>People with access</CardTitle>
+            {user.username === params.username && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShareDialogOpen(true)}
+                disabled={saving}
+              >
+                <Share2 className="size-4" />
+                Share
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent>
+            <ResourceAccessList
+              resourceType="brainstorm"
+              ownerUsername={params.username}
+              slug={params.slug}
+              token={token}
+              canManage={user?.username === params.username}
+              refreshTrigger={shareDialogOpen}
+            />
           </CardContent>
         </Card>
-      )}
+      </div>
 
       {user.username === params.username && (
         <ShareDialog

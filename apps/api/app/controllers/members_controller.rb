@@ -7,7 +7,7 @@ class MembersController < ApplicationController
 
   before_action :require_authentication!
   before_action :set_resource
-  before_action :authorize_editable!, only: %i[index create update destroy]
+  before_action :authorize_editable!, only: %i[create update destroy]
 
   def index
     members = member_association.accepted.includes(:user).order(created_at: :asc)
