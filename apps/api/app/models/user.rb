@@ -2,7 +2,10 @@
 
 class User < ApplicationRecord
   has_secure_password validations: false
+  has_many :brainstorms, dependent: :destroy
   has_many :ideas, dependent: :destroy
+  has_many :idea_members, dependent: :destroy
+  has_many :brainstorm_members, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true,
     format: { with: URI::MailTo::EMAIL_REGEXP }

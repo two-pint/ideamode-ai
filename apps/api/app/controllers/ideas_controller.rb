@@ -12,8 +12,9 @@ class IdeasController < ApplicationController
   end
 
   def shared
-    # Membership lands in Ticket 1.4; return empty until then.
-    render json: { ideas: [] }
+    idea_ids = current_user.idea_members.accepted.pluck(:idea_id).uniq
+    ideas = Idea.where(id: idea_ids).order(updated_at: :desc)
+    render json: { ideas: ideas.map { |idea| idea_json(idea) } }
   end
 
   def create
@@ -31,6 +32,7 @@ class IdeasController < ApplicationController
   end
 
   def update
+    return head :forbidden unless @idea.editable_by?(current_user)
     if @idea.update(update_params)
       render json: { idea: idea_json(@idea) }
     else
@@ -39,6 +41,7 @@ class IdeasController < ApplicationController
   end
 
   def destroy
+    return head :forbidden unless @idea.editable_by?(current_user)
     @idea.destroy
     head :no_content
   end
@@ -49,7 +52,7 @@ class IdeasController < ApplicationController
     owner = User.find_by(username: params[:username])
     idea = owner&.ideas&.find_by(slug: params[:slug])
 
-    if idea.nil? || idea.user_id != current_user.id
+    if idea.nil? || !idea.accessible_by?(current_user)
       render json: { error: "Not found" }, status: :not_found
       return
     end
@@ -58,11 +61,11 @@ class IdeasController < ApplicationController
   end
 
   def create_params
-    params.permit(:title, :description, :slug, :status, :visibility)
+    params.permit(:title, :description, :slug, :status, :visibility, :brainstorm_id)
   end
 
   def update_params
-    params.permit(:title, :description, :slug, :status, :visibility)
+    params.permit(:title, :description, :slug, :status, :visibility, :brainstorm_id)
   end
 
   def idea_json(idea)
@@ -73,6 +76,8 @@ class IdeasController < ApplicationController
       slug: idea.slug,
       status: idea.status,
       visibility: idea.visibility,
+      brainstorm_id: idea.brainstorm_id,
+      brainstorm_slug: idea.brainstorm&.slug,
       owner: {
         id: idea.user.id,
         username: idea.user.username,

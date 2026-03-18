@@ -11,7 +11,6 @@ type IdeaCardProps = {
 };
 
 const statusVariant = {
-  brainstorm: "brainstorm",
   validating: "validating",
   validated: "validated",
   shelved: "shelved",
@@ -19,7 +18,7 @@ const statusVariant = {
 
 export function IdeaCard({ idea, ownerUsername }: IdeaCardProps) {
   const username = ownerUsername || idea.owner?.username;
-  const href = username ? `/${username}/${idea.slug}` : "#";
+  const href = username ? `/${username}/ideas/${idea.slug}` : "#";
 
   return (
     <Card>

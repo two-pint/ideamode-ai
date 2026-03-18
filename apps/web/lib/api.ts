@@ -86,7 +86,7 @@ export type CheckUsernameResponse = {
   error?: string;
 };
 
-export type IdeaStatus = "brainstorm" | "validating" | "validated" | "shelved";
+export type IdeaStatus = "validating" | "validated" | "shelved";
 export type IdeaVisibility = "private" | "shared";
 
 export type Idea = {
@@ -96,6 +96,27 @@ export type Idea = {
   slug: string;
   status: IdeaStatus;
   visibility: IdeaVisibility;
+  brainstorm_id: number | null;
+  brainstorm_slug?: string | null;
+  owner?: {
+    id: number;
+    username: string | null;
+    name: string | null;
+    avatar_url: string | null;
+  };
+  updated_at: string;
+};
+
+export type BrainstormStatus = "exploring" | "researching" | "ready" | "archived";
+export type BrainstormVisibility = "private" | "shared";
+
+export type Brainstorm = {
+  id: number;
+  title: string;
+  description: string | null;
+  slug: string;
+  status: BrainstormStatus;
+  visibility: BrainstormVisibility;
   owner?: {
     id: number;
     username: string | null;
@@ -167,7 +188,7 @@ export const ideasApi = {
 
   create(
     token: string,
-    data: { title: string; description?: string; slug?: string }
+    data: { title: string; description?: string; slug?: string; brainstorm_id?: number | null }
   ) {
     return apiFetch<IdeaResponse>("/ideas", {
       method: "POST",
@@ -178,7 +199,7 @@ export const ideasApi = {
 
   getByOwnerAndSlug(token: string, username: string, slug: string) {
     return apiFetch<IdeaResponse>(
-      `/ideas/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}`,
       { token }
     );
   },
@@ -190,7 +211,7 @@ export const ideasApi = {
     data: Partial<Pick<Idea, "title" | "description" | "status" | "visibility" | "slug">>
   ) {
     return apiFetch<IdeaResponse>(
-      `/ideas/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}`,
       {
         method: "PATCH",
         token,
@@ -201,7 +222,66 @@ export const ideasApi = {
 
   deleteByOwnerAndSlug(token: string, username: string, slug: string) {
     return apiFetch<Record<string, never>>(
-      `/ideas/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}`,
+      { method: "DELETE", token }
+    );
+  },
+};
+
+export type BrainstormsResponse = {
+  brainstorms: Brainstorm[];
+};
+
+export type BrainstormResponse = {
+  brainstorm: Brainstorm;
+};
+
+export const brainstormsApi = {
+  listMine(token: string) {
+    return apiFetch<BrainstormsResponse>("/brainstorms", { token });
+  },
+
+  listShared(token: string) {
+    return apiFetch<BrainstormsResponse>("/brainstorms/shared", { token });
+  },
+
+  create(
+    token: string,
+    data: { title: string; description?: string; slug?: string }
+  ) {
+    return apiFetch<BrainstormResponse>("/brainstorms", {
+      method: "POST",
+      token,
+      body: data,
+    });
+  },
+
+  getByOwnerAndSlug(token: string, username: string, slug: string) {
+    return apiFetch<BrainstormResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}`,
+      { token }
+    );
+  },
+
+  updateByOwnerAndSlug(
+    token: string,
+    username: string,
+    slug: string,
+    data: Partial<Pick<Brainstorm, "title" | "description" | "status" | "visibility" | "slug">>
+  ) {
+    return apiFetch<BrainstormResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}`,
+      {
+        method: "PATCH",
+        token,
+        body: data as Record<string, unknown>,
+      }
+    );
+  },
+
+  deleteByOwnerAndSlug(token: string, username: string, slug: string) {
+    return apiFetch<Record<string, never>>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}`,
       { method: "DELETE", token }
     );
   },
@@ -217,6 +297,13 @@ export const usersApi = {
   getIdeas(token: string, username: string) {
     return apiFetch<IdeasResponse>(
       `/users/${encodeURIComponent(username)}/ideas`,
+      { token }
+    );
+  },
+
+  getBrainstorms(token: string, username: string) {
+    return apiFetch<BrainstormsResponse>(
+      `/users/${encodeURIComponent(username)}/brainstorms`,
       { token }
     );
   },
