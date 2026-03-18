@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# Nested under :username/:slug. Resolves resource (Brainstorm or Idea) and manages members/invites.
-# Only users who can edit the resource can manage members.
+# Nested under :username/brainstorms/:slug or :username/ideas/:slug (route sets resource_type via defaults).
+# Resolves resource from params and manages members/invites. Only users who can edit can manage members.
 class MembersController < ApplicationController
   include Authenticatable
 
@@ -69,7 +69,7 @@ class MembersController < ApplicationController
       return head :not_found if @resource.blank? || !@resource.accessible_by?(current_user)
       @resource_type = :idea
     else
-      head :not_found
+      return head :not_found
     end
   end
 

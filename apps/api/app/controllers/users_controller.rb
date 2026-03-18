@@ -27,7 +27,8 @@ class UsersController < ApplicationController
     ideas = if user.id == current_user.id
       user.ideas.order(updated_at: :desc)
     else
-      user.ideas.where(visibility: "shared").order(updated_at: :desc)
+      member_idea_ids = IdeaMember.where(user_id: current_user.id).accepted.pluck(:idea_id)
+      user.ideas.where(id: member_idea_ids).order(updated_at: :desc)
     end
 
     render json: { ideas: ideas.map { |idea| idea_json(idea) } }
@@ -44,7 +45,8 @@ class UsersController < ApplicationController
     brainstorms = if user.id == current_user.id
       user.brainstorms.order(updated_at: :desc)
     else
-      user.brainstorms.where(visibility: "shared").order(updated_at: :desc)
+      member_brainstorm_ids = BrainstormMember.where(user_id: current_user.id).accepted.pluck(:brainstorm_id)
+      user.brainstorms.where(id: member_brainstorm_ids).order(updated_at: :desc)
     end
 
     render json: { brainstorms: brainstorms.map { |b| brainstorm_json(b) } }

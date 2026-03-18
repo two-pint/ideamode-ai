@@ -24,6 +24,7 @@ class Idea < ApplicationRecord
     }
   validates :status, inclusion: { in: STATUSES }
   validates :visibility, inclusion: { in: VISIBILITIES }
+  validate :brainstorm_belongs_to_same_owner
 
   before_validation :normalize_slug
   before_validation :apply_defaults
@@ -33,6 +34,14 @@ class Idea < ApplicationRecord
   def apply_defaults
     self.status ||= "validating"
     self.visibility ||= "private"
+  end
+
+  def brainstorm_belongs_to_same_owner
+    return if brainstorm_id.blank?
+    return if brainstorm.nil?
+    return if brainstorm.user_id == user_id
+
+    errors.add(:brainstorm_id, "must belong to the same owner as the idea")
   end
 
   def normalize_slug

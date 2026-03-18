@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 /**
  * Legacy route /:username/:slug is no longer used.
@@ -10,11 +10,10 @@ import { useParams, useRouter } from "next/navigation";
  */
 export default function LegacySlugPage() {
   const router = useRouter();
-  const params = useParams<{ username: string; slug: string }>();
 
   useEffect(() => {
     router.replace("/not-found");
-  }, [router, params.username, params.slug]);
+  }, [router]);
 
   return (
     <main className="flex min-h-screen items-center justify-center">

@@ -11,6 +11,7 @@ class InvitesController < ApplicationController
     return head :not_found if invite.blank?
     return head :gone if invite.accepted_at.present?
     return head :gone if invite.expires_at < Time.current
+    return render json: { error: "Invite was sent to a different email" }, status: :forbidden unless invite.email.downcase == current_user.email.downcase
 
     payload = invite_payload(invite)
     render json: payload
