@@ -33,7 +33,8 @@ Rails.application.routes.draw do
   get "users/:username/ideas", to: "users#ideas"
   get "users/:username/brainstorms", to: "users#brainstorms"
 
-  # Invites (accept by token)
+  # Invites (list mine, show by token, accept)
+  get "me/invites", to: "invites#index"
   get "invites/:token", to: "invites#show"
   post "invites/:token/accept", to: "invites#accept"
 

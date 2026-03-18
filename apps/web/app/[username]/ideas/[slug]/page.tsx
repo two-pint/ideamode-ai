@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Share2, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { ShareDialog } from "@/components/share-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ export default function IdeaDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!ready || !token) return;
@@ -265,6 +267,17 @@ export default function IdeaDetailPage() {
                   {saving ? <Loader2 className="size-4 animate-spin" /> : null}
                   Save changes
                 </Button>
+                {user.username === params.username && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShareDialogOpen(true)}
+                    disabled={saving}
+                  >
+                    <Share2 className="size-4" />
+                    Share
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"
@@ -281,6 +294,18 @@ export default function IdeaDetailPage() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {user.username === params.username && (
+        <ShareDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          resourceType="idea"
+          resourceTitle={idea.title}
+          ownerUsername={params.username}
+          slug={params.slug}
+          token={token}
+        />
       )}
     </AppShell>
   );

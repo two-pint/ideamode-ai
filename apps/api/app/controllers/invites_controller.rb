@@ -6,6 +6,27 @@ class InvitesController < ApplicationController
 
   before_action :require_authentication!
 
+  def index
+    email = current_user.email.to_s.downcase
+    return render json: { invites: [] } if email.blank?
+
+    brainstorm_invites = BrainstormInvite
+      .where("LOWER(email) = ?", email)
+      .where(accepted_at: nil)
+      .where("expires_at > ?", Time.current)
+      .includes(:brainstorm, :invited_by)
+    idea_invites = IdeaInvite
+      .where("LOWER(email) = ?", email)
+      .where(accepted_at: nil)
+      .where("expires_at > ?", Time.current)
+      .includes(:idea, :invited_by)
+
+    list = brainstorm_invites.map { |inv| invite_list_item(inv) } +
+           idea_invites.map { |inv| invite_list_item(inv) }
+    list.sort_by! { |h| h[:created_at] }.reverse!
+    render json: { invites: list }
+  end
+
   def show
     invite = find_invite_by_token(params[:token])
     return head :not_found if invite.blank?
@@ -107,5 +128,31 @@ class InvitesController < ApplicationController
       name: user.name,
       avatar_url: user.avatar_url
     }
+  end
+
+  def invite_list_item(invite)
+    if invite.is_a?(BrainstormInvite)
+      {
+        token: invite.token,
+        type: "brainstorm",
+        email: invite.email,
+        role: invite.role,
+        expires_at: invite.expires_at,
+        created_at: invite.created_at,
+        resource: brainstorm_summary(invite.brainstorm),
+        invited_by: user_summary(invite.invited_by)
+      }
+    else
+      {
+        token: invite.token,
+        type: "idea",
+        email: invite.email,
+        role: invite.role,
+        expires_at: invite.expires_at,
+        created_at: invite.created_at,
+        resource: idea_summary(invite.idea),
+        invited_by: user_summary(invite.invited_by)
+      }
+    end
   end
 end

@@ -126,6 +126,157 @@ export type Brainstorm = {
   updated_at: string;
 };
 
+export type Member = {
+  id: number;
+  user_id: number;
+  username: string | null;
+  name: string | null;
+  avatar_url: string | null;
+  role: "collaborator" | "viewer";
+  accepted_at: string | null;
+  created_at: string;
+};
+
+export type Invite = {
+  id: number;
+  email: string;
+  role: "collaborator" | "viewer";
+  expires_at: string;
+  created_at: string;
+  /** Present when listing/creating so inviter can build invite link. */
+  token?: string;
+};
+
+export type MembersIndexResponse = {
+  members: Member[];
+  invites: Invite[];
+};
+
+export type MemberCreateResponse = { member: Member };
+export type InviteCreateResponse = { invite: Invite };
+export type MemberUpdateResponse = { member: Member };
+
+export type InviteShowResponse = {
+  type: "brainstorm" | "idea";
+  email: string;
+  role: string;
+  expires_at: string;
+  resource: { id: number; title: string; slug: string; owner_username: string };
+  invited_by: { id: number; username: string | null; name: string | null; avatar_url: string | null };
+};
+
+export type InviteAcceptResponse = {
+  resource_type: "brainstorm" | "idea";
+  resource: { id: number; title: string; slug: string; owner_username: string };
+};
+
+export type ResourceType = "brainstorm" | "idea";
+
+function membersPath(username: string, slug: string, resourceType: ResourceType): string {
+  const segment = resourceType === "brainstorm" ? "brainstorms" : "ideas";
+  return `/${encodeURIComponent(username)}/${segment}/${encodeURIComponent(slug)}/members`;
+}
+
+export const membersApi = {
+  list(token: string, username: string, slug: string, resourceType: ResourceType) {
+    return apiFetch<MembersIndexResponse>(membersPath(username, slug, resourceType), {
+      token,
+    });
+  },
+
+  create(
+    token: string,
+    username: string,
+    slug: string,
+    resourceType: ResourceType,
+    data: {
+      email?: string;
+      /** Use invitee_username so it doesn't overwrite route :username (owner). */
+      invitee_username?: string;
+      role?: "collaborator" | "viewer";
+    }
+  ) {
+    const body: Record<string, unknown> = {};
+    if (data.email != null && data.email.trim() !== "") {
+      body.email = data.email.trim().toLowerCase();
+    } else if (data.invitee_username != null && data.invitee_username.trim() !== "") {
+      body.invitee_username = data.invitee_username.trim();
+    }
+    if (data.role != null) body.role = data.role;
+    return apiFetch<MemberCreateResponse | InviteCreateResponse>(
+      membersPath(username, slug, resourceType),
+      {
+        method: "POST",
+        token,
+        body,
+      }
+    );
+  },
+
+  updateRole(
+    token: string,
+    username: string,
+    slug: string,
+    resourceType: ResourceType,
+    memberId: number,
+    role: "collaborator" | "viewer"
+  ) {
+    return apiFetch<MemberUpdateResponse>(
+      `${membersPath(username, slug, resourceType)}/${memberId}`,
+      {
+        method: "PATCH",
+        token,
+        body: { role },
+      }
+    );
+  },
+
+  remove(
+    token: string,
+    username: string,
+    slug: string,
+    resourceType: ResourceType,
+    id: number
+  ) {
+    return apiFetch<Record<string, never>>(
+      `${membersPath(username, slug, resourceType)}/${id}`,
+      { method: "DELETE", token }
+    );
+  },
+};
+
+export type PendingInviteItem = {
+  token: string;
+  type: "brainstorm" | "idea";
+  email: string;
+  role: string;
+  expires_at: string;
+  created_at: string;
+  resource: { id: number; title: string; slug: string; owner_username: string };
+  invited_by: { id: number; username: string | null; name: string | null; avatar_url: string | null };
+};
+
+export type PendingInvitesResponse = { invites: PendingInviteItem[] };
+
+export const invitesApi = {
+  listMine(token: string) {
+    return apiFetch<PendingInvitesResponse>("/me/invites", { token });
+  },
+
+  getByToken(token: string, inviteToken: string) {
+    return apiFetch<InviteShowResponse>(`/invites/${encodeURIComponent(inviteToken)}`, {
+      token,
+    });
+  },
+
+  accept(token: string, inviteToken: string) {
+    return apiFetch<InviteAcceptResponse>(
+      `/invites/${encodeURIComponent(inviteToken)}/accept`,
+      { method: "POST", token }
+    );
+  },
+};
+
 export const authApi = {
   register(data: { email: string; username: string; password: string; name?: string }) {
     return apiFetch<AuthResponse>("/auth/register", { method: "POST", body: data });

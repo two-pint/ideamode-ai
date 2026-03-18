@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Home, LogOut, UserRound, Moon, Sun } from "lucide-react";
+import { Home, LogOut, Mail, UserRound, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
@@ -13,7 +13,7 @@ type AppShellProps = {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
-  active?: "dashboard" | "profile" | "idea";
+  active?: "dashboard" | "profile" | "invitations" | "idea";
 };
 
 export function AppShell({ title, subtitle, children, active = "dashboard" }: AppShellProps) {
@@ -44,6 +44,18 @@ export function AppShell({ title, subtitle, children, active = "dashboard" }: Ap
               >
                 <Home className="size-4" />
                 Dashboard
+              </Link>
+              <Link
+                href="/invitations"
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
+                  active === "invitations"
+                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                )}
+              >
+                <Mail className="size-4" />
+                Invitations
               </Link>
               {username && (
                 <Link

@@ -19,12 +19,19 @@ class MembersController < ApplicationController
   end
 
   def create
-    if params[:user_id].present?
+    # Use invitee_username for body so it doesn't overwrite route :username (owner)
+    user_id = params[:user_id].presence
+    email_param = (params[:email] || params["email"]).to_s.strip.presence
+    invitee_username = (params[:invitee_username] || params["invitee_username"]).to_s.strip.presence
+
+    if user_id.present?
       add_existing_user
-    elsif params[:email].present?
-      invite_by_email
+    elsif invitee_username.present?
+      add_existing_user_by_username(invitee_username)
+    elsif email_param.present?
+      invite_by_email(email_param)
     else
-      render json: { errors: ["Provide user_id or email"] }, status: :unprocessable_entity
+      render json: { errors: ["Provide user_id, invitee_username, or email"] }, status: :unprocessable_entity
     end
   end
 
@@ -88,41 +95,27 @@ class MembersController < ApplicationController
   def add_existing_user
     user = User.find_by(id: params[:user_id])
     return render json: { errors: ["User not found"] }, status: :unprocessable_entity if user.blank?
-    return render json: { errors: ["Cannot add owner"] }, status: :unprocessable_entity if user.id == @resource.user_id
-
-    member = member_association.build(user: user, invited_by: current_user, role: params[:role].presence || "collaborator")
-    member.accepted_at = Time.current
-    if member.save
-      render json: { member: member_json(member) }, status: :created
-    else
-      render json: { errors: member.errors.full_messages }, status: :unprocessable_entity
-    end
+    create_invite_for_email(user.email)
   end
 
-  def invite_by_email
-    email = params[:email].to_s.strip.downcase
+  def add_existing_user_by_username(invitee_username)
+    return render json: { errors: ["Username required"] }, status: :unprocessable_entity if invitee_username.blank?
+    user = User.where("LOWER(username) = ?", invitee_username.downcase).first
+    return render json: { errors: ["User not found"] }, status: :unprocessable_entity if user.blank?
+    create_invite_for_email(user.email)
+  end
+
+  # Always create an invite (no immediate member). Invitee must accept before the resource appears in their list.
+  def create_invite_for_email(email_param)
+    email = email_param.to_s.strip.downcase
     return render json: { errors: ["Email required"] }, status: :unprocessable_entity if email.blank?
 
-    user = User.find_by(email: email)
-    if user
-      return render json: { errors: ["Cannot add owner"] }, status: :unprocessable_entity if user.id == @resource.user_id
-      existing = member_association.find_by(user_id: user.id)
-      if existing
-        render json: { errors: ["Already a member"] }, status: :unprocessable_entity
-        return
-      end
-      member = member_association.build(user: user, invited_by: current_user, role: params[:role].presence || "collaborator")
-      member.accepted_at = Time.current
-      if member.save
-        render json: { member: member_json(member) }, status: :created
-        return
-      end
-      render json: { errors: member.errors.full_messages }, status: :unprocessable_entity
-      return
-    end
+    user = User.find_by("LOWER(email) = ?", email)
+    return render json: { errors: ["Cannot add owner"] }, status: :unprocessable_entity if user&.id == @resource.user_id
+    return render json: { errors: ["Already a member"] }, status: :unprocessable_entity if user && member_association.exists?(user_id: user.id)
 
-    existing_invite = invite_association.find_by(email: email)
-    if existing_invite&.accepted_at.blank? && existing_invite.expires_at > Time.current
+    existing_invite = invite_association.where("LOWER(email) = ?", email).first
+    if existing_invite.present? && existing_invite.accepted_at.blank? && existing_invite.expires_at > Time.current
       render json: { errors: ["Invite already sent for this email"] }, status: :unprocessable_entity
       return
     end
@@ -138,6 +131,10 @@ class MembersController < ApplicationController
       expires_at: 7.days.from_now
     )
     render json: { invite: invite_json(inv) }, status: :created
+  end
+
+  def invite_by_email(email_param)
+    create_invite_for_email(email_param)
   end
 
   def member_json(member)
@@ -159,7 +156,8 @@ class MembersController < ApplicationController
       email: inv.email,
       role: inv.role,
       expires_at: inv.expires_at,
-      created_at: inv.created_at
+      created_at: inv.created_at,
+      token: inv.token
     }
   end
 end
