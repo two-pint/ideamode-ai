@@ -1,0 +1,50 @@
+# Brainstorms fixture. owner_username references users.yml.
+# Loaded by db/seeds.rb
+
+twopint_product_exploration:
+  owner_username: twopint
+  title: Product exploration
+  description: Exploring product directions.
+  slug: product-exploration
+  status: exploring
+  visibility: private
+
+twopint_feature_ideas:
+  owner_username: twopint
+  title: Feature ideas
+  description: Feature backlog and research.
+  slug: feature-ideas
+  status: researching
+  visibility: shared
+
+twopint_archived_concepts:
+  owner_username: twopint
+  title: Archived concepts
+  description: Old concepts for reference.
+  slug: archived-concepts
+  status: archived
+  visibility: private
+
+lime_product_exploration:
+  owner_username: lime
+  title: Product exploration
+  description: Exploring product directions.
+  slug: product-exploration
+  status: exploring
+  visibility: private
+
+lime_feature_ideas:
+  owner_username: lime
+  title: Feature ideas
+  description: Feature backlog and research.
+  slug: feature-ideas
+  status: researching
+  visibility: shared
+
+lime_archived_concepts:
+  owner_username: lime
+  title: Archived concepts
+  description: Old concepts for reference.
+  slug: archived-concepts
+  status: archived
+  visibility: private

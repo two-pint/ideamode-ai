@@ -62,6 +62,15 @@ export default function DashboardPage() {
   const lastBrainstormOverIdRef = useRef<string | null>(null);
   const lastIdeaOverIdRef = useRef<string | null>(null);
 
+  const allBrainstorms = useMemo(
+    () => [...myBrainstorms, ...sharedBrainstorms],
+    [myBrainstorms, sharedBrainstorms]
+  );
+  const allIdeas = useMemo(
+    () => [...myIdeas, ...sharedIdeas],
+    [myIdeas, sharedIdeas]
+  );
+
   const groupedBrainstorms = useMemo(() => {
     const groups: Record<BrainstormStatus, Brainstorm[]> = {
       exploring: [],
@@ -69,9 +78,9 @@ export default function DashboardPage() {
       ready: [],
       archived: [],
     };
-    myBrainstorms.forEach((b) => groups[b.status].push(b));
+    allBrainstorms.forEach((b) => groups[b.status].push(b));
     return groups;
-  }, [myBrainstorms]);
+  }, [allBrainstorms]);
 
   const groupedIdeas = useMemo(() => {
     const groups: Record<IdeaStatus, Idea[]> = {
@@ -79,9 +88,9 @@ export default function DashboardPage() {
       validated: [],
       shelved: [],
     };
-    myIdeas.forEach((idea) => groups[idea.status].push(idea));
+    allIdeas.forEach((idea) => groups[idea.status].push(idea));
     return groups;
-  }, [myIdeas]);
+  }, [allIdeas]);
 
   const loadBrainstorms = useCallback(async () => {
     if (!token) return;
@@ -153,10 +162,15 @@ export default function DashboardPage() {
       const brainstormId = Number(dragId.slice(11)); // "brainstorm-" length is 11
       if (Number.isNaN(brainstormId)) return;
 
-      const brainstorm = myBrainstorms.find((b) => b.id === brainstormId);
+      const brainstorm = allBrainstorms.find((b) => b.id === brainstormId);
       if (!brainstorm || brainstorm.status === newStatus) return;
+      const ownerUsername = brainstorm.owner?.username ?? user?.username;
+      if (!ownerUsername) return;
 
-      setMyBrainstorms((current) =>
+      const isMine = brainstorm.owner?.username === user?.username;
+      const setter = isMine ? setMyBrainstorms : setSharedBrainstorms;
+
+      setter((current) =>
         current.map((b) =>
           b.id === brainstormId ? { ...b, status: newStatus } : b
         )
@@ -164,11 +178,11 @@ export default function DashboardPage() {
       try {
         const res = await brainstormsApi.updateByOwnerAndSlug(
           token,
-          user.username,
+          ownerUsername,
           brainstorm.slug,
           { status: newStatus }
         );
-        setMyBrainstorms((current) =>
+        setter((current) =>
           current.map((b) =>
             b.id === brainstormId
               ? { ...b, status: res.brainstorm.status, updated_at: res.brainstorm.updated_at }
@@ -176,14 +190,14 @@ export default function DashboardPage() {
           )
         );
       } catch {
-        setMyBrainstorms((current) =>
+        setter((current) =>
           current.map((b) =>
             b.id === brainstormId ? { ...b, status: brainstorm.status } : b
           )
         );
       }
     },
-    [token, user?.username, myBrainstorms]
+    [token, user?.username, allBrainstorms, myBrainstorms, sharedBrainstorms]
   );
 
   const handleIdeaDragStart = useCallback(() => {
@@ -221,31 +235,36 @@ export default function DashboardPage() {
       const ideaId = Number(dragId.slice(5));
       if (Number.isNaN(ideaId)) return;
 
-      const idea = myIdeas.find((i) => i.id === ideaId);
+      const idea = allIdeas.find((i) => i.id === ideaId);
       if (!idea || idea.status === newStatus) return;
+      const ownerUsername = idea.owner?.username ?? user?.username;
+      if (!ownerUsername) return;
 
-      setMyIdeas((current) =>
+      const isMine = idea.owner?.username === user?.username;
+      const setter = isMine ? setMyIdeas : setSharedIdeas;
+
+      setter((current) =>
         current.map((i) => (i.id === ideaId ? { ...i, status: newStatus } : i))
       );
       try {
         const res = await ideasApi.updateByOwnerAndSlug(
           token,
-          user.username,
+          ownerUsername,
           idea.slug,
           { status: newStatus }
         );
-        setMyIdeas((current) =>
+        setter((current) =>
           current.map((i) => (i.id === ideaId ? res.idea : i))
         );
       } catch {
-        setMyIdeas((current) =>
+        setter((current) =>
           current.map((i) =>
             i.id === ideaId ? { ...i, status: idea.status } : i
           )
         );
       }
     },
-    [token, user?.username, myIdeas]
+    [token, user?.username, allIdeas, myIdeas, sharedIdeas]
   );
 
   useEffect(() => {
@@ -308,9 +327,8 @@ export default function DashboardPage() {
             </div>
 
             <section className="space-y-3">
-              <h2 className="text-lg font-semibold">My Brainstorms</h2>
               {loadingBrainstorms ? (
-                <p className="text-sm text-zinc-500">Loading your brainstorms...</p>
+                <p className="text-sm text-zinc-500">Loading brainstorms...</p>
               ) : (
                 <DndContext
                   sensors={sensors}
@@ -339,13 +357,23 @@ export default function DashboardPage() {
                               </p>
                             ) : (
                               <div className="space-y-3">
-                                {groupedBrainstorms[status].map((brainstorm) => (
-                                  <DraggableBrainstormCard
-                                    key={brainstorm.id}
-                                    brainstorm={brainstorm}
-                                    ownerUsername={user.username}
-                                  />
-                                ))}
+                                {groupedBrainstorms[status].map((brainstorm) => {
+                                  const ownerUsername =
+                                    brainstorm.owner?.username ?? user.username;
+                                  const sharedByUsername =
+                                    brainstorm.owner?.username &&
+                                    brainstorm.owner.username !== user.username
+                                      ? brainstorm.owner.username
+                                      : null;
+                                  return (
+                                    <DraggableBrainstormCard
+                                      key={brainstorm.id}
+                                      brainstorm={brainstorm}
+                                      ownerUsername={ownerUsername}
+                                      sharedByUsername={sharedByUsername}
+                                    />
+                                  );
+                                })}
                               </div>
                             )}
                           </CardContent>
@@ -354,23 +382,6 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 </DndContext>
-              )}
-            </section>
-
-            <section className="mt-8 space-y-3">
-              <h2 className="text-lg font-semibold">Shared With Me</h2>
-              {loadingBrainstorms ? (
-                <p className="text-sm text-zinc-500">Loading shared brainstorms...</p>
-              ) : sharedBrainstorms.length === 0 ? (
-                <p className="text-sm text-zinc-500">
-                  No shared brainstorms yet. You will see collaborator and viewer brainstorms here.
-                </p>
-              ) : (
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {sharedBrainstorms.map((brainstorm) => (
-                    <BrainstormCard key={brainstorm.id} brainstorm={brainstorm} />
-                  ))}
-                </div>
               )}
             </section>
           </>
@@ -386,17 +397,16 @@ export default function DashboardPage() {
             </div>
 
             <section className="space-y-3">
-              <h2 className="text-lg font-semibold">My Ideas</h2>
               {loadingIdeas ? (
-                <p className="text-sm text-zinc-500">Loading your ideas...</p>
+                <p className="text-sm text-zinc-500">Loading ideas...</p>
               ) : (
                 <DndContext
-                sensors={sensors}
-                collisionDetection={pointerWithin}
-                onDragStart={handleIdeaDragStart}
-                onDragOver={handleIdeaDragOver}
-                onDragEnd={handleIdeaDragEnd}
-              >
+                  sensors={sensors}
+                  collisionDetection={pointerWithin}
+                  onDragStart={handleIdeaDragStart}
+                  onDragOver={handleIdeaDragOver}
+                  onDragEnd={handleIdeaDragEnd}
+                >
                   <div className="grid gap-4 xl:grid-cols-3">
                     {IDEA_LANE_STATUSES.map((status) => (
                       <DroppableLane
@@ -415,13 +425,23 @@ export default function DashboardPage() {
                               <p className="text-sm text-zinc-500">No ideas in this lane.</p>
                             ) : (
                               <div className="space-y-3">
-                                {groupedIdeas[status].map((idea) => (
-                                  <DraggableIdeaCard
-                                    key={idea.id}
-                                    idea={idea}
-                                    ownerUsername={user.username}
-                                  />
-                                ))}
+                                {groupedIdeas[status].map((idea) => {
+                                  const ownerUsername =
+                                    idea.owner?.username ?? user.username;
+                                  const sharedByUsername =
+                                    idea.owner?.username &&
+                                    idea.owner.username !== user.username
+                                      ? idea.owner.username
+                                      : null;
+                                  return (
+                                    <DraggableIdeaCard
+                                      key={idea.id}
+                                      idea={idea}
+                                      ownerUsername={ownerUsername}
+                                      sharedByUsername={sharedByUsername}
+                                    />
+                                  );
+                                })}
                               </div>
                             )}
                           </CardContent>
@@ -430,23 +450,6 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 </DndContext>
-              )}
-            </section>
-
-            <section className="mt-8 space-y-3">
-              <h2 className="text-lg font-semibold">Shared With Me</h2>
-              {loadingIdeas ? (
-                <p className="text-sm text-zinc-500">Loading shared ideas...</p>
-              ) : sharedIdeas.length === 0 ? (
-                <p className="text-sm text-zinc-500">
-                  No shared ideas yet. You will see collaborator and viewer ideas here.
-                </p>
-              ) : (
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {sharedIdeas.map((idea) => (
-                    <IdeaCard key={idea.id} idea={idea} />
-                  ))}
-                </div>
               )}
             </section>
           </>

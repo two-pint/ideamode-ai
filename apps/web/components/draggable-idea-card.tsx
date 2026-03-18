@@ -6,23 +6,25 @@ import { type Idea } from "@/lib/api"
 import { IdeaCard } from "@/components/idea-card"
 
 type DraggableIdeaCardProps = {
-  idea: Idea
-  ownerUsername?: string | null
-}
+  idea: Idea;
+  ownerUsername?: string | null;
+  sharedByUsername?: string | null;
+};
 
 export function DraggableIdeaCard({
   idea,
   ownerUsername,
+  sharedByUsername,
 }: DraggableIdeaCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: `idea-${idea.id}`,
       data: { idea },
-    })
+    });
 
   const style = transform
     ? { transform: CSS.Translate.toString(transform) }
-    : undefined
+    : undefined;
 
   return (
     <div
@@ -32,7 +34,11 @@ export function DraggableIdeaCard({
       {...attributes}
       className={isDragging ? "opacity-50 cursor-grabbing" : "cursor-grab"}
     >
-      <IdeaCard idea={idea} ownerUsername={ownerUsername} />
+      <IdeaCard
+        idea={idea}
+        ownerUsername={ownerUsername}
+        sharedByUsername={sharedByUsername}
+      />
     </div>
-  )
+  );
 }

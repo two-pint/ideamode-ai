@@ -1,0 +1,71 @@
+# Ideas fixture. owner_username references users.yml.
+# brainstorm_slug (optional) references a brainstorm owned by the same user.
+# Loaded by db/seeds.rb
+
+twopint_idea_from_product:
+  owner_username: twopint
+  title: Idea from product exploration
+  description: Top idea from product brainstorm.
+  slug: idea-from-product-exploration
+  status: validating
+  visibility: private
+  brainstorm_slug: product-exploration
+
+twopint_idea_from_feature:
+  owner_username: twopint
+  title: Idea from feature ideas
+  description: Feature idea from research.
+  slug: idea-from-feature-ideas
+  status: validated
+  visibility: shared
+  brainstorm_slug: feature-ideas
+
+twopint_standalone_one:
+  owner_username: twopint
+  title: Standalone idea one
+  description: Independent idea.
+  slug: standalone-idea-one
+  status: validating
+  visibility: private
+
+twopint_standalone_two:
+  owner_username: twopint
+  title: Standalone idea two
+  description: Another independent idea.
+  slug: standalone-idea-two
+  status: shelved
+  visibility: private
+
+lime_idea_from_product:
+  owner_username: lime
+  title: Idea from product exploration
+  description: Top idea from product brainstorm.
+  slug: idea-from-product-exploration
+  status: validating
+  visibility: private
+  brainstorm_slug: product-exploration
+
+lime_idea_from_feature:
+  owner_username: lime
+  title: Idea from feature ideas
+  description: Feature idea from research.
+  slug: idea-from-feature-ideas
+  status: validated
+  visibility: shared
+  brainstorm_slug: feature-ideas
+
+lime_standalone_one:
+  owner_username: lime
+  title: Standalone idea one
+  description: Independent idea.
+  slug: standalone-idea-one
+  status: validating
+  visibility: private
+
+lime_standalone_two:
+  owner_username: lime
+  title: Standalone idea two
+  description: Another independent idea.
+  slug: standalone-idea-two
+  status: shelved
+  visibility: private

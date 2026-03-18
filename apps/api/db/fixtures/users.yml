@@ -1,0 +1,14 @@
+# Fixture users. Password for both: Test1234!
+# Loaded by db/seeds.rb
+
+twopint:
+  email: court@ideamode.dev
+  username: twopint
+  name: Courtney
+  password: "Test1234!"
+
+lime:
+  email: jason@ideamode.dev
+  username: lime
+  name: Jason
+  password: "Test1234!"

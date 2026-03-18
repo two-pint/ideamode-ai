@@ -8,11 +8,13 @@ import { BrainstormCard } from "@/components/brainstorm-card";
 type DraggableBrainstormCardProps = {
   brainstorm: Brainstorm;
   ownerUsername?: string | null;
+  sharedByUsername?: string | null;
 };
 
 export function DraggableBrainstormCard({
   brainstorm,
   ownerUsername,
+  sharedByUsername,
 }: DraggableBrainstormCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `brainstorm-${brainstorm.id}`,
@@ -31,7 +33,11 @@ export function DraggableBrainstormCard({
       {...attributes}
       className={isDragging ? "opacity-50 cursor-grabbing" : "cursor-grab"}
     >
-      <BrainstormCard brainstorm={brainstorm} ownerUsername={ownerUsername} />
+      <BrainstormCard
+        brainstorm={brainstorm}
+        ownerUsername={ownerUsername}
+        sharedByUsername={sharedByUsername}
+      />
     </div>
   );
 }
