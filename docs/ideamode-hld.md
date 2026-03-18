@@ -1,6 +1,6 @@
 # IdeaMode — High-Level Design
 
-**Version:** 1.0  
+**Version:** 2.0  
 **Domain:** ideamode.ai  
 **Stack:** Rails API + Next.js  
 **Last Updated:** March 2026
@@ -9,7 +9,9 @@
 
 ## Overview
 
-Four phased milestones from foundation to beta. The app follows a GitHub-style ownership model — ideas belong to a single user, are URL-scoped to that user's username, and can be shared with others as collaborators or viewers. AI runs throughout: brainstorm chat, validation analysis, and PRD generation all use the Claude API with streaming.
+Five phased milestones from foundation to beta. The app is built around two core models — **Brainstorms** (exploratory workspaces with AI chat, notes, and light research) and **Ideas** (structured validation with analysis, wireframes, tasks, and PRD generation). Ideas can optionally originate from a brainstorm (linked via `brainstorm_id`) or be created independently.
+
+Both models follow a GitHub-style ownership model — each belongs to a single user, is URL-scoped to that user's username, and can be shared with others as collaborators or viewers. AI runs throughout: brainstorm chat, brainstorm research, idea discussion chat, validation analysis, and PRD generation all use the Claude API with streaming.
 
 ---
 
@@ -39,30 +41,41 @@ Four phased milestones from foundation to beta. The app follows a GitHub-style o
 ## URL Structure
 
 ```
-/dashboard                               ← My Ideas + Shared With Me
+/dashboard                               ← Brainstorms tab + Ideas tab
+
 /:username                               ← User profile page
+
+Brainstorm routes:
+/:username/:brainstorm-slug              ← Brainstorm detail (defaults to /overview)
+  /:username/:brainstorm-slug/overview
+  /:username/:brainstorm-slug/chat
+  /:username/:brainstorm-slug/research
+  /:username/:brainstorm-slug/notes
+
+Idea routes:
 /:username/:idea-slug                    ← Idea detail (defaults to /overview)
   /:username/:idea-slug/overview
-  /:username/:idea-slug/brainstorm
+  /:username/:idea-slug/discussion
   /:username/:idea-slug/analysis
   /:username/:idea-slug/wireframes
   /:username/:idea-slug/prd
   /:username/:idea-slug/prd/:version
   /:username/:idea-slug/notes
   /:username/:idea-slug/tasks
+
 /settings
 ```
 
-> Accessing an idea without permission returns **404** — never confirm the idea exists.
+> Brainstorm and idea slugs share the same namespace per user. The backend resolves by checking both tables. Accessing without permission returns **404** — never confirm existence.
 
 ---
 
 ## Phase 1 — Foundation
 **Timeline:** Weeks 1–2
 
-Core infrastructure: auth, user model with username, idea ownership, and GitHub-style URL routing.
+Core infrastructure: auth, user model with username, brainstorm and idea ownership, GitHub-style URL routing, and slug resolution across both models.
 
-**Deliverable:** Users can sign in with Google, claim a username, create ideas, and invite collaborators. All idea pages are access-controlled and URL-scoped to the owner's username.
+**Deliverable:** Users can sign in with Google, claim a username, create brainstorms and ideas, and invite collaborators. All pages are access-controlled and URL-scoped to the owner's username. Dashboard has two tabs: Brainstorms and Ideas.
 
 ---
 
@@ -85,15 +98,37 @@ GET    /auth/check_username
 
 ---
 
-### Module 1.2 — Ideas CRUD
+### Module 1.2 — Brainstorms CRUD
 **Layer:** Backend · **Tech:** Rails, PostgreSQL
 
 **Tasks:**
-- Idea model: `user_id` (owner), `slug`, `title`, `description`, `status`, `visibility`
-- Slug auto-generation from title (unique per user)
-- Status enum: `brainstorm | validating | validated | shelved`
+- Brainstorm model: `user_id` (owner), `slug`, `title`, `description`, `status`, `visibility`
+- Slug auto-generation from title (unique per user, shared namespace with ideas)
+- Status enum: `exploring | researching | ready | archived`
 - Visibility enum: `private | shared`
 - Ownership is immutable post-creation
+
+**Endpoints:**
+```
+GET    /brainstorms
+POST   /brainstorms
+GET    /:username/:slug
+PATCH  /:username/:slug
+DELETE /:username/:slug
+```
+
+---
+
+### Module 1.3 — Ideas CRUD
+**Layer:** Backend · **Tech:** Rails, PostgreSQL
+
+**Tasks:**
+- Idea model: `user_id` (owner), `brainstorm_id` (nullable FK → Brainstorm), `slug`, `title`, `description`, `status`, `visibility`
+- Slug auto-generation from title (unique per user, shared namespace with brainstorms)
+- Status enum: `validating | validated | shelved`
+- Visibility enum: `private | shared`
+- Ownership is immutable post-creation
+- Slug resolution middleware: check both brainstorms and ideas tables for a given `/:username/:slug`
 
 **Endpoints:**
 ```
@@ -106,26 +141,30 @@ DELETE /:username/:slug
 
 ---
 
-### Module 1.3 — Membership & Access Control
+### Module 1.4 — Membership & Access Control
 **Layer:** Backend · **Tech:** Rails, Pundit
 
 **Tasks:**
+- `BrainstormMember`: `brainstorm_id`, `user_id`, `role` (`collaborator|viewer`), `invited_by`, `accepted_at`
+- `BrainstormInvite`: `brainstorm_id`, `email`, `token`, `role`, `expires_at` (7 days)
 - `IdeaMember`: `idea_id`, `user_id`, `role` (`collaborator|viewer`), `invited_by`, `accepted_at`
 - `IdeaInvite`: `idea_id`, `email`, `token`, `role`, `expires_at` (7 days)
-- Pundit policy: owner / collaborator / viewer permission matrix
-- 404 on unauthorized access (never confirm idea existence)
-- Access middleware on all idea-scoped routes
+- Pundit policies for both brainstorms and ideas: owner / collaborator / viewer permission matrix
+- 404 on unauthorized access (never confirm existence)
+- Access middleware on all brainstorm- and idea-scoped routes
 
-**Role Matrix:**
+**Role Matrix (applies to both brainstorms and ideas):**
 
 | Action | Owner | Collaborator | Viewer |
 |---|:---:|:---:|:---:|
-| Edit idea | ✓ | ✓ | — |
-| Run analysis | ✓ | ✓ | — |
-| Generate PRD | ✓ | ✓ | — |
-| Export PRD | ✓ | ✓ | ✓ |
+| Edit content | ✓ | ✓ | — |
+| Run research (brainstorms) | ✓ | ✓ | — |
+| Run analysis (ideas) | ✓ | ✓ | — |
+| Generate PRD (ideas) | ✓ | ✓ | — |
+| Export PRD (ideas) | ✓ | ✓ | ✓ |
+| Create idea from brainstorm | ✓ | — | — |
 | Manage members | ✓ | — | — |
-| Delete idea | ✓ | — | — |
+| Delete | ✓ | — | — |
 
 **Endpoints:**
 ```
@@ -137,27 +176,32 @@ POST   /invites/:token/accept
 
 ---
 
-### Module 1.4 — Dashboard + Navigation
+### Module 1.5 — Dashboard + Navigation
 **Layer:** Frontend · **Tech:** Next.js, Tailwind
 
 **Tasks:**
 - App shell: sidebar nav, user avatar, route slots
-- Dashboard: "My Ideas" grid grouped by status
-- Dashboard: "Shared With Me" section with owner attribution
-- Idea cards: title, status badge, score ring, member avatars
+- Dashboard with two top-level tabs: **Brainstorms** and **Ideas**
+- Brainstorms tab: "My Brainstorms" grid grouped by status (Exploring → Researching → Ready → Archived) + "Shared With Me" section
+- Ideas tab: "My Ideas" grid grouped by status (Validating → Validated → Shelved) + "Shared With Me" section
+- Brainstorm cards: title, status badge, member avatars, last updated
+- Idea cards: title, status badge, score ring, member avatars, linked brainstorm indicator
+- New brainstorm modal: title + description, slug preview
 - New idea modal: title + description, slug preview
-- User profile page at `/:username` listing visible ideas
+- Brainstorm detail shell with tabs (Overview, Chat, Research, Notes)
+- Idea detail shell with tabs (Overview, Discussion, Analysis, Wireframes, PRD, Notes, Tasks)
+- User profile page at `/:username` listing visible brainstorms and ideas
 
 **Routes:** `/dashboard`, `/:username`, `/:username/:slug`
 
 ---
 
-## Phase 2 — Core AI Value
+## Phase 2 — Brainstorm Features
 **Timeline:** Weeks 2–3
 
-Brainstorm chat and structured validation analysis — the primary reason to use the app.
+Brainstorm-specific AI features — the exploratory workspace that differentiates IdeaMode. Built first so users can start exploring concepts immediately.
 
-**Deliverable:** Users can brainstorm with Claude (streamed), run full validation analysis with real web search data, and view structured results. All runs are versioned.
+**Deliverable:** Users can chat with Claude in an exploratory mode, run lightweight research queries, take notes within a brainstorm, and create an idea from a brainstorm with context carried over.
 
 ---
 
@@ -165,22 +209,121 @@ Brainstorm chat and structured validation analysis — the primary reason to use
 **Layer:** AI / LLM · **Tech:** Claude API, Streaming, Rails SSE
 
 **Tasks:**
-- `BrainstormSession` model: `idea_id`, `user_id`, `messages` (jsonb)
-- System prompt: critical thinking partner, not a cheerleader
+- `ChatSession` model: `brainstorm_id` (nullable), `idea_id` (nullable), `user_id`, `messages` (jsonb) — check constraint: exactly one of `brainstorm_id` or `idea_id` must be set
+- System prompt: creative thinking partner — exploratory and curious, not evaluative
 - Streaming response via Server-Sent Events
-- Suggested starter prompts on empty state
+- Suggested starter prompts on empty state (e.g. "I have a rough idea — help me think it through")
 - Session history: archive old sessions, start new
 - Pin message to Overview as key insight
 
 **Endpoints:**
 ```
-POST /:username/:slug/brainstorm/sessions
-POST /:username/:slug/brainstorm/sessions/:id/messages   (SSE)
+POST /:username/:slug/chat/sessions
+POST /:username/:slug/chat/sessions/:id/messages   (SSE)
+GET  /:username/:slug/chat/sessions
 ```
 
 ---
 
-### Module 2.2 — Analysis Engine
+### Module 2.2 — Brainstorm Research
+**Layer:** AI / LLM · **Tech:** Claude API, Web Search Tool
+
+**Tasks:**
+- `BrainstormResearch` model: `brainstorm_id`, `research_type`, `query`, `result` (jsonb), `created_at`
+- Research types: `market_lookup | competitor_spot | trend_signal`
+- Web search tool enabled on all Claude API calls
+- Lightweight structured output — simpler than full idea analysis
+- Each query saved with result — research history viewable
+- Results render in simple, readable UI components
+
+**Endpoints:**
+```
+POST /:username/:slug/research
+GET  /:username/:slug/research
+GET  /:username/:slug/research/:id
+```
+
+---
+
+### Module 2.3 — Brainstorm Notes
+**Layer:** Frontend · **Tech:** Tiptap, Rails
+
+**Tasks:**
+- `BrainstormNote` model: `brainstorm_id`, `user_id`, `content` (Tiptap JSON), `updated_at`
+- Tiptap editor: headings, bold, italic, lists, links, code, blockquote
+- Auto-save on change (debounced 1.5s)
+- Last-saved timestamp display
+- Single note per brainstorm
+
+**Endpoints:**
+```
+GET /:username/:slug/note
+PUT /:username/:slug/note
+```
+
+---
+
+### Module 2.4 — Create Idea from Brainstorm
+**Layer:** Full Stack · **Tech:** Rails, Next.js
+
+**Tasks:**
+- "Create Idea" action on brainstorm Overview tab (owner only)
+- Modal pre-populated with brainstorm title + description (editable)
+- Slug preview auto-generated from title
+- Checkboxes to optionally carry over brainstorm members
+- On creation: sets `brainstorm_id` on the new idea
+- Brainstorm remains fully usable after idea creation
+- Idea Overview shows "From Brainstorm" link to source
+
+**Endpoints:**
+```
+POST /:username/:brainstorm-slug/create-idea
+```
+
+---
+
+### Module 2.5 — Brainstorm Research UI
+**Layer:** Frontend · **Tech:** Next.js, Tailwind
+
+**Tasks:**
+- Research tab: action buttons per research type (Market Lookup, Competitor Spot, Trend Signal)
+- Research history list with timestamps
+- Result cards: summary, links, key takeaways
+- Loading skeleton while research runs
+
+---
+
+## Phase 3 — Idea AI Value
+**Timeline:** Weeks 3–4
+
+Discussion chat and structured validation analysis — the core reason to move from brainstorm to idea.
+
+**Deliverable:** Users can discuss ideas with Claude (critical/evaluative mode, streamed), run full validation analysis with real web search data, and view structured results. All runs are versioned. If the idea was created from a brainstorm, context carries over into discussion and analysis prompts.
+
+---
+
+### Module 3.1 — Discussion Chat
+**Layer:** AI / LLM · **Tech:** Claude API, Streaming, Rails SSE
+
+**Tasks:**
+- Reuses `ChatSession` model with `idea_id` set (same table as brainstorm chat)
+- System prompt: critical thinking partner — pressure-tests assumptions, not a cheerleader
+- If idea has a linked brainstorm, system prompt includes brainstorm chat history and notes as context
+- Streaming response via Server-Sent Events
+- Suggested starter prompts on empty state (e.g. "What assumptions am I making that could be wrong?")
+- Session history: archive old sessions, start new
+- Pin message to Overview as key insight
+
+**Endpoints:**
+```
+POST /:username/:slug/discussion/sessions
+POST /:username/:slug/discussion/sessions/:id/messages   (SSE)
+GET  /:username/:slug/discussion/sessions
+```
+
+---
+
+### Module 3.2 — Analysis Engine
 **Layer:** AI / LLM · **Tech:** Claude API, Web Search Tool, Sidekiq
 
 **Tasks:**
@@ -192,6 +335,7 @@ POST /:username/:slug/brainstorm/sessions/:id/messages   (SSE)
 - Run via Sidekiq background job; stream progress to frontend
 - Versioned — retain all historical runs
 - Users can annotate any analysis result
+- If idea has a linked brainstorm, research results are included as context
 
 **Analysis Result Schema:**
 ```json
@@ -231,7 +375,7 @@ GET  /:username/:slug/analyses/:id
 
 ---
 
-### Module 2.3 — Analysis UI
+### Module 3.3 — Analysis UI
 **Layer:** Frontend · **Tech:** Next.js, Recharts
 
 **Tasks:**
@@ -245,16 +389,16 @@ GET  /:username/:slug/analyses/:id
 
 ---
 
-## Phase 3 — Productivity Layer
-**Timeline:** Weeks 3–4
+## Phase 4 — Productivity Layer
+**Timeline:** Weeks 4–5
 
 Notes, tasks, wireframes, and PRD generation — the tools that make an idea actionable.
 
-**Deliverable:** Ideas have a full productivity workspace: freeform notes, task tracking, Excalidraw wireframes, and AI-generated PRDs with Markdown/PDF export.
+**Deliverable:** Ideas have a full productivity workspace: freeform notes, task tracking, Excalidraw wireframes, and AI-generated PRDs (with brainstorm context when linked) with Markdown/PDF export.
 
 ---
 
-### Module 3.1 — Notes
+### Module 4.1 — Notes (Ideas)
 **Layer:** Frontend · **Tech:** Tiptap, Rails
 
 **Tasks:**
@@ -263,6 +407,7 @@ Notes, tasks, wireframes, and PRD generation — the tools that make an idea act
 - Auto-save on change (debounced 1.5s)
 - Last-saved timestamp display
 - Single note per idea (not multi-doc)
+- Same editor component as brainstorm notes (Module 2.3) — shared component, different data source
 
 **Endpoints:**
 ```
@@ -272,7 +417,7 @@ PUT /:username/:slug/note
 
 ---
 
-### Module 3.2 — Tasks
+### Module 4.2 — Tasks
 **Layer:** Frontend · **Tech:** Next.js, Rails
 
 **Tasks:**
@@ -292,7 +437,7 @@ DELETE /:username/:slug/tasks/:id
 
 ---
 
-### Module 3.3 — Wireframes
+### Module 4.3 — Wireframes
 **Layer:** Frontend · **Tech:** Excalidraw, Rails
 
 **Tasks:**
@@ -312,12 +457,13 @@ PATCH /:username/:slug/wireframes/:id
 
 ---
 
-### Module 3.4 — PRD Generator
+### Module 4.4 — PRD Generator
 **Layer:** AI / LLM · **Tech:** Claude API, Streaming, pdf-lib
 
 **Tasks:**
 - `IdeaPRD` model: `idea_id`, `user_id`, `content` (Markdown), `version` (int), `generated_at`, `updated_at`
-- Generate PRD from idea context: title + description + brainstorm history + analysis results + notes
+- Generate PRD from idea context: title + description + discussion history + analysis results + notes
+- If idea has a linked brainstorm: include brainstorm chat history, notes, and research results as additional context
 - Stream generation into live Markdown preview
 - Unfilled sections flagged as `[Needs input]` — no hallucination
 - Split-pane: Markdown source + rendered preview
@@ -336,27 +482,27 @@ GET  /:username/:slug/prds/:version/export?format=md|pdf
 
 ---
 
-## Phase 4 — Polish & Beta
-**Timeline:** Week 5
+## Phase 5 — Polish & Beta
+**Timeline:** Week 6
 
 Invite-only beta launch. Responsive polish, empty states, error handling, and onboarding flow.
 
-**Deliverable:** App is stable, responsive, and invite-gated. Friends can onboard, create ideas, and collaborate. Beta feedback loop established.
+**Deliverable:** App is stable, responsive, and invite-gated. Friends can onboard, create brainstorms and ideas, and collaborate. Beta feedback loop established.
 
 ---
 
-### Module 4.1 — Onboarding Flow
+### Module 5.1 — Onboarding Flow
 **Layer:** Frontend · **Tech:** Next.js
 
 **Tasks:**
 - Post-signup username selection screen (validated, URL-safe)
-- First idea creation wizard (title → description → status)
-- Empty state CTAs on all tabs
-- Welcome banner with suggested first actions
+- First brainstorm or idea creation wizard (title → description → status)
+- Empty state CTAs on all tabs (brainstorms and ideas)
+- Welcome banner with suggested first actions: "Start a Brainstorm" or "Create an Idea"
 
 ---
 
-### Module 4.2 — Responsive & Error Polish
+### Module 5.2 — Responsive & Error Polish
 **Layer:** Frontend · **Tech:** Next.js, Tailwind
 
 **Tasks:**
@@ -369,7 +515,7 @@ Invite-only beta launch. Responsive polish, empty states, error handling, and on
 
 ---
 
-### Module 4.3 — Beta Access & Invite Gate
+### Module 5.3 — Beta Access & Invite Gate
 **Layer:** Backend · **Tech:** Rails, Action Mailer
 
 **Tasks:**
@@ -377,8 +523,8 @@ Invite-only beta launch. Responsive polish, empty states, error handling, and on
 - Beta invite email via Action Mailer
 - Waitlist form on marketing page
 - Admin endpoint to grant/revoke beta access
-- Invite email for idea collaborators (non-registered users)
-- In-app notification: pending idea invite banner
+- Invite email for brainstorm and idea collaborators (non-registered users)
+- In-app notification: pending brainstorm/idea invite banner
 
 **Endpoints:**
 ```
@@ -393,19 +539,25 @@ GET  /invites/:token
 
 | Phase | Module | Layer | Tech | Tasks |
 |---|---|---|---|:---:|
-| 1 | Authentication | Backend | Rails, Devise, OmniAuth | 5 |
-| 1 | Ideas CRUD | Backend | Rails, PostgreSQL | 5 |
-| 1 | Membership & Access Control | Backend | Rails, Pundit | 5 |
-| 1 | Dashboard + Navigation | Frontend | Next.js, Tailwind | 6 |
-| 2 | Brainstorm Chat | AI / LLM | Claude API, SSE | 6 |
-| 2 | Analysis Engine | AI / LLM | Claude API, Sidekiq | 8 |
-| 2 | Analysis UI | Frontend | Next.js, Recharts | 7 |
-| 3 | Notes | Frontend | Tiptap, Rails | 5 |
-| 3 | Tasks | Frontend | Next.js, Rails | 5 |
-| 3 | Wireframes | Frontend | Excalidraw, Rails | 6 |
-| 3 | PRD Generator | AI / LLM | Claude API, pdf-lib | 9 |
-| 4 | Onboarding Flow | Frontend | Next.js | 4 |
-| 4 | Responsive & Error Polish | Frontend | Next.js, Tailwind | 6 |
-| 4 | Beta Access & Invite Gate | Backend | Rails, Action Mailer | 6 |
+| 1 | 1.1 Authentication | Backend | Rails, Devise, OmniAuth | 5 |
+| 1 | 1.2 Brainstorms CRUD | Backend | Rails, PostgreSQL | 5 |
+| 1 | 1.3 Ideas CRUD | Backend | Rails, PostgreSQL | 6 |
+| 1 | 1.4 Membership & Access Control | Backend | Rails, Pundit | 7 |
+| 1 | 1.5 Dashboard + Navigation | Frontend | Next.js, Tailwind | 11 |
+| 2 | 2.1 Brainstorm Chat | AI / LLM | Claude API, SSE | 6 |
+| 2 | 2.2 Brainstorm Research | AI / LLM | Claude API, Web Search | 6 |
+| 2 | 2.3 Brainstorm Notes | Frontend | Tiptap, Rails | 5 |
+| 2 | 2.4 Create Idea from Brainstorm | Full Stack | Rails, Next.js | 7 |
+| 2 | 2.5 Brainstorm Research UI | Frontend | Next.js, Tailwind | 4 |
+| 3 | 3.1 Discussion Chat | AI / LLM | Claude API, SSE | 7 |
+| 3 | 3.2 Analysis Engine | AI / LLM | Claude API, Sidekiq | 9 |
+| 3 | 3.3 Analysis UI | Frontend | Next.js, Recharts | 7 |
+| 4 | 4.1 Notes (Ideas) | Frontend | Tiptap, Rails | 6 |
+| 4 | 4.2 Tasks | Frontend | Next.js, Rails | 5 |
+| 4 | 4.3 Wireframes | Frontend | Excalidraw, Rails | 6 |
+| 4 | 4.4 PRD Generator | AI / LLM | Claude API, pdf-lib | 10 |
+| 5 | 5.1 Onboarding Flow | Frontend | Next.js | 4 |
+| 5 | 5.2 Responsive & Error Polish | Frontend | Next.js, Tailwind | 6 |
+| 5 | 5.3 Beta Access & Invite Gate | Backend | Rails, Action Mailer | 6 |
 
-**Total: 4 phases · 14 modules · 83 tasks**
+**Total: 5 phases · 20 modules · 121 tasks**

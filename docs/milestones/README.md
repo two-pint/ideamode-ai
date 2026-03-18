@@ -7,10 +7,11 @@ This folder breaks the [High-Level Design](../ideamode-hld.md) into **logical mi
 | # | File | Goal | Depends on |
 |---|------|------|------------|
 | 0 | [milestone_0.md](./milestone_0.md) | **Base app architecture** — Turborepo, Rails 8 API, Next.js web, Expo mobile | — |
-| 1 | [milestone_1.md](./milestone_1.md) | **Foundation** — Auth (Google SSO), Ideas CRUD, Membership, Dashboard & nav | M0 |
-| 2 | [milestone_2.md](./milestone_2.md) | **Core AI value** — Brainstorm chat, Analysis engine, Analysis UI | M1 |
-| 3 | [milestone_3.md](./milestone_3.md) | **Productivity layer** — Notes, Tasks, Wireframes, PRD generator | M2 |
-| 4 | [milestone_4.md](./milestone_4.md) | **Polish & beta** — Onboarding, responsive/error polish, beta invite gate | M3 |
+| 1 | [milestone_1.md](./milestone_1.md) | **Foundation** — Auth, Brainstorms CRUD, Ideas CRUD, Membership (both), Dashboard (two tabs) & nav | M0 |
+| 2 | [milestone_2.md](./milestone_2.md) | **Brainstorm features** — Brainstorm chat, Research, Notes, Create idea from brainstorm, Research UI | M1 |
+| 3 | [milestone_3.md](./milestone_3.md) | **Idea AI value** — Discussion chat, Analysis engine, Analysis UI | M2 |
+| 4 | [milestone_4.md](./milestone_4.md) | **Productivity layer** — Notes (ideas), Tasks, Wireframes, PRD generator | M3 |
+| 5 | [milestone_5.md](./milestone_5.md) | **Polish & beta** — Onboarding, responsive/error polish, beta invite gate | M4 |
 
 ## Ticket structure (per ticket)
 
@@ -23,9 +24,10 @@ This folder breaks the [High-Level Design](../ideamode-hld.md) into **logical mi
 ## Quick reference
 
 - **Milestone 0:** 4 tickets (Turborepo, Rails API, Next.js, Expo)
-- **Milestone 1:** 4 tickets (Auth, Ideas CRUD, Membership, Dashboard)
-- **Milestone 2:** 3 tickets (Brainstorm, Analysis engine, Analysis UI)
-- **Milestone 3:** 4 tickets (Notes, Tasks, Wireframes, PRD)
-- **Milestone 4:** 3 tickets (Onboarding, Responsive/error, Beta gate)
+- **Milestone 1:** 5 tickets (Auth, Brainstorms CRUD, Ideas CRUD, Membership, Dashboard & nav)
+- **Milestone 2:** 5 tickets (Brainstorm chat, Brainstorm research, Brainstorm notes, Create idea from brainstorm, Research UI)
+- **Milestone 3:** 3 tickets (Discussion chat, Analysis engine, Analysis UI)
+- **Milestone 4:** 4 tickets (Notes ideas, Tasks, Wireframes, PRD)
+- **Milestone 5:** 3 tickets (Onboarding, Responsive/error, Beta gate)
 
-**Total: 5 milestones, 18 tickets.**
+**Total: 6 milestones, 24 tickets.**

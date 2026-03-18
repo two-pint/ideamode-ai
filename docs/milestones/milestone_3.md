@@ -1,111 +1,102 @@
-# Milestone 3 — Productivity Layer
+# Milestone 3 — Idea AI Value
 
-**Goal:** Notes (Tiptap), tasks, Excalidraw wireframes, and AI-generated PRD with streaming, versioning, and Markdown/PDF export. Ideas become full workspaces with actionable artifacts.
+**Goal:** Discussion chat with Claude (critical/evaluative mode, streaming) and structured validation analysis (competitor, TAM, PMF, full report) with real web search data. All runs are versioned. If an idea was created from a brainstorm, brainstorm context (chat history, notes, research) is included in discussion and analysis prompts. This is the core reason to move from brainstorm to idea.
 
 **Timeline:** Weeks 3–4  
-**Depends on:** Milestone 2 (Core AI Value)
+**Depends on:** Milestone 2 (Brainstorm Features)
 
 ---
 
 ## Tickets
 
-### Ticket 3.1 — Notes (Tiptap, auto-save)
+### Ticket 3.1 — Discussion Chat (backend & streaming)
 
-**Description:** Add a single rich-text note per idea using Tiptap, stored as JSON and auto-saved, so users have a scratchpad for research and thoughts without leaving the idea. It matters because notes feed into PRD context and keep all idea-related content in one place.
+**Description:** Reuse ChatSession model with `idea_id` set (same table as brainstorm chat). Implement streaming chat with Claude via SSE for **ideas**. System prompt is a critical thinking partner — pressure-tests assumptions, asks hard questions, helps articulate problem and customer; not a cheerleader. If the idea has a linked brainstorm (`brainstorm_id`), include brainstorm chat history and notes in the system prompt context. Pinned messages and session history behave as in brainstorm chat.
 
 **Tasks:**
 
-- [ ] Create IdeaNote model: `idea_id`, `user_id` (last editor), `content` (jsonb for Tiptap JSON), `updated_at`. One note per idea (upsert by idea_id).
-- [ ] Endpoints: `GET /:username/:slug/note` (return note or empty), `PUT /:username/:slug/note` (body: content JSON; authorize owner/collaborator).
-- [ ] Next.js: Notes tab with Tiptap editor. Toolbar or menu for headings, bold, italic, lists, links, code, blockquote. Serialize to Tiptap JSON and send on save.
-- [ ] Auto-save: debounce 1.5s after last change; send PUT with current content. Show last-saved timestamp.
-- [ ] Viewer: read-only rendering of note content (no editor).
+- [ ] Use existing ChatSession model; create sessions with `idea_id` set (brainstorm_id null) for idea discussion. Same endpoints pattern: `POST /:username/:slug/discussion/sessions`, `POST /:username/:slug/discussion/sessions/:id/messages` (SSE), `GET /:username/:slug/discussion/sessions` when slug is an idea.
+- [ ] Design system prompt so Claude acts as a critical thinking partner for ideas (challenges assumptions, asks hard questions, helps articulate problem and target customer) — not affirmative only.
+- [ ] When idea has `brainstorm_id`: load linked brainstorm's chat sessions and note content; inject into system prompt or context so Claude can reference prior exploration.
+- [ ] Append user message and streamed assistant message to session `messages`; persist full history. Support "pin message to Overview" (display on idea Overview tab).
+- [ ] Enforce authorization: only owner and collaborators can create/post; viewers read-only.
 
 **Acceptance criteria:**
 
-- Owner/collaborator can type in Notes tab; content auto-saves after 1.5s idle and last-saved time updates. Refresh shows persisted content with formatting preserved.
-- Single note per idea; editing overwrites the same record. Viewer sees content but cannot edit.
+- User (owner/collaborator) can start a discussion session on an idea and send messages; responses stream in via SSE. Message history is persisted.
+- For an idea created from a brainstorm, discussion responses can reference or build on brainstorm context (e.g. "You mentioned in your brainstorm that …").
+- Pinning a message stores it and it appears on the idea Overview tab. Unauthorized users cannot post messages.
 
 **Test plan (manual):**
 
-1. Open Notes tab; type and apply bold, list, link. Wait for auto-save; confirm "Last saved at …" updates. Refresh page; confirm content and formatting are intact.
-2. Switch to another idea and back; confirm each idea has its own note. As viewer, open Notes; confirm read-only and no save control.
+1. Open an idea (with no linked brainstorm); go to Discussion tab. Send "What assumptions am I making?" Confirm response streams in and is saved; confirm critical/questioning tone.
+2. Open an idea that was created from a brainstorm; send a message. Confirm response can reference brainstorm content if relevant. Pin a message; confirm it appears on Overview.
+3. As viewer, open Discussion tab; confirm read-only. Start a new session; confirm previous session is archived.
 
 ---
 
-### Ticket 3.2 — Tasks
+### Ticket 3.2 — Analysis Engine (Claude, web search, Sidekiq)
 
-**Description:** Add a task list per idea with add, complete toggle, delete, and optional due date so users can track validation actions and next steps. It matters for turning analysis "next steps" into concrete todos.
+**Description:** Implement IdeaAnalysis model, analysis types (competitor, tam, pmf, full), Claude API with web search tool, structured JSON output per HLD schema, and Sidekiq job with progress streaming. If the idea has a linked brainstorm, include brainstorm research results (and optionally notes) as context for the analysis. Versioned, reproducible validation reports.
 
 **Tasks:**
 
-- [ ] Create IdeaTask model: `idea_id`, `user_id` (creator), `title`, `completed` (boolean, default false), `due_date` (optional), timestamps. Ordered by `created_at`.
-- [ ] Endpoints: `GET /:username/:slug/tasks`, `POST /:username/:slug/tasks`, `PATCH /:username/:slug/tasks/:id`, `DELETE /:username/:slug/tasks/:id`. Authorize owner/collaborator for write; viewer read-only.
-- [ ] Next.js: Tasks tab. Add task (title, optional due date). List incomplete tasks first; completed tasks in a "Completed" section (collapsible). Toggle complete, delete task.
-- [ ] Viewer: read-only list, no add/edit/delete.
+- [ ] Create IdeaAnalysis model: `idea_id`, `analysis_type` (competitor | tam | pmf | full), `result` (jsonb), `created_at`. Multiple runs per idea retained (versioned).
+- [ ] Integrate Claude API with web search tool enabled for all analysis calls.
+- [ ] Define and enforce structured JSON output schema for each analysis type (competitor_analysis, market_size, pmf_signals, verdict) per HLD schema.
+- [ ] Full report runs competitor + tam + pmf in one job and produces combined verdict (score, recommendation, key_risks, next_steps).
+- [ ] When idea has `brainstorm_id`: load linked brainstorm's BrainstormResearch results (and optionally note); pass as context to analysis prompt so Claude can use prior research.
+- [ ] Enqueue analysis run as a Sidekiq job; stream progress (e.g. "Running competitor analysis…", "Running TAM…") to frontend via SSE or polling.
+- [ ] Endpoints: `POST /:username/:slug/analyses` (trigger run, return job id or stream), `GET /:username/:slug/analyses`, `GET /:username/:slug/analyses/:id`.
+- [ ] Support annotating an analysis result (e.g. store annotations in a separate field or in result; allow add/edit).
 
 **Acceptance criteria:**
 
-- Owner/collaborator can add tasks, set due date, mark complete, delete. Order is by creation; completed grouped at bottom in collapsible section.
-- Viewer sees task list but cannot modify. Data persists across refresh.
+- User can trigger competitor, tam, pmf, or full analysis; job runs in background and frontend can show progress.
+- Each run produces valid JSON matching the HLD schema; result is stored and returned by `GET /analyses/:id`.
+- Full report includes competitor, market size, PMF, and verdict in one result. Multiple runs are kept; listing analyses returns history with timestamps.
+- For an idea with a linked brainstorm, analysis can reference or use brainstorm research context. Annotations can be added to a result and persisted. Unauthorized users cannot trigger or access analyses (404 for idea access).
 
 **Test plan (manual):**
 
-1. Add several tasks, one with due date. Toggle one complete; confirm it moves to "Completed" section. Delete a task; confirm it is removed. Refresh; confirm state persists.
-2. As viewer, open Tasks; confirm no add/complete/delete controls and list is read-only.
+1. Trigger a competitor analysis; confirm job starts and progress updates (or polling shows completion). Open result; confirm JSON has competitors, saturation_score, whitespace.
+2. Trigger a full report on an idea that was created from a brainstorm; confirm all sections present and verdict has score and recommendation. Optionally confirm analysis references brainstorm research if applicable.
+3. Run analysis again; confirm a second record is created and both are visible in history. Add an annotation; reload and confirm it is saved. As viewer, confirm analysis is read-only or access denied per spec.
 
 ---
 
-### Ticket 3.3 — Wireframes (Excalidraw)
+### Ticket 3.3 — Analysis UI
 
-**Description:** Embed Excalidraw per idea with multiple named frames, auto-save of canvas JSON, and read-only for viewers so users can sketch flows and screens without leaving IdeaMode. It matters for low-fidelity design and PRD context.
-
-**Tasks:**
-
-- [ ] Create IdeaWireframe model: `idea_id`, `user_id`, `title`, `canvas_data` (jsonb), `updated_at`. Multiple wireframes per idea.
-- [ ] Endpoints: `GET /:username/:slug/wireframes`, `POST /:username/:slug/wireframes`, `PATCH /:username/:slug/wireframes/:id`. Authorize owner/collaborator for write.
-- [ ] Next.js: Wireframes tab. Sidebar lists wireframes; click to load. Embed Excalidraw (open-source; no external account). Auto-save canvas state (debounced, e.g. 2s). Optional description/caption per frame.
-- [ ] Viewer: read-only canvas (no toolbar); load same canvas_data for view-only.
-
-**Acceptance criteria:**
-
-- Owner/collaborator can create multiple wireframes, draw in Excalidraw, and have state auto-saved. Switching frames loads correct canvas. Viewer sees canvas without editing.
-
-**Test plan (manual):**
-
-1. Create two wireframes, draw in each, wait for auto-save. Switch between frames; confirm correct content loads. Refresh; confirm data persists.
-2. As viewer, open Wireframes; confirm canvas is visible but toolbar/editing disabled.
-
----
-
-### Ticket 3.4 — PRD Generator (AI, streaming, versioning, export)
-
-**Description:** Generate PRDs from idea context (title, description, brainstorm, analysis, notes) via Claude with streaming, versioning, and Markdown/PDF export so users get a shareable PRD artifact without leaving the app. It matters as the main "output" of the validation workflow.
+**Description:** Build the Analysis tab in the Next.js app for ideas: run buttons per type, version selector, verdict banner, competitor cards, TAM/SAM display, PMF sections, next steps, and loading skeleton. Surfaces the engine in a clear, scannable way. Viewer sees all content read-only; run buttons hidden.
 
 **Tasks:**
 
-- [ ] Create IdeaPRD model: `idea_id`, `user_id`, `content` (text, Markdown), `version` (integer), `generated_at`, `updated_at`. Version auto-incremented per idea; retain all versions.
-- [ ] Build PRD generation job: gather context (idea, brainstorm sessions, analyses, note), call Claude with structured prompt; stream response. Sections without sufficient context output `[Needs input]` — no hallucination.
-- [ ] Endpoints: `POST /:username/:slug/prds` (SSE stream), `GET /:username/:slug/prds`, `GET /:username/:slug/prds/:version`, `GET /:username/:slug/prds/:version/export?format=md|pdf`. PDF via server-side render (e.g. pdf-lib or HTML-to-PDF).
-- [ ] Next.js: PRD tab. "Generate PRD" starts stream; live Markdown preview updates as content streams. Split-pane: Markdown source (editable) and rendered preview. Version history panel with timestamps and optional AI-generated diff summary; restore previous version. Export buttons: Markdown download, PDF (call export endpoint).
-- [ ] Optional: per-section regeneration (replace one section without full doc). Optional: revocable public share link for latest PRD (per HLD).
-- [ ] Viewer: can view and export; cannot generate or edit.
+- [ ] Analysis tab: buttons to run each analysis type (Competitor, TAM, PMF, Full Report). Disable or show loading while a job is running.
+- [ ] Version/history selector: list past runs by date; selecting one loads that result.
+- [ ] Verdict banner: score ring (e.g. 0–100), recommendation text, key risks list, next steps list. Use Recharts or similar if needed for score visualization.
+- [ ] Competitor cards: for each competitor show name, strengths/weaknesses as tag chips, pricing. Summary and whitespace above or below.
+- [ ] TAM/SAM display with confidence indicator (low/medium/high).
+- [ ] PMF signals: collapsible sections for demand evidence, pain point strength, willingness-to-pay, etc.
+- [ ] Loading skeleton while analysis job is in progress; empty state when no analyses have been run.
+- [ ] Viewer role: show all content read-only; hide run buttons.
 
 **Acceptance criteria:**
 
-- User can generate a PRD; content streams into the UI and is saved as a new version. Document follows PRD template (Overview, Problem, Target Users, etc.); gaps show `[Needs input]`.
-- User can edit Markdown and see preview; save updates the current version. Version history lists all versions; user can view or restore a prior version.
-- Export Markdown produces a .md file; export PDF produces a PDF. Viewer can view and export but not generate or edit.
+- User can start each analysis type from the UI and see progress until completion. Completed result is selected and displayed.
+- Verdict, competitors, TAM/SAM, and PMF sections render from the stored JSON without errors. Score and recommendation are prominent.
+- Switching version in history updates the displayed result. No run button for viewers; all content is read-only for them.
 
 **Test plan (manual):**
 
-1. Generate a PRD for an idea with brainstorm and analysis data; confirm streaming and that sections are populated where context exists and `[Needs input]` where not. Edit a section; confirm preview updates and save persists.
-2. Generate again (new version); confirm version list shows both. Restore first version; confirm content reverts. Export as Markdown and PDF; open files and confirm content matches.
-3. As viewer, open PRD tab; confirm view and export work but generate/edit are disabled.
+1. Open Analysis tab with no prior runs. Click "Run Full Report"; confirm loading state, then result appears with verdict, competitors, TAM/SAM, PMF.
+2. Run a second analysis; switch between "Version 1" and "Version 2" in history. Confirm data changes correctly.
+3. As viewer, open Analysis tab; confirm run buttons are hidden and existing results are visible read-only.
+4. Resize window; confirm layout is usable on small and large screens (responsive).
 
 ---
 
 ## Milestone 3 completion checklist
 
-- [ ] All four tickets (3.1–3.4) are implemented and accepted.
-- [ ] Notes, Tasks, Wireframes, and PRD are functional with correct role behavior and persistence. PRD generation uses idea context and supports versioning and export.
+- [ ] All three tickets (3.1–3.3) are implemented and accepted.
+- [ ] Users can discuss ideas with streaming responses and pin insights to Overview; linked brainstorm context is used when present.
+- [ ] Users can run all analysis types, see versioned results, and consume them in the Analysis UI with correct role behavior. Linked brainstorm research is used as context when present.

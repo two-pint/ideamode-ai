@@ -1,96 +1,114 @@
-# Milestone 4 — Polish & Beta
+# Milestone 4 — Productivity Layer
 
-**Goal:** Invite-only beta launch with onboarding flow, responsive and error polish, and beta/invite gating. App is stable, responsive, and ready for friends to onboard and collaborate.
+**Goal:** Notes per idea (Tiptap), tasks, Excalidraw wireframes, and AI-generated PRD with streaming, versioning, and Markdown/PDF export. When an idea has a linked brainstorm, PRD generation includes brainstorm chat history, notes, and research results as context. Ideas become full workspaces with actionable artifacts.
 
-**Timeline:** Week 5  
-**Depends on:** Milestone 3 (Productivity Layer)
+**Timeline:** Weeks 4–5  
+**Depends on:** Milestone 3 (Idea AI Value)
 
 ---
 
 ## Tickets
 
-### Ticket 4.1 — Onboarding Flow
+### Ticket 4.1 — Notes (Ideas) (Tiptap, auto-save)
 
-**Description:** Add a post-signup username selection screen, first-idea creation wizard, empty-state CTAs on all tabs, and a welcome banner so new users are guided to set a username and create their first idea. It matters to reduce drop-off and make the first session successful.
+**Description:** Add a single rich-text note per **idea** using Tiptap, stored as JSON and auto-saved. Same editor capabilities as brainstorm notes (M2); can reuse or share editor component with brainstorm Notes. Notes feed into PRD context and keep all idea-related content in one place.
 
 **Tasks:**
 
-- [ ] After first Google sign-in, redirect to username selection screen before dashboard. Validate unique, URL-safe, 3–30 chars; show errors in real time. On success, persist username and redirect to dashboard.
-- [ ] First-idea creation wizard: stepped flow (title → description → status) that creates the idea and redirects to idea detail. Trigger from empty dashboard or welcome banner.
-- [ ] Empty states: every tab (Overview, Brainstorm, Analysis, Wireframes, PRD, Notes, Tasks) has a clear CTA when there is no content (e.g. "Start brainstorming", "Run your first analysis", "Add a note").
-- [ ] Welcome banner on dashboard for new users with suggested first actions (e.g. create first idea, run analysis). Dismissible or hidden after first idea exists.
+- [ ] Create IdeaNote model: `idea_id`, `user_id` (last editor), `content` (jsonb for Tiptap JSON), `updated_at`. One note per idea (upsert by idea_id).
+- [ ] Endpoints: `GET /:username/:slug/note` (return note or empty when slug is an idea), `PUT /:username/:slug/note` (body: content JSON; authorize owner/collaborator).
+- [ ] Next.js: Notes tab in **idea** detail with Tiptap editor. Toolbar or menu for headings, bold, italic, lists, links, code, blockquote. Serialize to Tiptap JSON and send on save.
+- [ ] Auto-save: debounce 1.5s after last change; send PUT with current content. Show last-saved timestamp.
+- [ ] Viewer: read-only rendering of note content (no editor).
 
 **Acceptance criteria:**
 
-- New user completing Google sign-in is forced to set username before accessing the app; duplicate or invalid username is rejected with clear message.
-- Dashboard empty state offers wizard or button to create first idea; wizard creates idea and navigates to it. Each tab has an empty state with a relevant CTA.
-- Welcome banner appears for new users and suggests next steps; behavior is consistent and non-blocking after first use.
+- Owner/collaborator can type in idea Notes tab; content auto-saves after 1.5s idle and last-saved time updates. Refresh shows persisted content with formatting preserved.
+- Single note per idea; editing overwrites the same record. Viewer sees content but cannot edit.
 
 **Test plan (manual):**
 
-1. Sign in with a new Google account; confirm redirect to username screen. Enter short or invalid username; confirm validation. Enter valid unique username; confirm redirect to dashboard.
-2. On empty dashboard, use "Create first idea" or wizard; complete title, description, status. Confirm idea is created and you land on its detail page.
-3. Open each tab (Brainstorm, Analysis, Notes, Tasks, Wireframes, PRD) with no data; confirm empty state and CTA are visible and make sense.
-4. Confirm welcome banner appears and can be dismissed or disappears after first action; repeat with another new user if needed.
+1. Open idea Notes tab; type and apply bold, list, link. Wait for auto-save; confirm "Last saved at …" updates. Refresh page; confirm content and formatting are intact.
+2. Switch to another idea and back; confirm each idea has its own note. As viewer, open Notes; confirm read-only and no save control.
 
 ---
 
-### Ticket 4.2 — Responsive & Error Polish
+### Ticket 4.2 — Tasks
 
-**Description:** Ensure mobile-responsive layout, loading skeletons for async data, error boundaries with retry, optimistic UI for task toggle and note save, toasts for key events, and dedicated 404/access-denied pages so the app feels solid and recoverable on all devices.
+**Description:** Add a task list per idea with add, complete toggle, delete, and optional due date so users can track validation actions and next steps. It matters for turning analysis "next steps" into concrete todos.
 
 **Tasks:**
 
-- [ ] Audit and fix layout for mobile: sidebar collapses or becomes drawer; tables/cards stack; touch targets adequate. All main pages pass a simple responsive check (e.g. 320px, 768px, 1024px).
-- [ ] Add loading skeletons (or spinners) for dashboard idea list, idea detail, analysis results, PRD, and any other async-heavy views. Replace raw spinners where skeleton is more appropriate.
-- [ ] Add error boundaries (React error boundary) with retry and optional "Go to dashboard" link so failures don’t leave a blank screen.
-- [ ] Optimistic UI: task toggle (complete/incomplete) and note save reflect in UI immediately; revert and show error if request fails. Toasts: "Note saved", "Invite accepted", "Analysis complete" (or similar) for key actions.
-- [ ] Design and implement 404 page (idea not found or no access) and access-denied page if used elsewhere. Use product theme (zinc-50, zinc-900).
+- [ ] Create IdeaTask model: `idea_id`, `user_id` (creator), `title`, `completed` (boolean, default false), `due_date` (optional), timestamps. Ordered by `created_at`.
+- [ ] Endpoints: `GET /:username/:slug/tasks`, `POST /:username/:slug/tasks`, `PATCH /:username/:slug/tasks/:id`, `DELETE /:username/:slug/tasks/:id`. Authorize owner/collaborator for write; viewer read-only.
+- [ ] Next.js: Tasks tab. Add task (title, optional due date). List incomplete tasks first; completed tasks in a "Completed" section (collapsible). Toggle complete, delete task.
+- [ ] Viewer: read-only list, no add/edit/delete.
 
 **Acceptance criteria:**
 
-- All primary flows are usable on a narrow viewport (e.g. 375px width). No horizontal scroll or clipped critical content.
-- Async views show skeleton or loading state; errors show boundary with retry. Task toggle and note save feel instant; toasts confirm save and key events.
-- Visiting a non-existent or unauthorized idea URL shows the 404 page, not a generic browser 404.
+- Owner/collaborator can add tasks, set due date, mark complete, delete. Order is by creation; completed grouped at bottom in collapsible section.
+- Viewer sees task list but cannot modify. Data persists across refresh.
 
 **Test plan (manual):**
 
-1. Resize browser to mobile width; go through dashboard, idea detail, and at least one of each tab. Confirm layout adapts and nothing is unreachable.
-2. Throttle network to "Slow 3G"; open dashboard and idea detail. Confirm skeletons or loading states appear. Trigger a failure (e.g. disconnect); confirm error boundary and retry work.
-3. Toggle a task and edit a note; confirm immediate UI update and toast on save. Disconnect and save; confirm revert and error message if implemented.
-4. Open a URL for an idea you don’t have access to; confirm custom 404 page with theme styling.
+1. Add several tasks, one with due date. Toggle one complete; confirm it moves to "Completed" section. Delete a task; confirm it is removed. Refresh; confirm state persists.
+2. As viewer, open Tasks; confirm no add/complete/delete controls and list is read-only.
 
 ---
 
-### Ticket 4.3 — Beta Access & Invite Gate
+### Ticket 4.3 — Wireframes (Excalidraw)
 
-**Description:** Add allowlist for beta access, waitlist form on marketing page, beta invite email, and admin endpoint to grant/revoke access so launch is invite-only. Also ensure collaborator invite emails and in-app pending-invite banner work for idea invites. It matters to control load and create a clear beta cohort.
+**Description:** Embed Excalidraw per idea with multiple named frames, auto-save of canvas JSON, and read-only for viewers so users can sketch flows and screens without leaving IdeaMode. It matters for low-fidelity design and PRD context.
 
 **Tasks:**
 
-- [ ] Create allowlist table or model: `email`, `invited_by` (optional), `used_at` (nullable; set when user signs up with that email). Admin can add/remove emails.
-- [ ] After Google OAuth, if user’s email is not on allowlist, show "You’re not in the beta yet" (or waitlist) and do not create session / do not grant access. Optionally add them to waitlist.
-- [ ] Waitlist form on marketing/login page: submit email; store in waitlist table; show "We’ll be in touch" or similar. No sign-in until allowed.
-- [ ] Beta invite email: Action Mailer sends email to allowlisted address with sign-in link or instructions. Admin endpoint (e.g. `POST /admin/invites`) to grant access (add email to allowlist) and optionally send invite email; endpoint to revoke (remove from allowlist).
-- [ ] Idea collaborator invites: existing flow (from 1.3) sends email to invitee; if not registered, email contains link with token. In-app: pending idea invite banner for logged-in user when they have accepted member record but optional "pending" state, or banner for when they have an invite link to accept. Clarify with product: banner for "You have N pending idea invites."
-- [ ] Document admin flow: how to add/remove beta users and send invite emails.
+- [ ] Create IdeaWireframe model: `idea_id`, `user_id`, `title`, `canvas_data` (jsonb), `updated_at`. Multiple wireframes per idea.
+- [ ] Endpoints: `GET /:username/:slug/wireframes`, `POST /:username/:slug/wireframes`, `PATCH /:username/:slug/wireframes/:id`. Authorize owner/collaborator for write.
+- [ ] Next.js: Wireframes tab. Sidebar lists wireframes; click to load. Embed Excalidraw (open-source; no external account). Auto-save canvas state (debounced, e.g. 2s). Optional description/caption per frame.
+- [ ] Viewer: read-only canvas (no toolbar); load same canvas_data for view-only.
 
 **Acceptance criteria:**
 
-- Only allowlisted emails can sign in and use the app. Non-allowlisted user sees waitlist or "not in beta" message after OAuth. Waitlist form stores email and shows confirmation.
-- Admin can add email to allowlist (and optionally trigger invite email) and remove email (revoke). Invite email contains clear next step (e.g. sign in link).
-- Idea invite flow still works: invitee gets email; accepting invite grants access. Logged-in user with pending idea invite sees banner or notification; accepting works.
+- Owner/collaborator can create multiple wireframes, draw in Excalidraw, and have state auto-saved. Switching frames loads correct canvas. Viewer sees canvas without editing.
 
 **Test plan (manual):**
 
-1. As admin, add an email to allowlist and trigger invite. As that user, open invite email and sign in; confirm access to app. Remove email from allowlist; sign out and try to sign in again; confirm access denied and appropriate message.
-2. Submit email via waitlist form; confirm success message and email stored. Confirm that email cannot sign in until allowlisted.
-3. As owner, invite a non-user by email; confirm invite email is sent. As invitee, use token link and complete sign-up/sign-in; confirm added to idea. As existing user, invite to second idea; confirm in-app pending invite is visible and accept flow works.
+1. Create two wireframes, draw in each, wait for auto-save. Switch between frames; confirm correct content loads. Refresh; confirm data persists.
+2. As viewer, open Wireframes; confirm canvas is visible but toolbar/editing disabled.
+
+---
+
+### Ticket 4.4 — PRD Generator (AI, streaming, versioning, export)
+
+**Description:** Generate PRDs from idea context (title, description, **discussion** sessions, analysis results, notes) via Claude with streaming, versioning, and Markdown/PDF export. **If the idea has a linked brainstorm (`brainstorm_id`), include brainstorm chat history, notes, and research results as additional context.** Sections without sufficient context output `[Needs input]` — no hallucination. It matters as the main "output" of the validation workflow.
+
+**Tasks:**
+
+- [ ] Create IdeaPRD model: `idea_id`, `user_id`, `content` (text, Markdown), `version` (integer), `generated_at`, `updated_at`. Version auto-incremented per idea; retain all versions.
+- [ ] Build PRD generation job: gather context (idea, discussion sessions, analyses, note). **If idea has `brainstorm_id`, also load linked brainstorm's chat sessions, BrainstormNote, and BrainstormResearch results and pass as context.**
+- [ ] Call Claude with structured prompt; stream response. Sections without sufficient context output `[Needs input]` — no hallucination.
+- [ ] Endpoints: `POST /:username/:slug/prds` (SSE stream), `GET /:username/:slug/prds`, `GET /:username/:slug/prds/:version`, `GET /:username/:slug/prds/:version/export?format=md|pdf`. PDF via server-side render (e.g. pdf-lib or HTML-to-PDF).
+- [ ] Next.js: PRD tab. "Generate PRD" starts stream; live Markdown preview updates as content streams. Split-pane: Markdown source (editable) and rendered preview. Version history panel with timestamps and optional AI-generated diff summary; restore previous version. Export buttons: Markdown download, PDF (call export endpoint).
+- [ ] Optional: per-section regeneration (replace one section without full doc). Optional: revocable public share link for latest PRD (per HLD).
+- [ ] Viewer: can view and export; cannot generate or edit.
+
+**Acceptance criteria:**
+
+- User can generate a PRD; content streams into the UI and is saved as a new version. Document follows PRD template (Overview, Problem, Target Users, etc.); gaps show `[Needs input]`.
+- For an idea created from a brainstorm, generated PRD can reflect or reference brainstorm exploration (e.g. prior research, chat insights) where relevant.
+- User can edit Markdown and see preview; save updates the current version. Version history lists all versions; user can view or restore a prior version.
+- Export Markdown produces a .md file; export PDF produces a PDF. Viewer can view and export but not generate or edit.
+
+**Test plan (manual):**
+
+1. Generate a PRD for an idea with discussion and analysis data; confirm streaming and that sections are populated where context exists and `[Needs input]` where not. Edit a section; confirm preview updates and save persists.
+2. Generate a PRD for an idea that was created from a brainstorm (with chat and research); confirm PRD content can reference or incorporate brainstorm context where appropriate.
+3. Generate again (new version); confirm version list shows both. Restore first version; confirm content reverts. Export as Markdown and PDF; open files and confirm content matches.
+4. As viewer, open PRD tab; confirm view and export work but generate/edit are disabled.
 
 ---
 
 ## Milestone 4 completion checklist
 
-- [ ] All three tickets (4.1–4.3) are implemented and accepted.
-- [ ] New users are guided through username and first idea; empty states and welcome banner are in place.
-- [ ] App is responsive, has loading and error handling, and uses 404/access-denied pages. Beta is gated by allowlist with waitlist and admin controls.
+- [ ] All four tickets (4.1–4.4) are implemented and accepted.
+- [ ] Notes, Tasks, Wireframes, and PRD are functional for ideas with correct role behavior and persistence. PRD generation uses idea context and, when linked, brainstorm context; supports versioning and export.
