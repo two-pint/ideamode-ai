@@ -13,5 +13,14 @@
   "packageManager": "pnpm@9.14.2",
   "engines": {
     "node": ">=20"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "19.2.0",
+      "react-native": "0.83.0"
+    },
+    "patchedDependencies": {
+      "expo-router": "patches/expo-router.patch"
+    }
   }
 }

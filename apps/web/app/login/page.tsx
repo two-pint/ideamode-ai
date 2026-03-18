@@ -34,11 +34,25 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { token, user } = await authApi.login({ login, password });
+      const response = await authApi.login({ login, password });
+      const token = response?.token;
+      const user = response?.user;
+      if (!token || !user) {
+        setError("Invalid response from server. Check that the API is running.");
+        return;
+      }
       setAuth(token, user);
       router.push(user.username ? "/dashboard" : "/auth/set-username");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Login failed");
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else if (err instanceof TypeError && err.message === "Failed to fetch") {
+        setError(
+          "Cannot reach the API. Ensure the API server is running and NEXT_PUBLIC_API_URL is correct (e.g. http://localhost:3000)."
+        );
+      } else {
+        setError(err instanceof Error ? err.message : "Login failed");
+      }
     } finally {
       setLoading(false);
     }

@@ -11,13 +11,15 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ai.ideamode.app"
+      "bundleIdentifier": "ai.ideamode.app",
+      "jsEngine": "jsc"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#fafafa"
       },
-      "package": "ai.ideamode.app"
+      "package": "ai.ideamode.app",
+      "jsEngine": "jsc"
     },
     "plugins": ["expo-router"],
     "experiments": {
