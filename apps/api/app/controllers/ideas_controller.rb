@@ -81,6 +81,9 @@ class IdeasController < ApplicationController
       brainstorm_id: idea.brainstorm_id,
       brainstorm_slug: idea.brainstorm&.slug,
       brainstorm_title: idea.brainstorm&.title,
+      pinned_message_id: idea.pinned_message_id,
+      pinned_message_content: idea.pinned_message_content,
+      can_edit: idea.editable_by?(current_user),
       owner: {
         id: idea.user.id,
         username: idea.user.username,

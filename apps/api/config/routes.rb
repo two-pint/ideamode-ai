@@ -76,5 +76,17 @@ Rails.application.routes.draw do
     post ":username/ideas/:slug/members", to: "members#create", defaults: { resource_type: "idea" }
     patch ":username/ideas/:slug/members/:id", to: "members#update", defaults: { resource_type: "idea" }
     delete ":username/ideas/:slug/members/:id", to: "members#destroy", defaults: { resource_type: "idea" }
+
+    get ":username/ideas/:slug/discussion/sessions", to: "discussion_sessions#index"
+    post ":username/ideas/:slug/discussion/sessions", to: "discussion_sessions#create"
+    get ":username/ideas/:slug/discussion/sessions/current", to: "discussion_sessions#show", defaults: { id: "current" }
+    get ":username/ideas/:slug/discussion/sessions/:id", to: "discussion_sessions#show"
+    post ":username/ideas/:slug/discussion/sessions/:id/messages", to: "discussion_sessions#create_message"
+    post ":username/ideas/:slug/discussion/sessions/:id/pin", to: "discussion_sessions#pin"
+
+    get ":username/ideas/:slug/analyses", to: "idea_analyses#index"
+    post ":username/ideas/:slug/analyses", to: "idea_analyses#create"
+    get ":username/ideas/:slug/analyses/:id", to: "idea_analyses#show"
+    patch ":username/ideas/:slug/analyses/:id", to: "idea_analyses#update"
   end
 end
