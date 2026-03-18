@@ -1,5 +1,7 @@
 # Milestone 3 — Idea AI Value
 
+**Status:** Done (completed March 2025)
+
 **Goal:** Discussion chat with Claude (critical/evaluative mode, streaming) and structured validation analysis (competitor, TAM, PMF, full report) with real web search data. All runs are versioned. If an idea was created from a brainstorm, brainstorm context (chat history, notes, research) is included in discussion and analysis prompts. This is the core reason to move from brainstorm to idea.
 
 **Timeline:** Weeks 3–4  
@@ -15,11 +17,11 @@
 
 **Tasks:**
 
-- [ ] Use existing ChatSession model; create sessions with `idea_id` set (brainstorm_id null) for idea discussion. Same endpoints pattern: `POST /:username/:slug/discussion/sessions`, `POST /:username/:slug/discussion/sessions/:id/messages` (SSE), `GET /:username/:slug/discussion/sessions` when slug is an idea.
-- [ ] Design system prompt so Claude acts as a critical thinking partner for ideas (challenges assumptions, asks hard questions, helps articulate problem and target customer) — not affirmative only.
-- [ ] When idea has `brainstorm_id`: load linked brainstorm's chat sessions and note content; inject into system prompt or context so Claude can reference prior exploration.
-- [ ] Append user message and streamed assistant message to session `messages`; persist full history. Support "pin message to Overview" (display on idea Overview tab).
-- [ ] Enforce authorization: only owner and collaborators can create/post; viewers read-only.
+- [x] Use existing ChatSession model; create sessions with `idea_id` set (brainstorm_id null) for idea discussion. Same endpoints pattern: `POST /:username/:slug/discussion/sessions`, `POST /:username/:slug/discussion/sessions/:id/messages` (SSE), `GET /:username/:slug/discussion/sessions` when slug is an idea.
+- [x] Design system prompt so Claude acts as a critical thinking partner for ideas (challenges assumptions, asks hard questions, helps articulate problem and target customer) — not affirmative only.
+- [x] When idea has `brainstorm_id`: load linked brainstorm's chat sessions and note content; inject into system prompt or context so Claude can reference prior exploration.
+- [x] Append user message and streamed assistant message to session `messages`; persist full history. Support "pin message to Overview" (display on idea Overview tab).
+- [x] Enforce authorization: only owner and collaborators can create/post; viewers read-only.
 
 **Acceptance criteria:**
 
@@ -35,20 +37,20 @@
 
 ---
 
-### Ticket 3.2 — Analysis Engine (Claude, web search, Sidekiq)
+### Ticket 3.2 — Analysis Engine (Claude, web search, background jobs)
 
-**Description:** Implement IdeaAnalysis model, analysis types (competitor, tam, pmf, full), Claude API with web search tool, structured JSON output per HLD schema, and Sidekiq job with progress streaming. If the idea has a linked brainstorm, include brainstorm research results (and optionally notes) as context for the analysis. Versioned, reproducible validation reports.
+**Description:** Implement IdeaAnalysis model, analysis types (competitor, tam, pmf, full), Claude API with web search tool, structured JSON output per HLD schema, and a background job with progress (frontend polls). If the idea has a linked brainstorm, include brainstorm research results (and optionally notes) as context for the analysis. Versioned, reproducible validation reports.
 
 **Tasks:**
 
-- [ ] Create IdeaAnalysis model: `idea_id`, `analysis_type` (competitor | tam | pmf | full), `result` (jsonb), `created_at`. Multiple runs per idea retained (versioned).
-- [ ] Integrate Claude API with web search tool enabled for all analysis calls.
-- [ ] Define and enforce structured JSON output schema for each analysis type (competitor_analysis, market_size, pmf_signals, verdict) per HLD schema.
-- [ ] Full report runs competitor + tam + pmf in one job and produces combined verdict (score, recommendation, key_risks, next_steps).
-- [ ] When idea has `brainstorm_id`: load linked brainstorm's BrainstormResearch results (and optionally note); pass as context to analysis prompt so Claude can use prior research.
-- [ ] Enqueue analysis run as a Sidekiq job; stream progress (e.g. "Running competitor analysis…", "Running TAM…") to frontend via SSE or polling.
-- [ ] Endpoints: `POST /:username/:slug/analyses` (trigger run, return job id or stream), `GET /:username/:slug/analyses`, `GET /:username/:slug/analyses/:id`.
-- [ ] Support annotating an analysis result (e.g. store annotations in a separate field or in result; allow add/edit).
+- [x] Create IdeaAnalysis model: `idea_id`, `analysis_type` (competitor | tam | pmf | full), `result` (jsonb), `annotations` (jsonb), `created_at`. Multiple runs per idea retained (versioned).
+- [x] Integrate Claude API with web search tool enabled for all analysis calls.
+- [x] Define and enforce structured JSON output schema for each analysis type (competitor_analysis, market_size, pmf_signals, verdict) per HLD schema.
+- [x] Full report runs competitor + tam + pmf in one job and produces combined verdict (score, recommendation, key_risks, next_steps).
+- [x] When idea has `brainstorm_id`: load linked brainstorm's BrainstormResearch results (and optionally note); pass as context to analysis prompt so Claude can use prior research.
+- [x] Enqueue analysis run as a background job (Solid Queue); frontend polls `GET /analyses/:id` for progress until completed/failed.
+- [x] Endpoints: `POST /:username/:slug/analyses` (trigger run), `GET /:username/:slug/analyses`, `GET /:username/:slug/analyses/:id`, `PATCH /:username/:slug/analyses/:id` (annotations).
+- [x] Support annotating an analysis result (annotations jsonb; PATCH merges updates).
 
 **Acceptance criteria:**
 
@@ -71,14 +73,14 @@
 
 **Tasks:**
 
-- [ ] Analysis tab: buttons to run each analysis type (Competitor, TAM, PMF, Full Report). Disable or show loading while a job is running.
-- [ ] Version/history selector: list past runs by date; selecting one loads that result.
-- [ ] Verdict banner: score ring (e.g. 0–100), recommendation text, key risks list, next steps list. Use Recharts or similar if needed for score visualization.
-- [ ] Competitor cards: for each competitor show name, strengths/weaknesses as tag chips, pricing. Summary and whitespace above or below.
-- [ ] TAM/SAM display with confidence indicator (low/medium/high).
-- [ ] PMF signals: collapsible sections for demand evidence, pain point strength, willingness-to-pay, etc.
-- [ ] Loading skeleton while analysis job is in progress; empty state when no analyses have been run.
-- [ ] Viewer role: show all content read-only; hide run buttons.
+- [x] Analysis tab: buttons to run each analysis type (Competitor, TAM, PMF, Full Report). Disable or show loading while a job is running.
+- [x] Version/history selector: list past runs by date; selecting one loads that result.
+- [x] Verdict banner: score ring (0–100), recommendation text, key risks list, next steps list.
+- [x] Competitor cards: for each competitor show name, strengths/weaknesses as tag chips, pricing. Summary and whitespace.
+- [x] TAM/SAM display with confidence indicator (low/medium/high).
+- [x] PMF signals: collapsible sections for demand evidence, pain point strength, willingness-to-pay.
+- [x] Loading skeleton while analysis job is in progress; empty state when no analyses have been run.
+- [x] Viewer role: show all content read-only; hide run buttons (canEdit drives UI).
 
 **Acceptance criteria:**
 
@@ -97,6 +99,6 @@
 
 ## Milestone 3 completion checklist
 
-- [ ] All three tickets (3.1–3.3) are implemented and accepted.
-- [ ] Users can discuss ideas with streaming responses and pin insights to Overview; linked brainstorm context is used when present.
-- [ ] Users can run all analysis types, see versioned results, and consume them in the Analysis UI with correct role behavior. Linked brainstorm research is used as context when present.
+- [x] All three tickets (3.1–3.3) are implemented and accepted.
+- [x] Users can discuss ideas with streaming responses and pin insights to Overview; linked brainstorm context is used when present.
+- [x] Users can run all analysis types, see versioned results, and consume them in the Analysis UI with correct role behavior. Linked brainstorm research is used as context when present.
