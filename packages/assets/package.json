@@ -5,6 +5,7 @@
   "description": "Shared brand assets (icon, logo) for IdeaMode web and mobile apps",
   "exports": {
     "./ideamode_icon.svg": "./ideamode_icon.svg",
-    "./ideamode_logo.svg": "./ideamode_logo.svg"
+    "./ideamode_logo.svg": "./ideamode_logo.svg",
+    "./ideamode_logo_light.svg": "./ideamode_logo_light.svg"
   }
 }

@@ -32,10 +32,10 @@ export function NewIdeaModal({ open, onClose, onCreate }: NewIdeaModalProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-      <div className="w-full max-w-md rounded-xl border bg-white p-5 shadow-xl">
-        <h2 className="text-lg font-semibold">New idea</h2>
-        <p className="mb-4 text-sm text-zinc-500">Create an idea and jump straight into it.</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 dark:bg-black/50">
+      <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">New idea</h2>
+        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">Create an idea and jump straight into it.</p>
 
         <form
           className="space-y-3"
@@ -74,7 +74,7 @@ export function NewIdeaModal({ open, onClose, onCreate }: NewIdeaModalProps) {
               onChange={(event) => setSlug(event.target.value)}
               placeholder="auto-generated from title"
             />
-            <p className="text-xs text-zinc-500">Preview: /{slugPreview || "your-idea-slug"}</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Preview: /{slugPreview || "your-idea-slug"}</p>
           </div>
 
           <div className="space-y-1">
@@ -84,11 +84,11 @@ export function NewIdeaModal({ open, onClose, onCreate }: NewIdeaModalProps) {
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="What problem are you solving?"
-              className="min-h-24 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20"
+              className="min-h-24 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-400/20"
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={saving}>

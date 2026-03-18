@@ -13,7 +13,7 @@ if (!existsSync(src)) {
 }
 
 mkdirSync(dest, { recursive: true });
-for (const name of ["ideamode_icon.svg", "ideamode_logo.svg", "ideamode_logo_1.svg"]) {
+for (const name of ["ideamode_icon.svg", "ideamode_logo.svg", "ideamode_logo_1.svg", "ideamode_logo_light.svg"]) {
   const srcFile = join(src, name);
   if (existsSync(srcFile)) {
     cpSync(srcFile, join(dest, name));

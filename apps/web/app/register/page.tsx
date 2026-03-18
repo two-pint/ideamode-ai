@@ -3,8 +3,8 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { UserPlus } from "lucide-react";
+import { IdeaModeLogo } from "@/components/ideamode-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,18 +82,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex min-h-screen items-center justify-center bg-zinc-50 p-4 dark:bg-zinc-950">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
           <div className="flex w-full justify-center">
-            <Image
-              src="/ideamode_logo_1.svg"
-              alt="IdeaMode"
-              width={140}
-              height={21}
-              priority
-              unoptimized
-            />
+            <IdeaModeLogo width={140} height={21} priority className="h-5 w-auto" />
           </div>
           <CardTitle className="mt-2">Create your account</CardTitle>
           <CardDescription>Start capturing and validating ideas</CardDescription>

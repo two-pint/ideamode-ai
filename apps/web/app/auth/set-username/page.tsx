@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { AtSign } from "lucide-react";
+import { IdeaModeLogo } from "@/components/ideamode-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,24 +83,19 @@ export default function SetUsernamePage() {
 
   if (authLoading || !user) {
     return (
-      <main className="flex min-h-screen items-center justify-center">
+      <main className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
         <p className="text-muted-foreground">Loading...</p>
       </main>
     );
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex min-h-screen items-center justify-center bg-zinc-50 p-4 dark:bg-zinc-950">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
-          <Image
-            src="/ideamode_logo_1.svg"
-            alt="IdeaMode"
-            width={140}
-            height={21}
-            priority
-            unoptimized
-          />
+          <div className="flex w-full justify-center">
+            <IdeaModeLogo width={140} height={21} priority className="h-5 w-auto" />
+          </div>
           <CardTitle className="mt-2">Choose a username</CardTitle>
           <CardDescription>
             Your username is your unique URL namespace (e.g. ideamode.ai/<strong>you</strong>)

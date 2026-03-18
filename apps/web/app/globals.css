@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
-/* Theme: light only (zinc-50 bg, zinc-900 text). shadcn variables for components. */
+/* Class-based dark mode (toggle via .dark on html) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Theme: light (zinc-50 bg) and dark (zinc-950). shadcn variables for components. */
 :root {
   --background: #fafafa; /* zinc-50 */
   --foreground: #18181b; /* zinc-900 */
@@ -22,6 +25,28 @@
   --input: #e4e4e7;
   --ring: #71717a;
   --radius: 0.5rem; /* 8px */
+}
+
+.dark {
+  --background: #09090b; /* zinc-950 */
+  --foreground: #fafafa; /* zinc-50 */
+  --card: #18181b; /* zinc-900 */
+  --card-foreground: #fafafa;
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #18181b;
+  --secondary: #27272a; /* zinc-800 */
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa; /* zinc-400 */
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #dc2626;
+  --destructive-foreground: #fafafa;
+  --border: #3f3f46; /* zinc-700 */
+  --input: #3f3f46;
+  --ring: #71717a;
 }
 
 /* Tailwind v4: map shadcn CSS vars to theme for utility classes */
