@@ -1,6 +1,6 @@
 # Milestone 1 — Foundation
 
-**Goal:** Core infrastructure: authentication (username/password + JWT and Google OAuth with account linking), user model with username, **brainstorm and idea** ownership, membership for both, GitHub-style URL routing, and slug resolution across both models. Users can register or sign in with Google, claim a username, create **brainstorms and ideas**, invite collaborators to either, and access brainstorm/idea pages that are access-controlled and URL-scoped to the owner's username. Dashboard has two tabs: **Brainstorms** and **Ideas**.
+**Goal:** Core infrastructure: authentication (username/password + JWT and Google OAuth with account linking), user model with username, **brainstorm and idea** ownership, membership for both, namespaced URL routing (`/:username/brainstorms/:slug` and `/:username/ideas/:slug`). Users can register or sign in with Google, claim a username, create **brainstorms and ideas**, invite collaborators to either, and access brainstorm/idea pages that are access-controlled and URL-scoped to the owner's username. Dashboard has two tabs: **Brainstorms** and **Ideas**.
 
 **Timeline:** Weeks 1–2  
 **Depends on:** Milestone 0 (Base App Architecture)
@@ -47,74 +47,74 @@
 
 ---
 
-### Ticket 1.2 — Brainstorms CRUD
+### Ticket 1.2 — Brainstorms CRUD ✅
 
-**Description:** Implement the Brainstorm model and full CRUD with user-scoped slugs and status/visibility, so every brainstorm belongs to one owner and is addressable at `/:username/:slug`. Brainstorms share the same slug namespace as ideas per user (a user cannot have both a brainstorm and an idea with the same slug). This is the exploratory workspace resource; building it first allows Phase 2 to deliver brainstorm features immediately.
+**Description:** Implement the Brainstorm model and full CRUD with user-scoped slugs and status/visibility, so every brainstorm belongs to one owner and is addressable at `/:username/brainstorms/:slug`. Slugs are unique per user within brainstorms (DB unique index on `[user_id, slug]`); brainstorms and ideas have separate namespaces so the same slug can exist in both. This is the exploratory workspace resource; building it first allows Phase 2 to deliver brainstorm features immediately.
 
 **Tasks:**
 
-- [ ] Create Brainstorm model: `user_id` (owner), `slug`, `title`, `description`, `status`, `visibility`, timestamps. Add enum `status`: exploring, researching, ready, archived; enum `visibility`: private, shared.
-- [ ] Enforce slug unique per user (DB unique index on `[user_id, slug]`); slug namespace is shared with ideas — application layer must ensure no duplicate slug across both Brainstorm and Idea for the same user. Auto-generate slug from title (URL-safe, editable by owner).
-- [ ] Implement endpoints: `GET /brainstorms` (current user's brainstorms), `POST /brainstorms` (create, set current user as owner), `GET /:username/:slug` (show — resolve to brainstorm or idea via slug resolution), `PATCH /:username/:slug`, `DELETE /:username/:slug`. Slug resolution: for a given `:username` and `:slug`, check both brainstorms and ideas tables; return 404 if neither exists or no access.
-- [ ] Ensure ownership is immutable after creation (no transfer in v1).
-- [ ] Authorize: only owner (and later collaborators) can update/delete; show is restricted by membership (handled in 1.4).
+- [x] Create Brainstorm model: `user_id` (owner), `slug`, `title`, `description`, `status`, `visibility`, timestamps. Add enum `status`: exploring, researching, ready, archived; enum `visibility`: private, shared.
+- [x] Enforce slug unique per user within brainstorms (DB unique index on `[user_id, slug]`). Auto-generate slug from title (URL-safe, editable by owner). Brainstorms and ideas have separate slug namespaces.
+- [x] Implement endpoints: `GET /brainstorms` (current user's brainstorms), `POST /brainstorms` (create, set current user as owner), `GET /:username/brainstorms/:slug` (show), `PATCH /:username/brainstorms/:slug`, `DELETE /:username/brainstorms/:slug`. Return 404 if resource not found or no access.
+- [x] Ensure ownership is immutable after creation (no transfer in v1).
+- [x] Authorize: only owner (and accepted collaborators) can update/delete; show is restricted by membership (handled in 1.4).
 
 **Acceptance criteria:**
 
 - Authenticated user can create a brainstorm with title (and optional description); slug is auto-generated and can be edited on create/update by owner.
 - `GET /brainstorms` returns only brainstorms owned by the current user.
-- Slug is unique per user across both brainstorms and ideas (creating an idea with the same slug as an existing brainstorm for that user fails or vice versa).
-- `GET /:username/:slug` returns the brainstorm or idea when the current user is owner or member; returns 404 when not found or no access. Backend resolves whether the slug refers to a brainstorm or an idea.
-- Owner can PATCH (title, description, slug, status, visibility) and DELETE the brainstorm. Non-owners receive 403 or 404 as per policy.
+- Slug is unique per user within brainstorms. Brainstorms and ideas have separate namespaces so same slug can be used for both.
+- `GET /:username/brainstorms/:slug` returns the brainstorm when the current user is owner or member; returns 404 when not found or no access.
+- Owner can PATCH (title, description, slug, status, visibility) and DELETE the brainstorm. Non-owners receive 404 (not 403) to avoid revealing existence.
 
 **Test plan (manual):**
 
-1. Create a new brainstorm with title "My First Brainstorm"; confirm slug is generated and brainstorm appears in Brainstorms list. Create an idea with the same slug; confirm validation error or conflict. Create an idea with a different slug; confirm both exist.
+1. Create a new brainstorm with title "My First Brainstorm"; confirm slug is generated and brainstorm appears in Brainstorms list. Create an idea with the same slug; confirm both exist (separate namespaces). Create a brainstorm with the same slug; confirm validation error (same namespace).
 2. Edit the brainstorm: change title, slug, status, visibility. Save; confirm changes persist and URL with new slug works.
-3. Call `GET /brainstorms`; confirm only current user's brainstorms are returned. Open `/:username/:slug` for a brainstorm; confirm it loads. As another user (no membership), request same URL; confirm 404.
+3. Call `GET /brainstorms`; confirm only current user's brainstorms are returned. Open `/:username/brainstorms/:slug` for a brainstorm; confirm it loads. As another user (no membership), request same URL; confirm 404.
 
 ---
 
-### Ticket 1.3 — Ideas CRUD
+### Ticket 1.3 — Ideas CRUD ✅
 
-**Description:** Implement the Idea model and full CRUD with user-scoped slugs, optional `brainstorm_id` (nullable FK to Brainstorm), and status/visibility. Ideas share the same slug namespace as brainstorms per user. Every idea belongs to one owner and is addressable at `/:username/:slug`. Slug resolution (see 1.2) determines whether a slug refers to a brainstorm or an idea. This is the structured validation resource; ideas can be created from brainstorms (M2) or independently.
+**Description:** Implement the Idea model and full CRUD with user-scoped slugs, optional `brainstorm_id` (nullable FK to Brainstorm, must belong to same owner), and status/visibility. Slugs are unique per user within ideas (separate namespace from brainstorms). Every idea belongs to one owner and is addressable at `/:username/ideas/:slug`. This is the structured validation resource; ideas can be created from brainstorms (M2) or independently.
 
 **Tasks:**
 
-- [ ] Create Idea model: `user_id` (owner), `brainstorm_id` (nullable FK → Brainstorm), `slug`, `title`, `description`, `status`, `visibility`, timestamps. Add enum `status`: validating, validated, shelved; enum `visibility`: private, shared.
-- [ ] Enforce slug unique per user across both brainstorms and ideas (application-level or composite check with Brainstorm). Auto-generate slug from title (URL-safe, editable by owner).
-- [ ] Implement endpoints: `GET /ideas` (current user's ideas), `POST /ideas` (create, set current user as owner; optional `brainstorm_id` in payload for "create from brainstorm" flow in M2), `GET /:username/:slug` (show — via slug resolution), `PATCH /:username/:slug`, `DELETE /:username/:slug`. Resolve `:username` to user id for lookups.
-- [ ] Ensure ownership is immutable after creation (no transfer in v1).
-- [ ] Authorize: only owner (and later collaborators) can update/delete; show is restricted by membership (handled in 1.4).
+- [x] Create Idea model: `user_id` (owner), `brainstorm_id` (nullable FK → Brainstorm, validated to same owner), `slug`, `title`, `description`, `status`, `visibility`, timestamps. Add enum `status`: validating, validated, shelved; enum `visibility`: private, shared.
+- [x] Enforce slug unique per user within ideas (DB unique index on `[user_id, slug]`). Auto-generate slug from title (URL-safe, editable by owner). Ideas and brainstorms have separate slug namespaces.
+- [x] Implement endpoints: `GET /ideas` (current user's ideas), `POST /ideas` (create, set current user as owner; optional `brainstorm_id` in payload for "create from brainstorm" flow in M2), `GET /:username/ideas/:slug` (show), `PATCH /:username/ideas/:slug`, `DELETE /:username/ideas/:slug`. Resolve `:username` to user id for lookups.
+- [x] Ensure ownership is immutable after creation (no transfer in v1).
+- [x] Authorize: only owner (and accepted collaborators) can update/delete; show is restricted by membership (handled in 1.4).
 
 **Acceptance criteria:**
 
-- Authenticated user can create an idea with title (and optional description); slug is auto-generated and can be edited on create/update by owner. `brainstorm_id` can be null (direct idea) or set when creating from a brainstorm (M2).
+- Authenticated user can create an idea with title (and optional description); slug is auto-generated and can be edited on create/update by owner. `brainstorm_id` can be null (direct idea) or set when creating from a brainstorm (M2); must belong to the same owner.
 - `GET /ideas` returns only ideas owned by the current user.
-- `GET /:username/:slug` returns the idea when the current user is owner or member (membership in 1.4); returns 404 when not found or no access. Slug resolution correctly returns idea vs brainstorm.
-- Owner can PATCH (title, description, slug, status, visibility) and DELETE the idea. Non-owners receive 403 or 404 as per policy.
+- `GET /:username/ideas/:slug` returns the idea when the current user is owner or member (membership in 1.4); returns 404 when not found or no access.
+- Owner can PATCH (title, description, slug, status, visibility) and DELETE the idea. Non-owners receive 404 (not 403) to avoid revealing existence.
 
 **Test plan (manual):**
 
-1. Create a new idea with title "My First Idea"; confirm slug is generated and idea appears in Ideas tab. Ensure slug does not conflict with existing brainstorm for same user.
+1. Create a new idea with title "My First Idea"; confirm slug is generated and idea appears in Ideas tab. Create a brainstorm with the same slug; confirm both exist (separate namespaces).
 2. Edit the idea: change title, slug, status, visibility. Save; confirm changes persist and URL with new slug works.
-3. Call `GET /ideas`; confirm only current user's ideas are returned. Open `/:username/:slug` for an idea; confirm idea loads. As another user (no membership), request same URL; confirm 404 (not 403).
+3. Call `GET /ideas`; confirm only current user's ideas are returned. Open `/:username/ideas/:slug` for an idea; confirm idea loads. As another user (no membership), request same URL; confirm 404 (not 403).
 4. Delete the idea; confirm it is removed and no longer accessible.
 
 ---
 
-### Ticket 1.4 — Membership & Access Control
+### Ticket 1.4 — Membership & Access Control ✅
 
-**Description:** Add BrainstormMember, BrainstormInvite, IdeaMember, and IdeaInvite; Pundit policies for owner/collaborator/viewer for **both brainstorms and ideas**; 404 on unauthorized access so brainstorms and ideas can be shared without revealing existence to non-members. This matters for security and GitHub-style mental model: only people with access should see the resource at all.
+**Description:** Add BrainstormMember, BrainstormInvite, IdeaMember, and IdeaInvite; inline access policies (ResourceAccess concern) for owner/collaborator/viewer for **both brainstorms and ideas**; 404 on unauthorized access so brainstorms and ideas can be shared without revealing existence to non-members. This matters for security and GitHub-style mental model: only people with access should see the resource at all.
 
 **Tasks:**
 
-- [ ] Create BrainstormMember: `brainstorm_id`, `user_id`, `role` (collaborator | viewer), `invited_by`, `accepted_at`, timestamps. BrainstormInvite: `brainstorm_id`, `email`, `token`, `role`, `expires_at` (7 days), `invited_by`, timestamps.
-- [ ] Create IdeaMember: `idea_id`, `user_id`, `role` (collaborator | viewer), `invited_by`, `accepted_at`, timestamps. IdeaInvite: `idea_id`, `email`, `token`, `role`, `expires_at` (7 days), `invited_by`, timestamps.
-- [ ] Implement Pundit policies for both resources: owner can do everything; collaborator can edit, run research (brainstorms) or analysis/PRD (ideas), but not manage members or delete; viewer can view and export only. Apply policies to both brainstorm- and idea-scoped routes and member/invite actions.
-- [ ] For any brainstorm- or idea-scoped route, when the current user is not owner and not in the relevant Members (accepted), return 404 — never 403, never confirm the resource exists.
-- [ ] Endpoints: `POST /:username/:slug/members` (invite by email; context determines whether creating BrainstormMember/Invite or IdeaMember/Invite based on slug resolution), `DELETE /:username/:slug/members/:id`, `PATCH /:username/:slug/members/:id`, `POST /invites/:token/accept`.
-- [ ] Invite flow: if email matches existing user, create member record with `accepted_at` null and send in-app/email notification; if not, create Invite and send email with link containing token. Accept endpoint sets `accepted_at` and creates Member when applicable. Same flow for both brainstorms and ideas.
+- [x] Create BrainstormMember: `brainstorm_id`, `user_id`, `role` (collaborator | viewer), `invited_by`, `accepted_at`, timestamps. BrainstormInvite: `brainstorm_id`, `email`, `token`, `role`, `expires_at` (7 days), `invited_by`, timestamps.
+- [x] Create IdeaMember: `idea_id`, `user_id`, `role` (collaborator | viewer), `invited_by`, `accepted_at`, timestamps. IdeaInvite: `idea_id`, `email`, `token`, `role`, `expires_at` (7 days), `invited_by`, timestamps.
+- [x] Implement access control for both resources (ResourceAccess concern): owner can do everything; collaborator can edit; viewer can view only. Applied to BrainstormsController, IdeasController, MembersController; update/destroy require `editable_by?` (owner or collaborator). No Pundit gem; inline policies.
+- [x] For any brainstorm- or idea-scoped route, when the current user is not owner and not in the relevant Members (accepted), return 404. Note: `update`/`destroy` on the resource returns 403 for viewers (who can access but not edit); the `show` endpoint returns 404 for non-members.
+- [x] Endpoints: `GET/POST /:username/brainstorms/:slug/members`, `PATCH/DELETE /:username/brainstorms/:slug/members/:id`, `GET/POST /:username/ideas/:slug/members`, `PATCH/DELETE /:username/ideas/:slug/members/:id`, `GET /invites/:token`, `POST /invites/:token/accept`. Route `defaults` (`resource_type`) in MembersController determines Brainstorm vs Idea.
+- [x] Invite flow: if email matches existing user, create member with `accepted_at` set (immediate access); if not, create Invite with token and 7-day expiry. Accept endpoint creates Member and sets invite `accepted_at`. Same flow for both brainstorms and ideas. (Email sending not implemented; invite payload returned for client to use.)
 
 **Acceptance criteria:**
 
@@ -127,7 +127,7 @@
 
 1. As owner, invite an existing user by email as collaborator to a brainstorm. As invitee, accept invite. Confirm invitee can access the brainstorm and edit. Repeat for an idea; confirm same behavior. Confirm invitee cannot manage members or delete.
 2. As owner, invite a different user as viewer to a brainstorm and an idea. After accept, confirm viewer can open both and see content but not edit (UI hides or disables edit controls).
-3. As a user with no access, open URL `/:owner_username/:slug` for a brainstorm or idea you're not in. Confirm 404 response and no leak of title/existence.
+3. As a user with no access, open URL `/:owner_username/brainstorms/:slug` or `/:owner_username/ideas/:slug` for a brainstorm or idea you're not in. Confirm 404 response and no leak of title/existence.
 4. Invite with invalid or expired token; confirm appropriate error. Resend invite; confirm new token works.
 
 ---
@@ -138,23 +138,23 @@
 
 **Tasks:**
 
-- [x] Implement app shell: sidebar navigation, user avatar (and name), route slots for `/dashboard`, `/:username`, `/:username/:slug` (and children). Use design: zinc-50 background, zinc-900 text.
-- [ ] Dashboard at `/dashboard` with **two top-level tabs: Brainstorms and Ideas**.
-- [ ] **Brainstorms tab:** "My Brainstorms" — grid of brainstorm cards grouped by status (exploring, researching, ready, archived). "Shared With Me" — brainstorms where current user is collaborator or viewer, with owner avatar and username. Each card: title, status badge, member avatars, last updated.
-- [ ] **Ideas tab:** "My Ideas" — grid of idea cards grouped by status (validating, validated, shelved). "Shared With Me" — ideas where current user is collaborator or viewer, with owner avatar and username. Each card: title, status badge, score ring if analysis exists, member avatars, last updated, linked brainstorm indicator if `brainstorm_id` is set.
-- [ ] "New Brainstorm" button opens modal: title, optional description, slug preview (auto-generated, editable). Submit creates brainstorm via API and navigates to brainstorm detail.
-- [ ] "New Idea" button opens modal: title, optional description, slug preview (auto-generated, editable). Submit creates idea via API and navigates to idea detail.
-- [ ] User profile page at `/:username`: show avatar, display name, @username, bio, and list of **brainstorms and ideas** (visibility rules: owner sees all; others see only those shared with them).
-- [ ] **Brainstorm detail:** shell at `/:username/:slug` when slug resolves to a brainstorm, with tabs: Overview, Chat, Research, Notes. Overview tab shows editable title/description, status, members; placeholder content for Chat/Research/Notes until M2.
-- [ ] **Idea detail:** shell at `/:username/:slug` when slug resolves to an idea, with tabs: Overview, Discussion, Analysis, Wireframes, PRD, Notes, Tasks. Overview tab shows editable title/description, status, members, "From Brainstorm" link if `brainstorm_id` is set; placeholder content for other tabs until M3/M4.
-- [ ] Slug resolution: frontend or API must determine whether current slug is a brainstorm or an idea (e.g. API returns resource type; or frontend tries both). Implement 404 when API returns 404 or no access.
+- [x] Implement app shell: sidebar navigation, user avatar (and name), route slots for `/dashboard`, `/:username`, `/:username/brainstorms/:slug`, `/:username/ideas/:slug`. Use design: zinc-50 background, zinc-900 text.
+- [x] Dashboard at `/dashboard` with **two top-level tabs: Brainstorms and Ideas**.
+- [x] **Brainstorms tab:** "My Brainstorms" — grid of brainstorm cards grouped by status (exploring, researching, ready, archived). "Shared With Me" — brainstorms where current user is collaborator or viewer. Each card: title, status badge, last updated.
+- [x] **Ideas tab:** "My Ideas" — grid of idea cards grouped by status (validating, validated, shelved) with drag-and-drop. "Shared With Me" — ideas where current user is collaborator or viewer. Each card: title, status badge, last updated.
+- [x] "New Brainstorm" button opens modal: title, optional description, slug preview (auto-generated, editable). Submit creates brainstorm via API and navigates to brainstorm detail.
+- [x] "New Idea" button opens modal: title, optional description, slug preview (auto-generated, editable). Submit creates idea via API and navigates to idea detail.
+- [x] User profile page at `/:username`: show avatar, display name, @username, bio, and list of **brainstorms and ideas** (visibility/membership: owner sees all; others see shared via users API).
+- [x] **Brainstorm detail:** shell at `/:username/brainstorms/:slug` with tabs: Overview, Chat, Research, Notes. Overview tab shows editable title/description, status, visibility; placeholder content for Chat/Research/Notes until M2.
+- [x] **Idea detail:** shell at `/:username/ideas/:slug` with tabs: Overview, Discussion, Analysis, Wireframes, PRD, Notes, Tasks. Overview tab shows editable title/description, status, "From Brainstorm" link when `brainstorm_id` and `brainstorm_slug` present; placeholder content for other tabs until M3/M4.
+- [x] Namespaced routing: frontend uses `GET /:username/brainstorms/:slug` and `GET /:username/ideas/:slug` directly. No slug resolution needed since resource type is known from the URL path. Implement 404 when API returns 404 or no access.
 
 **Acceptance criteria:**
 
 - Logged-in user lands on dashboard and sees two tabs: Brainstorms and Ideas. Each tab shows "My …" and "Shared With Me" with correct data.
 - Creating a new brainstorm or idea via modal creates the resource and navigates to its detail page; card appears in the correct tab.
 - Navigating to `/:username` shows that user's profile with brainstorms and ideas (subject to visibility).
-- Navigating to `/:username/:slug` shows the correct shell (brainstorm vs idea) and Overview tab; unauthorized access shows 404 page.
+- Navigating to `/:username/brainstorms/:slug` or `/:username/ideas/:slug` shows the correct shell and Overview tab; unauthorized access shows 404 page.
 - Sidebar and header reflect current user and allow navigation to dashboard and profile.
 
 **Test plan (manual):**
@@ -162,13 +162,13 @@
 1. Log in and go to dashboard. Confirm Brainstorms tab shows "My Brainstorms" and "Shared With Me"; Ideas tab shows "My Ideas" and "Shared With Me" with correct data.
 2. Click "New Brainstorm," fill title and description, submit. Confirm redirect to brainstorm detail and card appears in Brainstorms tab. Repeat for "New Idea" and Ideas tab.
 3. Visit your profile at `/:username`. Confirm avatar, name, @username, and lists of brainstorms and ideas.
-4. Open a brainstorm you own; confirm Overview and tab strip (Chat, Research, Notes). Open an idea you own; confirm Overview and tab strip (Discussion, Analysis, Wireframes, PRD, Notes, Tasks).
-5. Paste URL of a brainstorm or idea you don't have access to; confirm 404 page and no flash of content.
+4. Open a brainstorm you own at `/:username/brainstorms/:slug`; confirm Overview and tab strip (Chat, Research, Notes). Open an idea you own at `/:username/ideas/:slug`; confirm Overview and tab strip (Discussion, Analysis, Wireframes, PRD, Notes, Tasks).
+5. Paste URL of a brainstorm or idea you don't have access to (e.g. `/:other_user/brainstorms/:slug`); confirm 404 page and no flash of content.
 
 ---
 
 ## Milestone 1 completion checklist
 
-- [ ] All five tickets (1.1–1.5) are implemented and accepted.
-- [ ] User can register, sign in with username/password or Google OAuth (JWT), link accounts when Google email matches existing user, create brainstorms and ideas, invite members to either, accept invites, and access dashboard (two tabs) and brainstorm/idea detail with correct permissions.
-- [ ] Unauthorized access to a brainstorm or idea returns 404. Role matrix (owner/collaborator/viewer) is enforced for both.
+- [x] All five tickets (1.1–1.5) are implemented and accepted.
+- [x] User can register, sign in with username/password or Google OAuth (JWT), link accounts when Google email matches existing user, create brainstorms and ideas, invite members to either, accept invites, and access dashboard (two tabs) and brainstorm/idea detail with correct permissions.
+- [x] Unauthorized access to a brainstorm or idea returns 404. Role matrix (owner/collaborator/viewer) is enforced for both.

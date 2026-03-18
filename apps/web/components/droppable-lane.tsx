@@ -1,11 +1,11 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
-import { type IdeaStatus } from "@/lib/api";
+import { type BrainstormStatus, type IdeaStatus } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type DroppableLaneProps = {
-  status: IdeaStatus;
+  status: IdeaStatus | BrainstormStatus;
   children: React.ReactNode;
   className?: string;
 };

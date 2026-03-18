@@ -86,7 +86,7 @@ export type CheckUsernameResponse = {
   error?: string;
 };
 
-export type IdeaStatus = "brainstorm" | "validating" | "validated" | "shelved";
+export type IdeaStatus = "validating" | "validated" | "shelved";
 export type IdeaVisibility = "private" | "shared";
 
 export type Idea = {
@@ -96,6 +96,8 @@ export type Idea = {
   slug: string;
   status: IdeaStatus;
   visibility: IdeaVisibility;
+  brainstorm_id: number | null;
+  brainstorm_slug?: string | null;
   owner?: {
     id: number;
     username: string | null;
@@ -103,6 +105,176 @@ export type Idea = {
     avatar_url: string | null;
   };
   updated_at: string;
+};
+
+export type BrainstormStatus = "exploring" | "researching" | "ready" | "archived";
+export type BrainstormVisibility = "private" | "shared";
+
+export type Brainstorm = {
+  id: number;
+  title: string;
+  description: string | null;
+  slug: string;
+  status: BrainstormStatus;
+  visibility: BrainstormVisibility;
+  owner?: {
+    id: number;
+    username: string | null;
+    name: string | null;
+    avatar_url: string | null;
+  };
+  updated_at: string;
+};
+
+export type Member = {
+  id: number;
+  user_id: number;
+  username: string | null;
+  name: string | null;
+  avatar_url: string | null;
+  role: "collaborator" | "viewer";
+  accepted_at: string | null;
+  created_at: string;
+};
+
+export type Invite = {
+  id: number;
+  email: string;
+  role: "collaborator" | "viewer";
+  expires_at: string;
+  created_at: string;
+  /** Present when listing/creating so inviter can build invite link. */
+  token?: string;
+};
+
+export type MembersIndexResponse = {
+  members: Member[];
+  invites: Invite[];
+};
+
+export type MemberCreateResponse = { member: Member };
+export type InviteCreateResponse = { invite: Invite };
+export type MemberUpdateResponse = { member: Member };
+
+export type InviteShowResponse = {
+  type: "brainstorm" | "idea";
+  email: string;
+  role: string;
+  expires_at: string;
+  resource: { id: number; title: string; slug: string; owner_username: string };
+  invited_by: { id: number; username: string | null; name: string | null; avatar_url: string | null };
+};
+
+export type InviteAcceptResponse = {
+  resource_type: "brainstorm" | "idea";
+  resource: { id: number; title: string; slug: string; owner_username: string };
+};
+
+export type ResourceType = "brainstorm" | "idea";
+
+function membersPath(username: string, slug: string, resourceType: ResourceType): string {
+  const segment = resourceType === "brainstorm" ? "brainstorms" : "ideas";
+  return `/${encodeURIComponent(username)}/${segment}/${encodeURIComponent(slug)}/members`;
+}
+
+export const membersApi = {
+  list(token: string, username: string, slug: string, resourceType: ResourceType) {
+    return apiFetch<MembersIndexResponse>(membersPath(username, slug, resourceType), {
+      token,
+    });
+  },
+
+  create(
+    token: string,
+    username: string,
+    slug: string,
+    resourceType: ResourceType,
+    data: {
+      email?: string;
+      /** Use invitee_username so it doesn't overwrite route :username (owner). */
+      invitee_username?: string;
+      role?: "collaborator" | "viewer";
+    }
+  ) {
+    const body: Record<string, unknown> = {};
+    if (data.email != null && data.email.trim() !== "") {
+      body.email = data.email.trim().toLowerCase();
+    } else if (data.invitee_username != null && data.invitee_username.trim() !== "") {
+      body.invitee_username = data.invitee_username.trim();
+    }
+    if (data.role != null) body.role = data.role;
+    return apiFetch<MemberCreateResponse | InviteCreateResponse>(
+      membersPath(username, slug, resourceType),
+      {
+        method: "POST",
+        token,
+        body,
+      }
+    );
+  },
+
+  updateRole(
+    token: string,
+    username: string,
+    slug: string,
+    resourceType: ResourceType,
+    memberId: number,
+    role: "collaborator" | "viewer"
+  ) {
+    return apiFetch<MemberUpdateResponse>(
+      `${membersPath(username, slug, resourceType)}/${memberId}`,
+      {
+        method: "PATCH",
+        token,
+        body: { role },
+      }
+    );
+  },
+
+  remove(
+    token: string,
+    username: string,
+    slug: string,
+    resourceType: ResourceType,
+    id: number
+  ) {
+    return apiFetch<Record<string, never>>(
+      `${membersPath(username, slug, resourceType)}/${id}`,
+      { method: "DELETE", token }
+    );
+  },
+};
+
+export type PendingInviteItem = {
+  token: string;
+  type: "brainstorm" | "idea";
+  email: string;
+  role: string;
+  expires_at: string;
+  created_at: string;
+  resource: { id: number; title: string; slug: string; owner_username: string };
+  invited_by: { id: number; username: string | null; name: string | null; avatar_url: string | null };
+};
+
+export type PendingInvitesResponse = { invites: PendingInviteItem[] };
+
+export const invitesApi = {
+  listMine(token: string) {
+    return apiFetch<PendingInvitesResponse>("/me/invites", { token });
+  },
+
+  getByToken(token: string, inviteToken: string) {
+    return apiFetch<InviteShowResponse>(`/invites/${encodeURIComponent(inviteToken)}`, {
+      token,
+    });
+  },
+
+  accept(token: string, inviteToken: string) {
+    return apiFetch<InviteAcceptResponse>(
+      `/invites/${encodeURIComponent(inviteToken)}/accept`,
+      { method: "POST", token }
+    );
+  },
 };
 
 export const authApi = {
@@ -167,7 +339,7 @@ export const ideasApi = {
 
   create(
     token: string,
-    data: { title: string; description?: string; slug?: string }
+    data: { title: string; description?: string; slug?: string; brainstorm_id?: number | null }
   ) {
     return apiFetch<IdeaResponse>("/ideas", {
       method: "POST",
@@ -178,7 +350,7 @@ export const ideasApi = {
 
   getByOwnerAndSlug(token: string, username: string, slug: string) {
     return apiFetch<IdeaResponse>(
-      `/ideas/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}`,
       { token }
     );
   },
@@ -190,7 +362,7 @@ export const ideasApi = {
     data: Partial<Pick<Idea, "title" | "description" | "status" | "visibility" | "slug">>
   ) {
     return apiFetch<IdeaResponse>(
-      `/ideas/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}`,
       {
         method: "PATCH",
         token,
@@ -201,7 +373,66 @@ export const ideasApi = {
 
   deleteByOwnerAndSlug(token: string, username: string, slug: string) {
     return apiFetch<Record<string, never>>(
-      `/ideas/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}`,
+      { method: "DELETE", token }
+    );
+  },
+};
+
+export type BrainstormsResponse = {
+  brainstorms: Brainstorm[];
+};
+
+export type BrainstormResponse = {
+  brainstorm: Brainstorm;
+};
+
+export const brainstormsApi = {
+  listMine(token: string) {
+    return apiFetch<BrainstormsResponse>("/brainstorms", { token });
+  },
+
+  listShared(token: string) {
+    return apiFetch<BrainstormsResponse>("/brainstorms/shared", { token });
+  },
+
+  create(
+    token: string,
+    data: { title: string; description?: string; slug?: string }
+  ) {
+    return apiFetch<BrainstormResponse>("/brainstorms", {
+      method: "POST",
+      token,
+      body: data,
+    });
+  },
+
+  getByOwnerAndSlug(token: string, username: string, slug: string) {
+    return apiFetch<BrainstormResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}`,
+      { token }
+    );
+  },
+
+  updateByOwnerAndSlug(
+    token: string,
+    username: string,
+    slug: string,
+    data: Partial<Pick<Brainstorm, "title" | "description" | "status" | "visibility" | "slug">>
+  ) {
+    return apiFetch<BrainstormResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}`,
+      {
+        method: "PATCH",
+        token,
+        body: data as Record<string, unknown>,
+      }
+    );
+  },
+
+  deleteByOwnerAndSlug(token: string, username: string, slug: string) {
+    return apiFetch<Record<string, never>>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}`,
       { method: "DELETE", token }
     );
   },
@@ -217,6 +448,13 @@ export const usersApi = {
   getIdeas(token: string, username: string) {
     return apiFetch<IdeasResponse>(
       `/users/${encodeURIComponent(username)}/ideas`,
+      { token }
+    );
+  },
+
+  getBrainstorms(token: string, username: string) {
+    return apiFetch<BrainstormsResponse>(
+      `/users/${encodeURIComponent(username)}/brainstorms`,
       { token }
     );
   },

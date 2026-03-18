@@ -1,18 +1,17 @@
 # frozen_string_literal: true
 
-class Idea < ApplicationRecord
+class Brainstorm < ApplicationRecord
   include ResourceAccess
 
-  STATUSES = %w[validating validated shelved].freeze
+  STATUSES = %w[exploring researching ready archived].freeze
   VISIBILITIES = %w[private shared].freeze
 
   belongs_to :user
-  belongs_to :brainstorm, optional: true
-  has_many :idea_members, dependent: :destroy
-  has_many :idea_invites, dependent: :destroy
-  has_many :members, through: :idea_members, source: :user
+  has_many :ideas, dependent: :nullify
+  has_many :brainstorm_members, dependent: :destroy
+  has_many :brainstorm_invites, dependent: :destroy
+  has_many :members, through: :brainstorm_members, source: :user
 
-  # Ownership is immutable after creation (no transfer in v1).
   attr_readonly :user_id
 
   validates :title, presence: true, length: { maximum: 120 }
@@ -24,7 +23,6 @@ class Idea < ApplicationRecord
     }
   validates :status, inclusion: { in: STATUSES }
   validates :visibility, inclusion: { in: VISIBILITIES }
-  validate :brainstorm_belongs_to_same_owner
 
   before_validation :normalize_slug
   before_validation :apply_defaults
@@ -32,16 +30,8 @@ class Idea < ApplicationRecord
   private
 
   def apply_defaults
-    self.status ||= "validating"
+    self.status ||= "exploring"
     self.visibility ||= "private"
-  end
-
-  def brainstorm_belongs_to_same_owner
-    return if brainstorm_id.blank?
-    return if brainstorm.nil?
-    return if brainstorm.user_id == user_id
-
-    errors.add(:brainstorm_id, "must belong to the same owner as the idea")
   end
 
   def normalize_slug

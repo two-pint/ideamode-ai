@@ -3,8 +3,15 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { BrainstormCard } from "@/components/brainstorm-card";
 import { IdeaCard } from "@/components/idea-card";
-import { type Idea, type User, ApiError, usersApi } from "@/lib/api";
+import {
+  type Brainstorm,
+  type Idea,
+  type User,
+  ApiError,
+  usersApi,
+} from "@/lib/api";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 
 type ProfileUser = Pick<User, "id" | "username" | "name" | "avatar_url" | "bio">;
@@ -14,6 +21,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const { user, token, ready } = useRequireAuth();
   const [profile, setProfile] = useState<ProfileUser | null>(null);
+  const [brainstorms, setBrainstorms] = useState<Brainstorm[]>([]);
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,10 +31,12 @@ export default function ProfilePage() {
     setLoading(true);
     Promise.all([
       usersApi.getProfile(token, params.username),
+      usersApi.getBrainstorms(token, params.username),
       usersApi.getIdeas(token, params.username),
     ])
-      .then(([profileRes, ideasRes]) => {
+      .then(([profileRes, brainstormsRes, ideasRes]) => {
         setProfile(profileRes.user);
+        setBrainstorms(brainstormsRes.brainstorms);
         setIdeas(ideasRes.ideas);
       })
       .catch((error) => {
@@ -47,7 +57,7 @@ export default function ProfilePage() {
 
   const isOwner = user.username === profile.username;
   const subtitle = isOwner
-    ? "Manage your profile and ideas"
+    ? "Manage your profile, brainstorms, and ideas"
     : `Viewing @${profile.username}'s profile`;
 
   return (
@@ -59,10 +69,35 @@ export default function ProfilePage() {
       </div>
 
       <section className="space-y-3">
+        <h3 className="text-lg font-semibold">
+          {isOwner ? "Your brainstorms" : "Shared brainstorms"}
+        </h3>
+        {brainstorms.length === 0 ? (
+          <p className="text-sm text-zinc-500">
+            {isOwner
+              ? "You have not created any brainstorms yet."
+              : "No brainstorms are visible for this user."}
+          </p>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {brainstorms.map((brainstorm) => (
+              <BrainstormCard
+                key={brainstorm.id}
+                brainstorm={brainstorm}
+                ownerUsername={profile.username}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="mt-8 space-y-3">
         <h3 className="text-lg font-semibold">{isOwner ? "Your ideas" : "Shared ideas"}</h3>
         {ideas.length === 0 ? (
           <p className="text-sm text-zinc-500">
-            {isOwner ? "You have not created any ideas yet." : "No ideas are visible for this user."}
+            {isOwner
+              ? "You have not created any ideas yet."
+              : "No ideas are visible for this user."}
           </p>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

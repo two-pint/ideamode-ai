@@ -10,19 +10,92 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_15_200500) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_17_000004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
-  create_table "ideas", force: :cascade do |t|
+  create_table "brainstorm_invites", force: :cascade do |t|
+    t.datetime "accepted_at", precision: nil
+    t.bigint "brainstorm_id", null: false
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.datetime "expires_at", precision: nil, null: false
+    t.bigint "invited_by_id", null: false
+    t.string "role", default: "collaborator", null: false
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.index ["brainstorm_id"], name: "index_brainstorm_invites_on_brainstorm_id"
+    t.index ["invited_by_id"], name: "index_brainstorm_invites_on_invited_by_id"
+    t.index ["token"], name: "index_brainstorm_invites_on_token", unique: true
+  end
+
+  create_table "brainstorm_members", force: :cascade do |t|
+    t.datetime "accepted_at", precision: nil
+    t.bigint "brainstorm_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "invited_by_id", null: false
+    t.string "role", default: "collaborator", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["brainstorm_id", "user_id"], name: "index_brainstorm_members_on_brainstorm_id_and_user_id", unique: true
+    t.index ["brainstorm_id"], name: "index_brainstorm_members_on_brainstorm_id"
+    t.index ["invited_by_id"], name: "index_brainstorm_members_on_invited_by_id"
+    t.index ["user_id"], name: "index_brainstorm_members_on_user_id"
+  end
+
+  create_table "brainstorms", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
     t.string "slug", null: false
-    t.string "status", default: "brainstorm", null: false
+    t.string "status", default: "exploring", null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.string "visibility", default: "private", null: false
+    t.index ["user_id", "slug"], name: "index_brainstorms_on_user_id_and_slug", unique: true
+    t.index ["user_id"], name: "index_brainstorms_on_user_id"
+  end
+
+  create_table "idea_invites", force: :cascade do |t|
+    t.datetime "accepted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.datetime "expires_at", precision: nil, null: false
+    t.bigint "idea_id", null: false
+    t.bigint "invited_by_id", null: false
+    t.string "role", default: "collaborator", null: false
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.index ["idea_id"], name: "index_idea_invites_on_idea_id"
+    t.index ["invited_by_id"], name: "index_idea_invites_on_invited_by_id"
+    t.index ["token"], name: "index_idea_invites_on_token", unique: true
+  end
+
+  create_table "idea_members", force: :cascade do |t|
+    t.datetime "accepted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.bigint "idea_id", null: false
+    t.bigint "invited_by_id", null: false
+    t.string "role", default: "collaborator", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["idea_id", "user_id"], name: "index_idea_members_on_idea_id_and_user_id", unique: true
+    t.index ["idea_id"], name: "index_idea_members_on_idea_id"
+    t.index ["invited_by_id"], name: "index_idea_members_on_invited_by_id"
+    t.index ["user_id"], name: "index_idea_members_on_user_id"
+  end
+
+  create_table "ideas", force: :cascade do |t|
+    t.bigint "brainstorm_id"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "slug", null: false
+    t.string "status", default: "validating", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.string "visibility", default: "private", null: false
+    t.index ["brainstorm_id"], name: "index_ideas_on_brainstorm_id"
     t.index ["user_id", "slug"], name: "index_ideas_on_user_id_and_slug", unique: true
     t.index ["user_id"], name: "index_ideas_on_user_id"
   end
@@ -42,5 +115,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_15_200500) do
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
+  add_foreign_key "brainstorm_invites", "brainstorms"
+  add_foreign_key "brainstorm_invites", "users", column: "invited_by_id"
+  add_foreign_key "brainstorm_members", "brainstorms"
+  add_foreign_key "brainstorm_members", "users"
+  add_foreign_key "brainstorm_members", "users", column: "invited_by_id"
+  add_foreign_key "brainstorms", "users"
+  add_foreign_key "idea_invites", "ideas"
+  add_foreign_key "idea_invites", "users", column: "invited_by_id"
+  add_foreign_key "idea_members", "ideas"
+  add_foreign_key "idea_members", "users"
+  add_foreign_key "idea_members", "users", column: "invited_by_id"
+  add_foreign_key "ideas", "brainstorms"
   add_foreign_key "ideas", "users"
 end
