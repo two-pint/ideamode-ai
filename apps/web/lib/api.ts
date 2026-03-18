@@ -627,6 +627,15 @@ export const chatSessionsApi = {
       },
       body: JSON.stringify({ content }),
     });
+    if (!res.ok) {
+      let errData: Record<string, unknown> = {};
+      try { errData = await res.json(); } catch { /* ignore */ }
+      throw new ApiError(
+        typeof errData.error === "string" ? errData.error : Array.isArray(errData.errors) ? errData.errors.join(", ") : "Request failed",
+        res.status,
+        errData
+      );
+    }
     const contentType = res.headers.get("Content-Type") || "";
     if (contentType.includes("text/event-stream") && onStreamChunk) {
       const reader = res.body?.getReader();
@@ -653,13 +662,6 @@ export const chatSessionsApi = {
       return {};
     }
     const data = await res.json();
-    if (!res.ok) {
-      throw new ApiError(
-        typeof data.error === "string" ? data.error : Array.isArray(data.errors) ? data.errors.join(", ") : "Request failed",
-        res.status,
-        data
-      );
-    }
     return { message: data.message, session: data.session };
   },
 
@@ -730,6 +732,15 @@ export const discussionSessionsApi = {
       },
       body: JSON.stringify({ content }),
     });
+    if (!res.ok) {
+      let errData: Record<string, unknown> = {};
+      try { errData = await res.json(); } catch { /* ignore */ }
+      throw new ApiError(
+        typeof errData.error === "string" ? errData.error : Array.isArray(errData.errors) ? errData.errors.join(", ") : "Request failed",
+        res.status,
+        errData
+      );
+    }
     const contentType = res.headers.get("Content-Type") || "";
     if (contentType.includes("text/event-stream") && onStreamChunk) {
       const reader = res.body?.getReader();
@@ -756,13 +767,6 @@ export const discussionSessionsApi = {
       return {};
     }
     const data = await res.json();
-    if (!res.ok) {
-      throw new ApiError(
-        typeof data.error === "string" ? data.error : Array.isArray(data.errors) ? data.errors.join(", ") : "Request failed",
-        res.status,
-        data
-      );
-    }
     return { session: data.session };
   },
 

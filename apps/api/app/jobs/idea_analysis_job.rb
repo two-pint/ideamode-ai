@@ -13,6 +13,7 @@ class IdeaAnalysisJob < ApplicationJob
     end
   rescue StandardError => e
     Rails.logger.error("[IdeaAnalysisJob] #{e.message}")
-    idea_analysis.update!(status: "failed", result: idea_analysis.result.merge("error" => e.message))
+    # Optional hardening: result is non-nil in schema (default: {}, null: false); guard if schema were relaxed.
+    idea_analysis.update!(status: "failed", result: (idea_analysis.result || {}).merge("error" => e.message))
   end
 end

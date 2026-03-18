@@ -38,6 +38,7 @@ class DiscussionSessionsController < ApplicationController
     response.headers["X-Accel-Buffering"] = "no"
 
     assistant_content = +""
+    stream_success = false
     begin
       ClaudeChatService.new.stream_chat(
         system_prompt: build_discussion_system_prompt,
@@ -46,13 +47,18 @@ class DiscussionSessionsController < ApplicationController
         assistant_content << chunk
         response.stream.write("data: #{escape_sse(chunk)}\n\n")
       end
+      stream_success = true
+    rescue StandardError => e
+      Rails.logger.error("[DiscussionSessions] stream error: #{e.message}")
     ensure
       response.stream.close
     end
 
-    assistant_message = build_message("assistant", assistant_content, nil)
-    @session.messages = (@session.messages || []) + [assistant_message]
-    @session.save!
+    if stream_success && assistant_content.present?
+      assistant_message = build_message("assistant", assistant_content, nil)
+      @session.messages = (@session.messages || []) + [assistant_message]
+      @session.save!
+    end
   end
 
   def pin

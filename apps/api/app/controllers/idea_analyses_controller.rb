@@ -30,8 +30,10 @@ class IdeaAnalysesController < ApplicationController
   end
 
   def update
-    if params[:annotations].is_a?(Hash)
+    if params[:annotations].respond_to?(:to_unsafe_h)
       @analysis.update!(annotations: @analysis.annotations.deep_merge(params[:annotations].to_unsafe_h))
+    elsif params[:annotations].is_a?(Hash)
+      @analysis.update!(annotations: @analysis.annotations.deep_merge(params[:annotations]))
     end
     render json: analysis_json(@analysis)
   end
