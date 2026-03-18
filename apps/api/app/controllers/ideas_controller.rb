@@ -65,7 +65,9 @@ class IdeasController < ApplicationController
   end
 
   def update_params
-    params.permit(:title, :description, :slug, :status, :visibility, :brainstorm_id)
+    permitted = params.permit(:username, :slug, :title, :description, :slug, :status, :visibility, :brainstorm_id, idea: %i[title description slug status visibility brainstorm_id])
+    source = permitted[:idea].presence || permitted
+    source.permit(:title, :description, :slug, :status, :visibility, :brainstorm_id)
   end
 
   def idea_json(idea)

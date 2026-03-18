@@ -59,7 +59,10 @@ class BrainstormsController < ApplicationController
   end
 
   def update_params
-    params.permit(:title, :description, :slug, :status, :visibility)
+    # Permit route/body keys to avoid unpermitted-parameter logs; accept nested :brainstorm or flat body.
+    permitted = params.permit(:username, :slug, :title, :description, :status, :visibility, brainstorm: %i[title description slug status visibility])
+    source = permitted[:brainstorm].presence || permitted
+    source.permit(:title, :description, :slug, :status, :visibility)
   end
 
   def brainstorm_json(brainstorm)
