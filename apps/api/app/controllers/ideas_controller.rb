@@ -80,6 +80,7 @@ class IdeasController < ApplicationController
       visibility: idea.visibility,
       brainstorm_id: idea.brainstorm_id,
       brainstorm_slug: idea.brainstorm&.slug,
+      brainstorm_title: idea.brainstorm&.title,
       owner: {
         id: idea.user.id,
         username: idea.user.username,

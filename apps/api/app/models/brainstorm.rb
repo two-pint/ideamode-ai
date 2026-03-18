@@ -11,6 +11,10 @@ class Brainstorm < ApplicationRecord
   has_many :brainstorm_members, dependent: :destroy
   has_many :brainstorm_invites, dependent: :destroy
   has_many :members, through: :brainstorm_members, source: :user
+  has_one :chat_session, dependent: :destroy
+  has_many :brainstorm_research, dependent: :destroy
+  has_one :brainstorm_note, dependent: :destroy
+  has_many :brainstorm_resources, dependent: :destroy
 
   attr_readonly :user_id
 
