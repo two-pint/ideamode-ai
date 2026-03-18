@@ -4,7 +4,7 @@ class BrainstormsController < ApplicationController
   include Authenticatable
 
   before_action :require_authentication!
-  before_action :set_brainstorm, only: %i[show update destroy]
+  before_action :set_brainstorm, only: %i[show update destroy create_idea]
 
   def index
     brainstorms = current_user.brainstorms.includes(:user).order(updated_at: :desc)
@@ -46,6 +46,39 @@ class BrainstormsController < ApplicationController
     head :no_content
   end
 
+  def create_idea
+    return head :forbidden unless @brainstorm.user_id == current_user.id
+
+    title = params[:title].to_s.strip
+    description = params[:description].to_s.strip
+    slug_param = params[:slug].to_s.strip
+    member_ids = Array(params[:member_ids]).map(&:to_i).uniq
+
+    if title.blank?
+      return render json: { errors: ["Title is required"] }, status: :unprocessable_entity
+    end
+
+    idea = current_user.ideas.new(
+      title: title,
+      description: description.presence,
+      slug: slug_param.presence || title.parameterize,
+      brainstorm_id: @brainstorm.id
+    )
+
+    if idea.save
+      member_ids.each do |user_id|
+        next if user_id == current_user.id
+        user = User.find_by(id: user_id)
+        next unless user
+        next if idea.idea_members.exists?(user_id: user.id)
+        idea.idea_members.create!(user_id: user.id, invited_by: current_user, role: "collaborator", accepted_at: Time.current)
+      end
+      render json: { idea: idea_json(idea) }, status: :created
+    else
+      render json: { errors: idea.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
   private
 
   def set_brainstorm
@@ -73,6 +106,9 @@ class BrainstormsController < ApplicationController
       slug: brainstorm.slug,
       status: brainstorm.status,
       visibility: brainstorm.visibility,
+      pinned_message_id: brainstorm.pinned_message_id,
+      pinned_message_content: brainstorm.pinned_message_content,
+      can_edit: brainstorm.editable_by?(current_user),
       owner: {
         id: brainstorm.user.id,
         username: brainstorm.user.username,
@@ -80,6 +116,26 @@ class BrainstormsController < ApplicationController
         avatar_url: brainstorm.user.avatar_url
       },
       updated_at: brainstorm.updated_at
+    }
+  end
+
+  def idea_json(idea)
+    {
+      id: idea.id,
+      title: idea.title,
+      description: idea.description,
+      slug: idea.slug,
+      status: idea.status,
+      visibility: idea.visibility,
+      brainstorm_id: idea.brainstorm_id,
+      brainstorm_slug: idea.brainstorm&.slug,
+      owner: {
+        id: idea.user.id,
+        username: idea.user.username,
+        name: idea.user.name,
+        avatar_url: idea.user.avatar_url
+      },
+      updated_at: idea.updated_at
     }
   end
 end

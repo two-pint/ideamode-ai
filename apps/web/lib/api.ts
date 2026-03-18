@@ -98,6 +98,7 @@ export type Idea = {
   visibility: IdeaVisibility;
   brainstorm_id: number | null;
   brainstorm_slug?: string | null;
+  brainstorm_title?: string | null;
   owner?: {
     id: number;
     username: string | null;
@@ -117,6 +118,9 @@ export type Brainstorm = {
   slug: string;
   status: BrainstormStatus;
   visibility: BrainstormVisibility;
+  pinned_message_id?: string | null;
+  pinned_message_content?: string | null;
+  can_edit?: boolean;
   owner?: {
     id: number;
     username: string | null;
@@ -124,6 +128,31 @@ export type Brainstorm = {
     avatar_url: string | null;
   };
   updated_at: string;
+};
+
+export type BrainstormResource = {
+  id: number;
+  url: string;
+  title: string | null;
+  resource_type: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  user_id: number | null;
+  content: string;
+};
+
+export type ChatSessionResponse = {
+  id: number;
+  brainstorm_id: number;
+  messages: ChatMessage[];
+  pinned_message_id: string | null;
+  pinned_message_content: string | null;
 };
 
 export type Member = {
@@ -434,6 +463,207 @@ export const brainstormsApi = {
     return apiFetch<Record<string, never>>(
       `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}`,
       { method: "DELETE", token }
+    );
+  },
+
+  createIdeaFromBrainstorm(
+    token: string,
+    username: string,
+    slug: string,
+    data: { title: string; description?: string; slug?: string; member_ids?: number[] }
+  ) {
+    return apiFetch<IdeaResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/create-idea`,
+      { method: "POST", token, body: data as Record<string, unknown> }
+    );
+  },
+};
+
+export type BrainstormResourcesResponse = { resources: BrainstormResource[] };
+export type BrainstormResourceResponse = { resource: BrainstormResource };
+
+export const brainstormResourcesApi = {
+  list(token: string, username: string, slug: string) {
+    return apiFetch<BrainstormResourcesResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/resources`,
+      { token }
+    );
+  },
+
+  create(
+    token: string,
+    username: string,
+    slug: string,
+    data: { url: string; title?: string; notes?: string }
+  ) {
+    return apiFetch<BrainstormResourceResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/resources`,
+      { method: "POST", token, body: data as Record<string, unknown> }
+    );
+  },
+
+  update(
+    token: string,
+    username: string,
+    slug: string,
+    id: number,
+    data: { url?: string; title?: string; notes?: string }
+  ) {
+    return apiFetch<BrainstormResourceResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/resources/${id}`,
+      { method: "PATCH", token, body: data as Record<string, unknown> }
+    );
+  },
+
+  delete(token: string, username: string, slug: string, id: number) {
+    return apiFetch<Record<string, never>>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/resources/${id}`,
+      { method: "DELETE", token }
+    );
+  },
+};
+
+export type BrainstormNoteResponse = {
+  note: {
+    id?: number;
+    brainstorm_id?: number;
+    content: Record<string, unknown>;
+    updated_at: string | null;
+  };
+};
+
+export type BrainstormResearchItem = {
+  id: number;
+  brainstorm_id: number;
+  research_type: string;
+  query: string;
+  result: {
+    summary?: string;
+    links?: Array<{ url: string; title?: string }>;
+    competitors?: Array<{ name: string; url?: string; one_liner?: string }>;
+    key_takeaways?: string[];
+    error?: string;
+  };
+  created_at: string;
+};
+
+export type BrainstormResearchListResponse = { research: BrainstormResearchItem[] };
+export type BrainstormResearchItemResponse = { research: BrainstormResearchItem };
+
+export const brainstormResearchApi = {
+  list(token: string, username: string, slug: string) {
+    return apiFetch<BrainstormResearchListResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/research`,
+      { token }
+    );
+  },
+
+  create(
+    token: string,
+    username: string,
+    slug: string,
+    data: { research_type: string; query: string }
+  ) {
+    return apiFetch<BrainstormResearchItemResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/research`,
+      { method: "POST", token, body: data }
+    );
+  },
+
+  get(token: string, username: string, slug: string, id: number) {
+    return apiFetch<BrainstormResearchItemResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/research/${id}`,
+      { token }
+    );
+  },
+};
+
+export const brainstormNotesApi = {
+  get(token: string, username: string, slug: string) {
+    return apiFetch<BrainstormNoteResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/note`,
+      { token }
+    );
+  },
+
+  update(
+    token: string,
+    username: string,
+    slug: string,
+    content: Record<string, unknown>
+  ) {
+    return apiFetch<BrainstormNoteResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/note`,
+      { method: "PUT", token, body: { content } }
+    );
+  },
+};
+
+export const chatSessionsApi = {
+  getSession(token: string, username: string, slug: string) {
+    return apiFetch<ChatSessionResponse>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/chat/session`,
+      { token }
+    );
+  },
+
+  async postMessage(
+    token: string,
+    username: string,
+    slug: string,
+    content: string,
+    onStreamChunk?: (chunk: string) => void
+  ): Promise<{ message?: ChatMessage; session?: ChatSessionResponse }> {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const url = `${API_URL}/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/chat/session/messages`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content }),
+    });
+    const contentType = res.headers.get("Content-Type") || "";
+    if (contentType.includes("text/event-stream") && onStreamChunk) {
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      if (!reader) throw new ApiError("No body", res.status, null);
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              onStreamChunk(typeof data === "string" ? data : String(data));
+            } catch {
+              // ignore parse errors
+            }
+          }
+        }
+      }
+      return {};
+    }
+    const data = await res.json();
+    if (!res.ok) {
+      throw new ApiError(
+        typeof data.error === "string" ? data.error : Array.isArray(data.errors) ? data.errors.join(", ") : "Request failed",
+        res.status,
+        data
+      );
+    }
+    return { message: data.message, session: data.session };
+  },
+
+  pinMessage(token: string, username: string, slug: string, messageId: string) {
+    return apiFetch<{ pinned_message_id: string; pinned_message_content: string | null }>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/chat/session/pin`,
+      { method: "POST", token, body: { message_id: messageId } }
     );
   },
 };

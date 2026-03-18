@@ -201,26 +201,29 @@ POST   /invites/:token/accept
 
 Brainstorm-specific AI features — the exploratory workspace that differentiates IdeaMode. Built first so users can start exploring concepts immediately.
 
-**Deliverable:** Users can chat with Claude in an exploratory mode, run lightweight research queries, take notes within a brainstorm, and create an idea from a brainstorm with context carried over.
+**Deliverable:** Users can collaborate in a shared brainstorm chat (owner + collaborators + AI in one thread), trigger the AI by mentioning **@ideabot** in a message, attach linked resources (URLs, YouTube) for reference and AI context, run lightweight research queries, take notes, and create an idea from a brainstorm with context carried over.
 
 ---
 
-### Module 2.1 — Brainstorm Chat
+### Module 2.1 — Brainstorm Chat (shared thread, @ideabot trigger)
 **Layer:** AI / LLM · **Tech:** Claude API, Streaming, Rails SSE
 
+Brainstorm chat is **one shared thread per brainstorm**: all users with access (owner and collaborators) participate in the same conversation; the AI (Ideabot) replies when explicitly invoked.
+
 **Tasks:**
-- `ChatSession` model: `brainstorm_id` (nullable), `idea_id` (nullable), `user_id`, `messages` (jsonb) — check constraint: exactly one of `brainstorm_id` or `idea_id` must be set
-- System prompt: creative thinking partner — exploratory and curious, not evaluative
-- Streaming response via Server-Sent Events
-- Suggested starter prompts on empty state (e.g. "I have a rough idea — help me think it through")
-- Session history: archive old sessions, start new
+- `ChatSession` model: `brainstorm_id` (nullable), `idea_id` (nullable), `messages` (jsonb) — check constraint: exactly one of `brainstorm_id` or `idea_id` must be set. One session per brainstorm (single shared thread). Each message in `messages`: `role` (user | assistant), `user_id` (nullable; set for user messages), `content`, `id`.
+- **@ideabot trigger:** Invoke Claude only when the message content contains `@ideabot`. Messages without `@ideabot` are persisted as user messages only; no API call or assistant reply. Reduces unnecessary UI/API usage.
+- System prompt: creative thinking partner — exploratory and curious, not evaluative. When building context, include linked resources (Module 2.6) as reference material for the AI.
+- Streaming response via Server-Sent Events when @ideabot is present; otherwise return success after persisting the user message.
+- Suggested starter prompts on empty state (e.g. "I have a rough idea — @ideabot help me think it through")
 - Pin message to Overview as key insight
+- Viewers: read-only access to chat; only owner and collaborators can post
 
 **Endpoints:**
 ```
-POST /:username/:slug/chat/sessions
-POST /:username/:slug/chat/sessions/:id/messages   (SSE)
-GET  /:username/:slug/chat/sessions
+GET  /:username/brainstorms/:slug/chat/session
+POST /:username/brainstorms/:slug/chat/session/messages   (body: content; SSE only when message contains @ideabot)
+POST /:username/brainstorms/:slug/chat/session/pin      (body: message_id)
 ```
 
 ---
@@ -290,6 +293,27 @@ POST /:username/:brainstorm-slug/create-idea
 - Research history list with timestamps
 - Result cards: summary, links, key takeaways
 - Loading skeleton while research runs
+
+---
+
+### Module 2.6 — Brainstorm Linked Resources
+**Layer:** Full Stack · **Tech:** Rails, Next.js
+
+Users can attach URLs (including YouTube) to a brainstorm. Resources are shown as a reference list and included as targeted context when the AI is invoked (chat, and later research / Create Idea).
+
+**Tasks:**
+- `BrainstormResource` model: `brainstorm_id`, `url` (required), `title` (optional), `resource_type` (url | youtube), `notes` (optional), timestamps. Infer `resource_type` from URL when not provided.
+- CRUD under brainstorm: list, add, update title/notes, delete. Authorization: same as brainstorm (owner/collaborator write; viewer read-only).
+- UI: Resources section (e.g. on Overview or dedicated area); add-link form (URL, optional title/notes); list with edit/delete. Optional: autocomplete or hint for @ideabot in chat input.
+- When calling Claude for brainstorm chat (and later research / Create Idea), include linked resources in system or context block (e.g. "Reference material: [title]: [url]").
+
+**Endpoints:**
+```
+GET   /:username/brainstorms/:slug/resources
+POST  /:username/brainstorms/:slug/resources   (body: url, title?, resource_type?, notes?)
+PATCH /:username/brainstorms/:slug/resources/:id
+DELETE /:username/brainstorms/:slug/resources/:id
+```
 
 ---
 
@@ -544,11 +568,12 @@ GET  /invites/:token
 | 1 | 1.3 Ideas CRUD | Backend | Rails, PostgreSQL | 6 |
 | 1 | 1.4 Membership & Access Control | Backend | Rails, Pundit | 7 |
 | 1 | 1.5 Dashboard + Navigation | Frontend | Next.js, Tailwind | 11 |
-| 2 | 2.1 Brainstorm Chat | AI / LLM | Claude API, SSE | 6 |
+| 2 | 2.1 Brainstorm Chat (shared, @ideabot) | AI / LLM | Claude API, SSE | 7 |
 | 2 | 2.2 Brainstorm Research | AI / LLM | Claude API, Web Search | 6 |
 | 2 | 2.3 Brainstorm Notes | Frontend | Tiptap, Rails | 5 |
 | 2 | 2.4 Create Idea from Brainstorm | Full Stack | Rails, Next.js | 7 |
 | 2 | 2.5 Brainstorm Research UI | Frontend | Next.js, Tailwind | 4 |
+| 2 | 2.6 Brainstorm Linked Resources | Full Stack | Rails, Next.js | 5 |
 | 3 | 3.1 Discussion Chat | AI / LLM | Claude API, SSE | 7 |
 | 3 | 3.2 Analysis Engine | AI / LLM | Claude API, Sidekiq | 9 |
 | 3 | 3.3 Analysis UI | Frontend | Next.js, Recharts | 7 |
@@ -560,4 +585,4 @@ GET  /invites/:token
 | 5 | 5.2 Responsive & Error Polish | Frontend | Next.js, Tailwind | 6 |
 | 5 | 5.3 Beta Access & Invite Gate | Backend | Rails, Action Mailer | 6 |
 
-**Total: 5 phases · 20 modules · 121 tasks**
+**Total: 5 phases · 21 modules · 126 tasks**

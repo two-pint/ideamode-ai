@@ -50,6 +50,24 @@ Rails.application.routes.draw do
     patch ":username/brainstorms/:slug/members/:id", to: "members#update", defaults: { resource_type: "brainstorm" }
     delete ":username/brainstorms/:slug/members/:id", to: "members#destroy", defaults: { resource_type: "brainstorm" }
 
+    post ":username/brainstorms/:slug/create-idea", to: "brainstorms#create_idea"
+
+    get ":username/brainstorms/:slug/resources", to: "brainstorm_resources#index"
+    post ":username/brainstorms/:slug/resources", to: "brainstorm_resources#create"
+    patch ":username/brainstorms/:slug/resources/:id", to: "brainstorm_resources#update"
+    delete ":username/brainstorms/:slug/resources/:id", to: "brainstorm_resources#destroy"
+
+    get ":username/brainstorms/:slug/chat/session", to: "chat_sessions#show"
+    post ":username/brainstorms/:slug/chat/session/messages", to: "chat_sessions#create_message"
+    post ":username/brainstorms/:slug/chat/session/pin", to: "chat_sessions#pin"
+
+    get ":username/brainstorms/:slug/note", to: "brainstorm_notes#show"
+    put ":username/brainstorms/:slug/note", to: "brainstorm_notes#update"
+
+    get ":username/brainstorms/:slug/research", to: "brainstorm_research#index"
+    post ":username/brainstorms/:slug/research", to: "brainstorm_research#create"
+    get ":username/brainstorms/:slug/research/:id", to: "brainstorm_research#show"
+
     # Ideas
     get ":username/ideas/:slug", to: "ideas#show"
     patch ":username/ideas/:slug", to: "ideas#update"

@@ -191,7 +191,7 @@ export default function IdeaDetailPage() {
                       href={`/${idea.owner.username}/brainstorms/${idea.brainstorm_slug}`}
                       className="font-medium text-zinc-900 underline hover:no-underline"
                     >
-                      View linked brainstorm
+                      {idea.brainstorm_title ?? "View linked brainstorm"}
                     </Link>
                   </p>
                 )}

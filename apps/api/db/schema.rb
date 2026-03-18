@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_17_000004) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_18_000005) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -43,9 +43,43 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_000004) do
     t.index ["user_id"], name: "index_brainstorm_members_on_user_id"
   end
 
+  create_table "brainstorm_notes", force: :cascade do |t|
+    t.bigint "brainstorm_id", null: false
+    t.jsonb "content", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["brainstorm_id"], name: "index_brainstorm_notes_on_brainstorm_id", unique: true
+    t.index ["user_id"], name: "index_brainstorm_notes_on_user_id"
+  end
+
+  create_table "brainstorm_research", force: :cascade do |t|
+    t.bigint "brainstorm_id", null: false
+    t.datetime "created_at", null: false
+    t.string "query", null: false
+    t.string "research_type", null: false
+    t.jsonb "result", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["brainstorm_id", "created_at"], name: "index_brainstorm_research_on_brainstorm_id_and_created_at"
+    t.index ["brainstorm_id"], name: "index_brainstorm_research_on_brainstorm_id"
+  end
+
+  create_table "brainstorm_resources", force: :cascade do |t|
+    t.bigint "brainstorm_id", null: false
+    t.datetime "created_at", null: false
+    t.text "notes"
+    t.string "resource_type", default: "url", null: false
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.string "url", null: false
+    t.index ["brainstorm_id"], name: "index_brainstorm_resources_on_brainstorm_id"
+  end
+
   create_table "brainstorms", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
+    t.text "pinned_message_content"
+    t.string "pinned_message_id"
     t.string "slug", null: false
     t.string "status", default: "exploring", null: false
     t.string "title", null: false
@@ -54,6 +88,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_000004) do
     t.string "visibility", default: "private", null: false
     t.index ["user_id", "slug"], name: "index_brainstorms_on_user_id_and_slug", unique: true
     t.index ["user_id"], name: "index_brainstorms_on_user_id"
+  end
+
+  create_table "chat_sessions", force: :cascade do |t|
+    t.bigint "brainstorm_id"
+    t.datetime "created_at", null: false
+    t.bigint "idea_id"
+    t.jsonb "messages", default: [], null: false
+    t.datetime "updated_at", null: false
+    t.index ["brainstorm_id"], name: "index_chat_sessions_on_brainstorm_id", unique: true, where: "(brainstorm_id IS NOT NULL)"
+    t.index ["idea_id"], name: "index_chat_sessions_on_idea_id", unique: true, where: "(idea_id IS NOT NULL)"
+    t.check_constraint "brainstorm_id IS NOT NULL AND idea_id IS NULL OR brainstorm_id IS NULL AND idea_id IS NOT NULL", name: "chat_sessions_exactly_one_scope"
   end
 
   create_table "idea_invites", force: :cascade do |t|
@@ -120,7 +165,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_000004) do
   add_foreign_key "brainstorm_members", "brainstorms"
   add_foreign_key "brainstorm_members", "users"
   add_foreign_key "brainstorm_members", "users", column: "invited_by_id"
+  add_foreign_key "brainstorm_notes", "brainstorms"
+  add_foreign_key "brainstorm_notes", "users"
+  add_foreign_key "brainstorm_research", "brainstorms"
+  add_foreign_key "brainstorm_resources", "brainstorms"
   add_foreign_key "brainstorms", "users"
+  add_foreign_key "chat_sessions", "brainstorms"
+  add_foreign_key "chat_sessions", "ideas"
   add_foreign_key "idea_invites", "ideas"
   add_foreign_key "idea_invites", "users", column: "invited_by_id"
   add_foreign_key "idea_members", "ideas"
