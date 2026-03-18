@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, Share2, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { IdeaAnalysisTab } from "@/components/idea-analysis-tab";
+import { IdeaDiscussionChat } from "@/components/idea-discussion-chat";
 import { ResourceAccessList } from "@/components/resource-access-list";
 import { ShareDialog } from "@/components/share-dialog";
 import { Button } from "@/components/ui/button";
@@ -73,9 +75,21 @@ export default function IdeaDetailPage() {
   }, [params.slug, params.username, ready, router, token]);
 
   const canEditOverview = useMemo(
-    () => user?.username === params.username && activeTab === "Overview",
-    [activeTab, params.username, user?.username]
+    () => idea?.can_edit === true && activeTab === "Overview",
+    [activeTab, idea?.can_edit]
   );
+
+  const canEditIdea = idea?.can_edit === true;
+
+  const refreshIdea = useCallback(async () => {
+    if (!token || !params.username || !params.slug) return;
+    try {
+      const res = await ideasApi.getByOwnerAndSlug(token, params.username, params.slug);
+      setIdea(res.idea);
+    } catch {
+      // ignore
+    }
+  }, [token, params.username, params.slug]);
 
   const handleSave = async () => {
     if (!idea || !token) return;
@@ -169,7 +183,22 @@ export default function IdeaDetailPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
         <div className="min-w-0">
-          {activeTab !== "Overview" ? (
+          {activeTab === "Discussion" ? (
+            <IdeaDiscussionChat
+              username={params.username}
+              slug={params.slug}
+              token={token}
+              canEdit={canEditIdea}
+              onPinned={refreshIdea}
+            />
+          ) : activeTab === "Analysis" ? (
+            <IdeaAnalysisTab
+              username={params.username}
+              slug={params.slug}
+              token={token}
+              canEdit={canEditIdea}
+            />
+          ) : activeTab !== "Overview" ? (
             <Card>
               <CardHeader>
                 <CardTitle>{activeTab}</CardTitle>
@@ -194,6 +223,13 @@ export default function IdeaDetailPage() {
                       {idea.brainstorm_title ?? "View linked brainstorm"}
                     </Link>
                   </p>
+                )}
+
+                {idea.pinned_message_content && (
+                  <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                    <p className="text-xs font-medium uppercase text-zinc-500">Pinned from Discussion</p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-800">{idea.pinned_message_content}</p>
+                  </div>
                 )}
 
                 <div className="space-y-1">

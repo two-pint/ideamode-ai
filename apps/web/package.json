@@ -9,7 +9,9 @@
     "dev": "node ../../node_modules/next/dist/bin/next dev --port 8080",
     "build": "node ../../node_modules/next/dist/bin/next build",
     "start": "node ../../node_modules/next/dist/bin/next start --port 8080",
-    "lint": "node ../../node_modules/next/dist/bin/next lint"
+    "lint": "node ../../node_modules/next/dist/bin/next lint",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@ideamode/assets": "workspace:*",
@@ -34,13 +36,20 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.0.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.2",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9",
     "eslint-config-next": "^16.0.0",
+    "jsdom": "^25.0.1",
     "postcss": "^8",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.6"
   }
 }

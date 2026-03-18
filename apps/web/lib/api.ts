@@ -99,6 +99,9 @@ export type Idea = {
   brainstorm_id: number | null;
   brainstorm_slug?: string | null;
   brainstorm_title?: string | null;
+  pinned_message_id?: string | null;
+  pinned_message_content?: string | null;
+  can_edit?: boolean;
   owner?: {
     id: number;
     username: string | null;
@@ -624,6 +627,15 @@ export const chatSessionsApi = {
       },
       body: JSON.stringify({ content }),
     });
+    if (!res.ok) {
+      let errData: Record<string, unknown> = {};
+      try { errData = await res.json(); } catch { /* ignore */ }
+      throw new ApiError(
+        typeof errData.error === "string" ? errData.error : Array.isArray(errData.errors) ? errData.errors.join(", ") : "Request failed",
+        res.status,
+        errData
+      );
+    }
     const contentType = res.headers.get("Content-Type") || "";
     if (contentType.includes("text/event-stream") && onStreamChunk) {
       const reader = res.body?.getReader();
@@ -650,13 +662,6 @@ export const chatSessionsApi = {
       return {};
     }
     const data = await res.json();
-    if (!res.ok) {
-      throw new ApiError(
-        typeof data.error === "string" ? data.error : Array.isArray(data.errors) ? data.errors.join(", ") : "Request failed",
-        res.status,
-        data
-      );
-    }
     return { message: data.message, session: data.session };
   },
 
@@ -664,6 +669,204 @@ export const chatSessionsApi = {
     return apiFetch<{ pinned_message_id: string; pinned_message_content: string | null }>(
       `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/chat/session/pin`,
       { method: "POST", token, body: { message_id: messageId } }
+    );
+  },
+};
+
+export type DiscussionSessionResponse = {
+  id: number;
+  idea_id: number;
+  messages: ChatMessage[];
+  archived_at: string | null;
+  created_at: string;
+  pinned_message_id: string | null;
+  pinned_message_content: string | null;
+};
+
+export type DiscussionSessionsListResponse = { sessions: DiscussionSessionResponse[] };
+
+export const discussionSessionsApi = {
+  list(token: string, username: string, slug: string) {
+    return apiFetch<DiscussionSessionsListResponse>(
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/discussion/sessions`,
+      { token }
+    );
+  },
+
+  create(token: string, username: string, slug: string) {
+    return apiFetch<DiscussionSessionResponse>(
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/discussion/sessions`,
+      { method: "POST", token }
+    );
+  },
+
+  getCurrent(token: string, username: string, slug: string) {
+    return apiFetch<DiscussionSessionResponse>(
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/discussion/sessions/current`,
+      { token }
+    );
+  },
+
+  get(token: string, username: string, slug: string, sessionId: number) {
+    return apiFetch<DiscussionSessionResponse>(
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/discussion/sessions/${sessionId}`,
+      { token }
+    );
+  },
+
+  async postMessage(
+    token: string,
+    username: string,
+    slug: string,
+    sessionId: number,
+    content: string,
+    onStreamChunk?: (chunk: string) => void
+  ): Promise<{ session?: DiscussionSessionResponse }> {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const url = `${API_URL}/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/discussion/sessions/${sessionId}/messages`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content }),
+    });
+    if (!res.ok) {
+      let errData: Record<string, unknown> = {};
+      try { errData = await res.json(); } catch { /* ignore */ }
+      throw new ApiError(
+        typeof errData.error === "string" ? errData.error : Array.isArray(errData.errors) ? errData.errors.join(", ") : "Request failed",
+        res.status,
+        errData
+      );
+    }
+    const contentType = res.headers.get("Content-Type") || "";
+    if (contentType.includes("text/event-stream") && onStreamChunk) {
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      if (!reader) throw new ApiError("No body", res.status, null);
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              onStreamChunk(typeof data === "string" ? data : String(data));
+            } catch {
+              // ignore parse errors
+            }
+          }
+        }
+      }
+      return {};
+    }
+    const data = await res.json();
+    return { session: data.session };
+  },
+
+  pinMessage(
+    token: string,
+    username: string,
+    slug: string,
+    sessionId: number,
+    messageId: string
+  ) {
+    return apiFetch<{ pinned_message_id: string; pinned_message_content: string | null }>(
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/discussion/sessions/${sessionId}/pin`,
+      { method: "POST", token, body: { message_id: messageId } }
+    );
+  },
+};
+
+export type IdeaAnalysisType = "competitor" | "tam" | "pmf" | "full";
+export type IdeaAnalysisStatus = "pending" | "running" | "completed" | "failed";
+
+export type CompetitorItem = {
+  name: string;
+  strengths?: string[];
+  weaknesses?: string[];
+  pricing?: string;
+};
+
+export type IdeaAnalysisResult = {
+  competitor_analysis?: {
+    summary?: string;
+    competitors?: CompetitorItem[];
+    saturation_score?: number;
+    whitespace?: string;
+  };
+  market_size?: {
+    tam_estimate?: string;
+    sam_estimate?: string;
+    confidence?: string;
+    proxies_used?: string[];
+  };
+  pmf_signals?: {
+    demand_evidence?: string;
+    pain_point_strength?: string;
+    willingness_to_pay_signals?: string;
+  };
+  verdict?: {
+    score?: number;
+    recommendation?: string;
+    key_risks?: string[];
+    next_steps?: string[];
+  };
+  error?: string;
+};
+
+export type IdeaAnalysisItem = {
+  id: number;
+  idea_id: number;
+  analysis_type: string;
+  status: IdeaAnalysisStatus;
+  result: IdeaAnalysisResult;
+  annotations: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type IdeaAnalysesListResponse = { analyses: IdeaAnalysisItem[] };
+export type IdeaAnalysisItemResponse = { analysis?: IdeaAnalysisItem };
+
+export const ideaAnalysesApi = {
+  list(token: string, username: string, slug: string) {
+    return apiFetch<IdeaAnalysesListResponse>(
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/analyses`,
+      { token }
+    );
+  },
+
+  create(token: string, username: string, slug: string, analysis_type: IdeaAnalysisType) {
+    return apiFetch<IdeaAnalysisItem>(
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/analyses`,
+      { method: "POST", token, body: { analysis_type } }
+    );
+  },
+
+  get(token: string, username: string, slug: string, id: number) {
+    return apiFetch<IdeaAnalysisItem>(
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/analyses/${id}`,
+      { token }
+    );
+  },
+
+  updateAnnotations(
+    token: string,
+    username: string,
+    slug: string,
+    id: number,
+    annotations: Record<string, unknown>
+  ) {
+    return apiFetch<IdeaAnalysisItem>(
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/analyses/${id}`,
+      { method: "PATCH", token, body: { annotations } }
     );
   },
 };
