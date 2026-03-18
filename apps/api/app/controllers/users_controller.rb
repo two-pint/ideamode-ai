@@ -25,10 +25,10 @@ class UsersController < ApplicationController
     end
 
     ideas = if user.id == current_user.id
-      user.ideas.order(updated_at: :desc)
+      user.ideas.includes(:user).order(updated_at: :desc)
     else
       member_idea_ids = IdeaMember.where(user_id: current_user.id).accepted.pluck(:idea_id)
-      user.ideas.where(id: member_idea_ids).order(updated_at: :desc)
+      user.ideas.includes(:user).where(id: member_idea_ids).order(updated_at: :desc)
     end
 
     render json: { ideas: ideas.map { |idea| idea_json(idea) } }
@@ -43,10 +43,10 @@ class UsersController < ApplicationController
     end
 
     brainstorms = if user.id == current_user.id
-      user.brainstorms.order(updated_at: :desc)
+      user.brainstorms.includes(:user).order(updated_at: :desc)
     else
       member_brainstorm_ids = BrainstormMember.where(user_id: current_user.id).accepted.pluck(:brainstorm_id)
-      user.brainstorms.where(id: member_brainstorm_ids).order(updated_at: :desc)
+      user.brainstorms.includes(:user).where(id: member_brainstorm_ids).order(updated_at: :desc)
     end
 
     render json: { brainstorms: brainstorms.map { |b| brainstorm_json(b) } }

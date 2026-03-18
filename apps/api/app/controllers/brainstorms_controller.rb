@@ -7,13 +7,13 @@ class BrainstormsController < ApplicationController
   before_action :set_brainstorm, only: %i[show update destroy]
 
   def index
-    brainstorms = current_user.brainstorms.order(updated_at: :desc)
+    brainstorms = current_user.brainstorms.includes(:user).order(updated_at: :desc)
     render json: { brainstorms: brainstorms.map { |b| brainstorm_json(b) } }
   end
 
   def shared
     brainstorm_ids = current_user.brainstorm_members.accepted.pluck(:brainstorm_id).uniq
-    brainstorms = Brainstorm.where(id: brainstorm_ids).order(updated_at: :desc)
+    brainstorms = Brainstorm.includes(:user).where(id: brainstorm_ids).order(updated_at: :desc)
     render json: { brainstorms: brainstorms.map { |b| brainstorm_json(b) } }
   end
 

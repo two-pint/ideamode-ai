@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 # Nested under :username/brainstorms/:slug or :username/ideas/:slug (route sets resource_type via defaults).
-# Resolves resource from params and manages members/invites. Only users who can edit can manage members.
+# Resolves resource from params and manages members/invites. Only the resource owner can create/update/destroy members.
 class MembersController < ApplicationController
   include Authenticatable
 
   before_action :require_authentication!
   before_action :set_resource
-  before_action :authorize_editable!, only: %i[create update destroy]
+  before_action :authorize_owner!, only: %i[create update destroy]
 
   def index
     members = member_association.accepted.includes(:user).order(created_at: :asc)
@@ -80,8 +80,8 @@ class MembersController < ApplicationController
     end
   end
 
-  def authorize_editable!
-    return head :forbidden unless @resource.editable_by?(current_user)
+  def authorize_owner!
+    return head :forbidden unless @resource.user_id == current_user.id
   end
 
   def member_association
@@ -105,14 +105,14 @@ class MembersController < ApplicationController
     create_invite_for_email(user.email)
   end
 
-  # Always create an invite (no immediate member). Invitee must accept before the resource appears in their list.
+  # Always create an invite. Invitee must accept (via token or invitations flow) before the resource appears in their list.
   def create_invite_for_email(email_param)
     email = email_param.to_s.strip.downcase
     return render json: { errors: ["Email required"] }, status: :unprocessable_entity if email.blank?
 
     user = User.find_by("LOWER(email) = ?", email)
     return render json: { errors: ["Cannot add owner"] }, status: :unprocessable_entity if user&.id == @resource.user_id
-    return render json: { errors: ["Already a member"] }, status: :unprocessable_entity if user && member_association.exists?(user_id: user.id)
+    return render json: { errors: ["Already a member"] }, status: :unprocessable_entity if user && member_association.accepted.exists?(user_id: user.id)
 
     existing_invite = invite_association.where("LOWER(email) = ?", email).first
     if existing_invite.present? && existing_invite.accepted_at.blank? && existing_invite.expires_at > Time.current

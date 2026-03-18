@@ -7,13 +7,13 @@ class IdeasController < ApplicationController
   before_action :set_idea_by_route, only: %i[show update destroy]
 
   def index
-    ideas = current_user.ideas.order(updated_at: :desc)
+    ideas = current_user.ideas.includes(:user).order(updated_at: :desc)
     render json: { ideas: ideas.map { |idea| idea_json(idea) } }
   end
 
   def shared
     idea_ids = current_user.idea_members.accepted.pluck(:idea_id).uniq
-    ideas = Idea.where(id: idea_ids).order(updated_at: :desc)
+    ideas = Idea.includes(:user).where(id: idea_ids).order(updated_at: :desc)
     render json: { ideas: ideas.map { |idea| idea_json(idea) } }
   end
 

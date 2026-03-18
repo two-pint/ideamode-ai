@@ -124,7 +124,23 @@ export default function IdeaDetailPage() {
     }
   };
 
-  if (!ready || !user || !token || loading || !idea) {
+  if (!ready || !user || !token) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </main>
+    );
+  }
+
+  if (!loading && error) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p className="text-destructive">{error}</p>
+      </main>
+    );
+  }
+
+  if (loading || !idea) {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
