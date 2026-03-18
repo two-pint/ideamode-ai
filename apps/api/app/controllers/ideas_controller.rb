@@ -4,7 +4,7 @@ class IdeasController < ApplicationController
   include Authenticatable
 
   before_action :require_authentication!
-  before_action :set_idea_by_route, only: %i[show update]
+  before_action :set_idea_by_route, only: %i[show update destroy]
 
   def index
     ideas = current_user.ideas.order(updated_at: :desc)
@@ -36,6 +36,11 @@ class IdeasController < ApplicationController
     else
       render json: { errors: @idea.errors.full_messages }, status: :unprocessable_entity
     end
+  end
+
+  def destroy
+    @idea.destroy
+    head :no_content
   end
 
   private

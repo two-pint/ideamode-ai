@@ -26,6 +26,10 @@ export async function apiFetch<T = unknown>(
     body: body ? JSON.stringify(body) : undefined,
   });
 
+  if (res.status === 204) {
+    return {} as T;
+  }
+
   let data: Record<string, unknown> = {};
   try {
     data = (await res.json()) as Record<string, unknown>;
@@ -192,6 +196,13 @@ export const ideasApi = {
         token,
         body: data as Record<string, unknown>,
       }
+    );
+  },
+
+  deleteByOwnerAndSlug(token: string, username: string, slug: string) {
+    return apiFetch<Record<string, never>>(
+      `/ideas/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+      { method: "DELETE", token }
     );
   },
 };

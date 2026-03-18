@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { type Idea } from "@/lib/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type IdeaCardProps = {
   idea: Idea;
   ownerUsername?: string | null;
 };
+
+const statusVariant = {
+  brainstorm: "brainstorm",
+  validating: "validating",
+  validated: "validated",
+  shelved: "shelved",
+} as const;
 
 export function IdeaCard({ idea, ownerUsername }: IdeaCardProps) {
   const username = ownerUsername || idea.owner?.username;
@@ -16,7 +24,7 @@ export function IdeaCard({ idea, ownerUsername }: IdeaCardProps) {
   return (
     <Card>
       <CardHeader className="gap-1">
-        <CardDescription className="uppercase">{idea.status}</CardDescription>
+        <Badge variant={statusVariant[idea.status]}>{idea.status}</Badge>
         <CardTitle className="text-base">
           {username ? (
             <Link href={href} className="hover:underline">

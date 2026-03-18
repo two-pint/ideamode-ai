@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "echo 'Rails API: run bundle install and bin/rails db:prepare in apps/api'",
-    "dev": "echo 'Run: cd apps/api && bin/rails s'",
+    "dev": "rm -f tmp/pids/server.pid && bin/rails s",
     "lint": "echo 'Optional: bin/rubocop'",
     "test": "echo 'Optional: bin/rails test'"
   }
