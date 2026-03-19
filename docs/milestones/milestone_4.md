@@ -1,25 +1,26 @@
-# Milestone 4 — Productivity Layer
+# Milestone 4 — Productivity Layer ✅
 
 **Goal:** Notes per idea (Tiptap), tasks, Excalidraw wireframes, and AI-generated PRD with streaming, versioning, and Markdown/PDF export. When an idea has a linked brainstorm, PRD generation includes brainstorm chat history, notes, and research results as context. Ideas become full workspaces with actionable artifacts.
 
 **Timeline:** Weeks 4–5  
-**Depends on:** Milestone 3 (Idea AI Value)
+**Depends on:** Milestone 3 (Idea AI Value)  
+**Status:** Completed
 
 ---
 
 ## Tickets
 
-### Ticket 4.1 — Notes (Ideas) (Tiptap, auto-save)
+### Ticket 4.1 — Notes (Ideas) (Tiptap, auto-save) ✅
 
 **Description:** Add a single rich-text note per **idea** using Tiptap, stored as JSON and auto-saved. Same editor capabilities as brainstorm notes (M2); can reuse or share editor component with brainstorm Notes. Notes feed into PRD context and keep all idea-related content in one place.
 
 **Tasks:**
 
-- [ ] Create IdeaNote model: `idea_id`, `user_id` (last editor), `content` (jsonb for Tiptap JSON), `updated_at`. One note per idea (upsert by idea_id).
-- [ ] Endpoints: `GET /:username/:slug/note` (return note or empty when slug is an idea), `PUT /:username/:slug/note` (body: content JSON; authorize owner/collaborator).
-- [ ] Next.js: Notes tab in **idea** detail with Tiptap editor. Toolbar or menu for headings, bold, italic, lists, links, code, blockquote. Serialize to Tiptap JSON and send on save.
-- [ ] Auto-save: debounce 1.5s after last change; send PUT with current content. Show last-saved timestamp.
-- [ ] Viewer: read-only rendering of note content (no editor).
+- [x] Create IdeaNote model: `idea_id`, `user_id` (last editor), `content` (jsonb for Tiptap JSON), `updated_at`. One note per idea (upsert by idea_id).
+- [x] Endpoints: `GET /:username/:slug/note` (return note or empty when slug is an idea), `PUT /:username/:slug/note` (body: content JSON; authorize owner/collaborator).
+- [x] Next.js: Notes tab in **idea** detail with Tiptap editor. Toolbar or menu for headings, bold, italic, lists, links, code, blockquote. Serialize to Tiptap JSON and send on save.
+- [x] Auto-save: debounce 1.5s after last change; send PUT with current content. Show last-saved timestamp.
+- [x] Viewer: read-only rendering of note content (no editor).
 
 **Acceptance criteria:**
 
@@ -33,16 +34,16 @@
 
 ---
 
-### Ticket 4.2 — Tasks
+### Ticket 4.2 — Tasks ✅
 
 **Description:** Add a task list per idea with add, complete toggle, delete, and optional due date so users can track validation actions and next steps. It matters for turning analysis "next steps" into concrete todos.
 
 **Tasks:**
 
-- [ ] Create IdeaTask model: `idea_id`, `user_id` (creator), `title`, `completed` (boolean, default false), `due_date` (optional), timestamps. Ordered by `created_at`.
-- [ ] Endpoints: `GET /:username/:slug/tasks`, `POST /:username/:slug/tasks`, `PATCH /:username/:slug/tasks/:id`, `DELETE /:username/:slug/tasks/:id`. Authorize owner/collaborator for write; viewer read-only.
-- [ ] Next.js: Tasks tab. Add task (title, optional due date). List incomplete tasks first; completed tasks in a "Completed" section (collapsible). Toggle complete, delete task.
-- [ ] Viewer: read-only list, no add/edit/delete.
+- [x] Create IdeaTask model: `idea_id`, `user_id` (creator), `title`, `completed` (boolean, default false), `due_date` (optional), timestamps. Ordered by `created_at`.
+- [x] Endpoints: `GET /:username/:slug/tasks`, `POST /:username/:slug/tasks`, `PATCH /:username/:slug/tasks/:id`, `DELETE /:username/:slug/tasks/:id`. Authorize owner/collaborator for write; viewer read-only.
+- [x] Next.js: Tasks tab. Add task (title, optional due date). List incomplete tasks first; completed tasks in a "Completed" section (collapsible). Toggle complete, delete task.
+- [x] Viewer: read-only list, no add/edit/delete.
 
 **Acceptance criteria:**
 
@@ -56,16 +57,16 @@
 
 ---
 
-### Ticket 4.3 — Wireframes (Excalidraw)
+### Ticket 4.3 — Wireframes (Excalidraw) ✅
 
 **Description:** Embed Excalidraw per idea with multiple named frames, auto-save of canvas JSON, and read-only for viewers so users can sketch flows and screens without leaving IdeaMode. It matters for low-fidelity design and PRD context.
 
 **Tasks:**
 
-- [ ] Create IdeaWireframe model: `idea_id`, `user_id`, `title`, `canvas_data` (jsonb), `updated_at`. Multiple wireframes per idea.
-- [ ] Endpoints: `GET /:username/:slug/wireframes`, `POST /:username/:slug/wireframes`, `PATCH /:username/:slug/wireframes/:id`. Authorize owner/collaborator for write.
-- [ ] Next.js: Wireframes tab. Sidebar lists wireframes; click to load. Embed Excalidraw (open-source; no external account). Auto-save canvas state (debounced, e.g. 2s). Optional description/caption per frame.
-- [ ] Viewer: read-only canvas (no toolbar); load same canvas_data for view-only.
+- [x] Create IdeaWireframe model: `idea_id`, `user_id`, `title`, `canvas_data` (jsonb), `updated_at`. Multiple wireframes per idea.
+- [x] Endpoints: `GET /:username/:slug/wireframes`, `POST /:username/:slug/wireframes`, `PATCH /:username/:slug/wireframes/:id`. Authorize owner/collaborator for write.
+- [x] Next.js: Wireframes tab. Sidebar lists wireframes; click to load. Embed Excalidraw (open-source; no external account). Auto-save canvas state (debounced, e.g. 2s). Optional description/caption per frame.
+- [x] Viewer: read-only canvas (no toolbar); load same canvas_data for view-only.
 
 **Acceptance criteria:**
 
@@ -78,19 +79,19 @@
 
 ---
 
-### Ticket 4.4 — PRD Generator (AI, streaming, versioning, export)
+### Ticket 4.4 — PRD Generator (AI, streaming, versioning, export) ✅
 
 **Description:** Generate PRDs from idea context (title, description, **discussion** sessions, analysis results, notes) via Claude with streaming, versioning, and Markdown/PDF export. **If the idea has a linked brainstorm (`brainstorm_id`), include brainstorm chat history, notes, and research results as additional context.** Sections without sufficient context output `[Needs input]` — no hallucination. It matters as the main "output" of the validation workflow.
 
 **Tasks:**
 
-- [ ] Create IdeaPRD model: `idea_id`, `user_id`, `content` (text, Markdown), `version` (integer), `generated_at`, `updated_at`. Version auto-incremented per idea; retain all versions.
-- [ ] Build PRD generation job: gather context (idea, discussion sessions, analyses, note). **If idea has `brainstorm_id`, also load linked brainstorm's chat sessions, BrainstormNote, and BrainstormResearch results and pass as context.**
-- [ ] Call Claude with structured prompt; stream response. Sections without sufficient context output `[Needs input]` — no hallucination.
-- [ ] Endpoints: `POST /:username/:slug/prds` (SSE stream), `GET /:username/:slug/prds`, `GET /:username/:slug/prds/:version`, `GET /:username/:slug/prds/:version/export?format=md|pdf`. PDF via server-side render (e.g. pdf-lib or HTML-to-PDF).
-- [ ] Next.js: PRD tab. "Generate PRD" starts stream; live Markdown preview updates as content streams. Split-pane: Markdown source (editable) and rendered preview. Version history panel with timestamps and optional AI-generated diff summary; restore previous version. Export buttons: Markdown download, PDF (call export endpoint).
+- [x] Create IdeaPRD model: `idea_id`, `user_id`, `content` (text, Markdown), `version` (integer), `generated_at`, `updated_at`. Version auto-incremented per idea; retain all versions.
+- [x] Build PRD generation job: gather context (idea, discussion sessions, analyses, note). **If idea has `brainstorm_id`, also load linked brainstorm's chat sessions, BrainstormNote, and BrainstormResearch results and pass as context.**
+- [x] Call Claude with structured prompt; stream response. Sections without sufficient context output `[Needs input]` — no hallucination.
+- [x] Endpoints: `POST /:username/:slug/prds` (SSE stream), `GET /:username/:slug/prds`, `GET /:username/:slug/prds/:version`, `GET /:username/:slug/prds/:version/export?format=md|pdf`. PDF via server-side render (e.g. pdf-lib or HTML-to-PDF).
+- [x] Next.js: PRD tab. "Generate PRD" starts stream; live Markdown preview updates as content streams. Split-pane: Markdown source (editable) and rendered preview. Version history panel with timestamps and optional AI-generated diff summary; restore previous version. Export buttons: Markdown download, PDF (call export endpoint).
 - [ ] Optional: per-section regeneration (replace one section without full doc). Optional: revocable public share link for latest PRD (per HLD).
-- [ ] Viewer: can view and export; cannot generate or edit.
+- [x] Viewer: can view and export; cannot generate or edit.
 
 **Acceptance criteria:**
 
@@ -110,5 +111,5 @@
 
 ## Milestone 4 completion checklist
 
-- [ ] All four tickets (4.1–4.4) are implemented and accepted.
-- [ ] Notes, Tasks, Wireframes, and PRD are functional for ideas with correct role behavior and persistence. PRD generation uses idea context and, when linked, brainstorm context; supports versioning and export.
+- [x] All four tickets (4.1–4.4) are implemented and accepted.
+- [x] Notes, Tasks, Wireframes, and PRD are functional for ideas with correct role behavior and persistence. PRD generation uses idea context and, when linked, brainstorm context; supports versioning and export.
