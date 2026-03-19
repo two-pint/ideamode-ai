@@ -32,6 +32,7 @@ class BrainstormNotesController < ApplicationController
   private
 
   def normalize_note_content(content)
+    content = content.to_unsafe_h if content.respond_to?(:to_unsafe_h)
     return content if content.is_a?(Hash)
     if content.is_a?(String) && content.present?
       return {

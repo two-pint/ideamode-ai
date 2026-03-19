@@ -35,12 +35,16 @@ class IdeaPrdsController < ApplicationController
     return unless full_content.present?
 
     next_version = (@idea.idea_prds.maximum(:version) || 0) + 1
-    @idea.idea_prds.create!(
-      user_id: current_user.id,
-      content: full_content,
-      version: next_version,
-      generated_at: Time.current
-    )
+    begin
+      @idea.idea_prds.create!(
+        user_id: current_user.id,
+        content: full_content,
+        version: next_version,
+        generated_at: Time.current
+      )
+    rescue StandardError => e
+      Rails.logger.error("[IdeaPrdsController] failed to persist PRD after stream: #{e.message}")
+    end
   end
 
   def show
