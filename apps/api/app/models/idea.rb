@@ -13,6 +13,10 @@ class Idea < ApplicationRecord
   has_many :members, through: :idea_members, source: :user
   has_many :chat_sessions, dependent: :destroy
   has_many :idea_analyses, dependent: :destroy
+  has_one :idea_note, dependent: :destroy
+  has_many :idea_tasks, dependent: :destroy
+  has_many :idea_wireframes, dependent: :destroy
+  has_many :idea_prds, dependent: :destroy
 
   # Ownership is immutable after creation (no transfer in v1).
   attr_readonly :user_id
