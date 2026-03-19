@@ -138,7 +138,7 @@ class IdeaAnalysisService
 
   def call_claude(prompt)
     response = @client.messages.create(
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 4096,
       system: "Respond with only valid JSON. No markdown, no code fences, no extra text.",
       messages: [{ role: "user", content: prompt }],

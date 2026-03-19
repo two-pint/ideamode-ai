@@ -1,100 +1,116 @@
-"use client";
+"use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { Loader2, Share2, Trash2 } from "lucide-react";
-import { AppShell } from "@/components/app-shell";
-import { IdeaAnalysisTab } from "@/components/idea-analysis-tab";
-import { IdeaDiscussionChat } from "@/components/idea-discussion-chat";
-import { ResourceAccessList } from "@/components/resource-access-list";
-import { ShareDialog } from "@/components/share-dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { useCallback, useEffect, useMemo, useState } from "react"
+import Link from "next/link"
+import { useParams, useRouter } from "next/navigation"
+import { Loader2, Share2, Trash2 } from "lucide-react"
+import { AppShell } from "@/components/app-shell"
+import { IdeaAnalysisTab } from "@/components/idea-analysis-tab"
+import { IdeaDiscussionChat } from "@/components/idea-discussion-chat"
+import { IdeaNotesTab } from "@/components/idea-notes-tab"
+import { IdeaPrdTab } from "@/components/idea-prd-tab"
+import { IdeaTasksTab } from "@/components/idea-tasks-tab"
+import { IdeaWireframesTab } from "@/components/idea-wireframes-tab"
+import { ResourceAccessList } from "@/components/resource-access-list"
+import { ShareDialog } from "@/components/share-dialog"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"
 import {
   type Idea,
   type IdeaStatus,
   type IdeaVisibility,
   ApiError,
   ideasApi,
-} from "@/lib/api";
-import { useRequireAuth } from "@/hooks/use-require-auth";
+} from "@/lib/api"
+import { useRequireAuth } from "@/hooks/use-require-auth"
 
-const TABS = ["Overview", "Discussion", "Analysis", "Wireframes", "PRD", "Notes", "Tasks"] as const;
-const STATUS_OPTIONS: IdeaStatus[] = ["validating", "validated", "shelved"];
-const VISIBILITY_OPTIONS: IdeaVisibility[] = ["private", "shared"];
+const TABS = [
+  "Overview",
+  "Discussion",
+  "Analysis",
+  "Wireframes",
+  "PRD",
+  "Notes",
+  "Tasks",
+] as const
+const STATUS_OPTIONS: IdeaStatus[] = ["validating", "validated", "shelved"]
+const VISIBILITY_OPTIONS: IdeaVisibility[] = ["private", "shared"]
 
 export default function IdeaDetailPage() {
-  const params = useParams<{ username: string; slug: string }>();
-  const router = useRouter();
-  const { user, token, ready } = useRequireAuth();
-  const [idea, setIdea] = useState<Idea | null>(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [slug, setSlug] = useState("");
-  const [status, setStatus] = useState<IdeaStatus>("validating");
-  const [visibility, setVisibility] = useState<IdeaVisibility>("private");
-  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("Overview");
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const params = useParams<{ username: string; slug: string }>()
+  const router = useRouter()
+  const { user, token, ready } = useRequireAuth()
+  const [idea, setIdea] = useState<Idea | null>(null)
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [slug, setSlug] = useState("")
+  const [status, setStatus] = useState<IdeaStatus>("validating")
+  const [visibility, setVisibility] = useState<IdeaVisibility>("private")
+  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("Overview")
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [shareDialogOpen, setShareDialogOpen] = useState(false)
 
   useEffect(() => {
-    if (!ready || !token) return;
+    if (!ready || !token) return
 
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
     ideasApi
       .getByOwnerAndSlug(token, params.username, params.slug)
       .then((res) => {
-        setIdea(res.idea);
-        setTitle(res.idea.title);
-        setDescription(res.idea.description || "");
-        setSlug(res.idea.slug);
-        setStatus(res.idea.status);
-        setVisibility(res.idea.visibility);
+        setIdea(res.idea)
+        setTitle(res.idea.title)
+        setDescription(res.idea.description || "")
+        setSlug(res.idea.slug)
+        setStatus(res.idea.status)
+        setVisibility(res.idea.visibility)
       })
       .catch((requestError) => {
         if (requestError instanceof ApiError && requestError.status === 404) {
-          router.replace("/not-found");
-          return;
+          router.replace("/not-found")
+          return
         }
-        setError("Failed to load idea.");
+        setError("Failed to load idea.")
       })
-      .finally(() => setLoading(false));
-  }, [params.slug, params.username, ready, router, token]);
+      .finally(() => setLoading(false))
+  }, [params.slug, params.username, ready, router, token])
 
   const canEditOverview = useMemo(
     () => idea?.can_edit === true && activeTab === "Overview",
-    [activeTab, idea?.can_edit]
-  );
+    [activeTab, idea?.can_edit],
+  )
 
-  const canEditIdea = idea?.can_edit === true;
+  const canEditIdea = idea?.can_edit === true
 
   const refreshIdea = useCallback(async () => {
-    if (!token || !params.username || !params.slug) return;
+    if (!token || !params.username || !params.slug) return
     try {
-      const res = await ideasApi.getByOwnerAndSlug(token, params.username, params.slug);
-      setIdea(res.idea);
+      const res = await ideasApi.getByOwnerAndSlug(
+        token,
+        params.username,
+        params.slug,
+      )
+      setIdea(res.idea)
     } catch {
       // ignore
     }
-  }, [token, params.username, params.slug]);
+  }, [token, params.username, params.slug])
 
   const handleSave = async () => {
-    if (!idea || !token) return;
-    setSaving(true);
-    setError(null);
+    if (!idea || !token) return
+    setSaving(true)
+    setError(null)
     try {
       const res = await ideasApi.updateByOwnerAndSlug(
         token,
@@ -106,44 +122,49 @@ export default function IdeaDetailPage() {
           slug: slug.trim() || undefined,
           status,
           visibility,
-        }
-      );
-      setIdea(res.idea);
-      setTitle(res.idea.title);
-      setDescription(res.idea.description || "");
-      setSlug(res.idea.slug);
-      setStatus(res.idea.status);
-      setVisibility(res.idea.visibility);
+        },
+      )
+      setIdea(res.idea)
+      setTitle(res.idea.title)
+      setDescription(res.idea.description || "")
+      setSlug(res.idea.slug)
+      setStatus(res.idea.status)
+      setVisibility(res.idea.visibility)
       if (res.idea.slug !== params.slug) {
-        router.replace(`/${params.username}/ideas/${res.idea.slug}`);
+        router.replace(`/${params.username}/ideas/${res.idea.slug}`)
       }
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Failed to save");
+      setError(
+        saveError instanceof Error ? saveError.message : "Failed to save",
+      )
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   const handleDelete = async () => {
-    if (!idea || !token || !confirm("Delete this idea? This cannot be undone.")) return;
-    setDeleting(true);
-    setError(null);
+    if (!idea || !token || !confirm("Delete this idea? This cannot be undone."))
+      return
+    setDeleting(true)
+    setError(null)
     try {
-      await ideasApi.deleteByOwnerAndSlug(token, params.username, idea.slug);
-      router.replace("/dashboard");
+      await ideasApi.deleteByOwnerAndSlug(token, params.username, idea.slug)
+      router.replace("/dashboard")
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Failed to delete");
+      setError(
+        deleteError instanceof Error ? deleteError.message : "Failed to delete",
+      )
     } finally {
-      setDeleting(false);
+      setDeleting(false)
     }
-  };
+  }
 
   if (!ready || !user || !token) {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
       </main>
-    );
+    )
   }
 
   if (!loading && error) {
@@ -151,7 +172,7 @@ export default function IdeaDetailPage() {
       <main className="flex min-h-screen items-center justify-center">
         <p className="text-destructive">{error}</p>
       </main>
-    );
+    )
   }
 
   if (loading || !idea) {
@@ -159,7 +180,7 @@ export default function IdeaDetailPage() {
       <main className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
       </main>
-    );
+    )
   }
 
   return (
@@ -198,37 +219,62 @@ export default function IdeaDetailPage() {
               token={token}
               canEdit={canEditIdea}
             />
-          ) : activeTab !== "Overview" ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>{activeTab}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-zinc-500">{activeTab} content ships in a follow-up milestone.</p>
-              </CardContent>
-            </Card>
+          ) : activeTab === "Notes" ? (
+            <IdeaNotesTab
+              username={params.username}
+              slug={params.slug}
+              token={token}
+              canEdit={canEditIdea}
+            />
+          ) : activeTab === "Tasks" ? (
+            <IdeaTasksTab
+              username={params.username}
+              slug={params.slug}
+              token={token}
+              canEdit={canEditIdea}
+            />
+          ) : activeTab === "Wireframes" ? (
+            <IdeaWireframesTab
+              username={params.username}
+              slug={params.slug}
+              token={token}
+              canEdit={canEditIdea}
+            />
+          ) : activeTab === "PRD" ? (
+            <IdeaPrdTab
+              username={params.username}
+              slug={params.slug}
+              token={token}
+              canEdit={canEditIdea}
+            />
           ) : (
             <Card>
               <CardHeader>
                 <CardTitle>Overview</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {idea.brainstorm_id != null && idea.brainstorm_slug && idea.owner?.username && (
-                  <p className="text-sm text-zinc-600">
-                    From brainstorm:{" "}
-                    <Link
-                      href={`/${idea.owner.username}/brainstorms/${idea.brainstorm_slug}`}
-                      className="font-medium text-zinc-900 underline hover:no-underline"
-                    >
-                      {idea.brainstorm_title ?? "View linked brainstorm"}
-                    </Link>
-                  </p>
-                )}
+                {idea.brainstorm_id != null &&
+                  idea.brainstorm_slug &&
+                  idea.owner?.username && (
+                    <p className="text-sm text-zinc-600">
+                      From brainstorm:{" "}
+                      <Link
+                        href={`/${idea.owner.username}/brainstorms/${idea.brainstorm_slug}`}
+                        className="font-medium text-zinc-900 underline hover:no-underline"
+                      >
+                        {idea.brainstorm_title ?? "View linked brainstorm"}
+                      </Link>
+                    </p>
+                  )}
 
                 {idea.pinned_message_content && (
                   <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
-                    <p className="text-xs font-medium uppercase text-zinc-500">Pinned from Discussion</p>
-                    <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-800">{idea.pinned_message_content}</p>
+                    <p className="text-xs font-medium uppercase text-zinc-500">
+                      Pinned from Discussion
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-800">
+                      {idea.pinned_message_content}
+                    </p>
                   </div>
                 )}
 
@@ -270,7 +316,10 @@ export default function IdeaDetailPage() {
                     <>
                       <div className="space-y-1">
                         <p className="text-sm font-medium">Status</p>
-                        <Select value={status} onValueChange={(v) => setStatus(v as IdeaStatus)}>
+                        <Select
+                          value={status}
+                          onValueChange={(v) => setStatus(v as IdeaStatus)}
+                        >
                           <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Status" />
                           </SelectTrigger>
@@ -287,7 +336,9 @@ export default function IdeaDetailPage() {
                         <p className="text-sm font-medium">Visibility</p>
                         <Select
                           value={visibility}
-                          onValueChange={(v) => setVisibility(v as IdeaVisibility)}
+                          onValueChange={(v) =>
+                            setVisibility(v as IdeaVisibility)
+                          }
                         >
                           <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Visibility" />
@@ -317,25 +368,33 @@ export default function IdeaDetailPage() {
                 {error && <p className="text-sm text-red-600">{error}</p>}
 
                 {canEditOverview ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <Button disabled={saving} onClick={handleSave}>
-                  {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-                  Save changes
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                  disabled={deleting || saving}
-                  onClick={handleDelete}
-                >
-                  {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                  Delete idea
-                </Button>
-              </div>
-            ) : (
-              <p className="text-sm text-zinc-500">You have read-only access.</p>
-            )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button disabled={saving} onClick={handleSave}>
+                      {saving ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : null}
+                      Save changes
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                      disabled={deleting || saving}
+                      onClick={handleDelete}
+                    >
+                      {deleting ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
+                      )}
+                      Delete idea
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-zinc-500">
+                    You have read-only access.
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}
@@ -382,5 +441,5 @@ export default function IdeaDetailPage() {
         />
       )}
     </AppShell>
-  );
+  )
 }

@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-class BrainstormNotesController < ApplicationController
+class IdeaNotesController < ApplicationController
   include Authenticatable
-  include BrainstormFromRoute
+  include IdeaFromRoute
 
   before_action :require_authentication!
-  before_action :set_brainstorm
-  before_action :require_editable!, only: [:update]
+  before_action :set_idea, only: %i[show update]
+  before_action :require_editable!, only: %i[update]
 
   def show
-    note = @brainstorm.brainstorm_note
+    note = @idea.idea_note
     payload = if note
       { note: note_json(note) }
     else
@@ -22,7 +22,7 @@ class BrainstormNotesController < ApplicationController
     content = params[:content]
     content = {} if content.nil?
 
-    note = @brainstorm.brainstorm_note || @brainstorm.build_brainstorm_note(user_id: current_user.id)
+    note = @idea.idea_note || @idea.build_idea_note(user_id: current_user.id)
     note.user_id = current_user.id
     note.content = normalize_note_content(content)
     note.save!
@@ -48,7 +48,7 @@ class BrainstormNotesController < ApplicationController
   def note_json(n)
     {
       id: n.id,
-      brainstorm_id: n.brainstorm_id,
+      idea_id: n.idea_id,
       content: n.content,
       updated_at: n.updated_at
     }

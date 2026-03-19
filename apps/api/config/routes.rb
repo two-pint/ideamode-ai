@@ -88,5 +88,24 @@ Rails.application.routes.draw do
     post ":username/ideas/:slug/analyses", to: "idea_analyses#create"
     get ":username/ideas/:slug/analyses/:id", to: "idea_analyses#show"
     patch ":username/ideas/:slug/analyses/:id", to: "idea_analyses#update"
+
+    get ":username/ideas/:slug/note", to: "idea_notes#show"
+    put ":username/ideas/:slug/note", to: "idea_notes#update"
+
+    get ":username/ideas/:slug/tasks", to: "idea_tasks#index"
+    post ":username/ideas/:slug/tasks", to: "idea_tasks#create"
+    patch ":username/ideas/:slug/tasks/:id", to: "idea_tasks#update"
+    delete ":username/ideas/:slug/tasks/:id", to: "idea_tasks#destroy"
+
+    get ":username/ideas/:slug/wireframes", to: "idea_wireframes#index"
+    post ":username/ideas/:slug/wireframes", to: "idea_wireframes#create"
+    get ":username/ideas/:slug/wireframes/:id", to: "idea_wireframes#show"
+    patch ":username/ideas/:slug/wireframes/:id", to: "idea_wireframes#update"
+
+    get ":username/ideas/:slug/prds", to: "idea_prds#index"
+    post ":username/ideas/:slug/prds", to: "idea_prds#create"
+    get ":username/ideas/:slug/prds/:id", to: "idea_prds#show"
+    patch ":username/ideas/:slug/prds/:id", to: "idea_prds#update"
+    get ":username/ideas/:slug/prds/:id/export", to: "idea_prds#export"
   end
 end

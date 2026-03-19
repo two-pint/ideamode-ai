@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_18_100004) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_18_100008) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -142,6 +142,54 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_18_100004) do
     t.index ["idea_id"], name: "index_idea_members_on_idea_id"
     t.index ["invited_by_id"], name: "index_idea_members_on_invited_by_id"
     t.index ["user_id"], name: "index_idea_members_on_user_id"
+  end
+
+  create_table "idea_notes", force: :cascade do |t|
+    t.jsonb "content", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.bigint "idea_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["idea_id"], name: "index_idea_notes_on_idea_id", unique: true
+    t.index ["user_id"], name: "index_idea_notes_on_user_id"
+  end
+
+  create_table "idea_prds", force: :cascade do |t|
+    t.text "content", default: "", null: false
+    t.datetime "created_at", null: false
+    t.datetime "generated_at"
+    t.bigint "idea_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.integer "version", default: 1, null: false
+    t.index ["idea_id", "version"], name: "index_idea_prds_on_idea_id_and_version", unique: true
+    t.index ["idea_id"], name: "index_idea_prds_on_idea_id"
+    t.index ["user_id"], name: "index_idea_prds_on_user_id"
+  end
+
+  create_table "idea_tasks", force: :cascade do |t|
+    t.boolean "completed", default: false, null: false
+    t.datetime "created_at", null: false
+    t.date "due_date"
+    t.bigint "idea_id", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["idea_id", "created_at"], name: "index_idea_tasks_on_idea_id_and_created_at"
+    t.index ["idea_id"], name: "index_idea_tasks_on_idea_id"
+    t.index ["user_id"], name: "index_idea_tasks_on_user_id"
+  end
+
+  create_table "idea_wireframes", force: :cascade do |t|
+    t.jsonb "canvas_data", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.bigint "idea_id", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["idea_id", "created_at"], name: "index_idea_wireframes_on_idea_id_and_created_at"
+    t.index ["idea_id"], name: "index_idea_wireframes_on_idea_id"
+    t.index ["user_id"], name: "index_idea_wireframes_on_user_id"
   end
 
   create_table "ideas", force: :cascade do |t|
@@ -315,6 +363,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_18_100004) do
   add_foreign_key "idea_members", "ideas"
   add_foreign_key "idea_members", "users"
   add_foreign_key "idea_members", "users", column: "invited_by_id"
+  add_foreign_key "idea_notes", "ideas"
+  add_foreign_key "idea_notes", "users"
+  add_foreign_key "idea_prds", "ideas"
+  add_foreign_key "idea_prds", "users"
+  add_foreign_key "idea_tasks", "ideas"
+  add_foreign_key "idea_tasks", "users"
+  add_foreign_key "idea_wireframes", "ideas"
+  add_foreign_key "idea_wireframes", "users"
   add_foreign_key "ideas", "brainstorms"
   add_foreign_key "ideas", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

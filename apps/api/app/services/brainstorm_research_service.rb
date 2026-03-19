@@ -21,7 +21,7 @@ class BrainstormResearchService
     user_content = "Query: #{query}\n\nRespond with only a single JSON object (no markdown, no code block). Keys: summary, links (array of {url, title}), key_takeaways (array of strings). For competitor_spot use \"competitors\" (array of {name, url, one_liner}) instead of links."
 
     response = @client.messages.create(
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 2048,
       system: prompt,
       messages: [{ role: "user", content: user_content }],
