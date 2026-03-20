@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { IdeaAnalysisItem } from "@/lib/api";
+import type { IdeaAnalysisItem, IdeaAnalysisResult } from "@/lib/api";
 
 export function AnalysisResultView({
   analysis,
@@ -63,7 +63,7 @@ export function AnalysisResultView({
 function VerdictBanner({
   verdict: { score = 0, recommendation, key_risks = [], next_steps = [] },
 }: {
-  verdict: NonNullable<IdeaAnalysisItem["result"]>["verdict"];
+  verdict: NonNullable<IdeaAnalysisResult["verdict"]>;
 }) {
   const normalized = Math.min(100, Math.max(0, Number(score)));
   return (
@@ -123,7 +123,7 @@ function VerdictBanner({
 function CompetitorSection({
   data,
 }: {
-  data: NonNullable<IdeaAnalysisItem["result"]>["competitor_analysis"];
+  data: NonNullable<IdeaAnalysisResult["competitor_analysis"]>;
 }) {
   const [open, setOpen] = useState(true);
   const { summary, competitors = [], saturation_score, whitespace } = data;
@@ -177,7 +177,7 @@ function CompetitorSection({
 function MarketSizeSection({
   data,
 }: {
-  data: NonNullable<IdeaAnalysisItem["result"]>["market_size"];
+  data: NonNullable<IdeaAnalysisResult["market_size"]>;
 }) {
   const [open, setOpen] = useState(true);
   const { tam_estimate, sam_estimate, confidence, proxies_used = [] } = data;
@@ -220,7 +220,7 @@ function MarketSizeSection({
 function PmfSection({
   data,
 }: {
-  data: NonNullable<IdeaAnalysisItem["result"]>["pmf_signals"];
+  data: NonNullable<IdeaAnalysisResult["pmf_signals"]>;
 }) {
   const [open, setOpen] = useState(true);
   const { demand_evidence, pain_point_strength, willingness_to_pay_signals } = data;

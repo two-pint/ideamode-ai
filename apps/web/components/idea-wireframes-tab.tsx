@@ -227,7 +227,8 @@ export function IdeaWireframesTab({ username, slug, token, canEdit }: Props) {
                     initialData={{
                       elements: Array.isArray(selected.canvas_data?.elements) ? selected.canvas_data.elements : [],
                       appState: normalizeAppState(selected.canvas_data?.appState as Record<string, unknown>),
-                      files: (selected.canvas_data?.files as Record<string, unknown>) ?? {},
+                      // Persisted JSON; Excalidraw types BinaryFiles strictly
+                      files: (selected.canvas_data?.files ?? {}) as never,
                     }}
                     onChange={handleExcalidrawChange}
                     viewModeEnabled={!canEdit}

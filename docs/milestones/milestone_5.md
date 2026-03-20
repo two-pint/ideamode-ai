@@ -3,7 +3,7 @@
 **Goal:** Invite-only beta launch with onboarding flow, responsive and error polish, and beta/invite gating. App is stable, responsive, and ready for friends to onboard and collaborate on brainstorms and ideas.
 
 **Timeline:** Week 6  
-**Depends on:** Milestone 4 (Productivity Layer)
+**Depends on:** Milestone 4.5 (UI Standardization & Polish)
 
 ---
 
