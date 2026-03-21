@@ -140,7 +140,7 @@ class IdeaAnalysisService
     response = @client.messages.create(
       model: "claude-sonnet-4-6",
       max_tokens: 4096,
-      system: "Respond with only valid JSON. No markdown, no code fences, no extra text.",
+      system_: "Respond with only valid JSON. No markdown, no code fences, no extra text.",
       messages: [{ role: "user", content: prompt }],
       tools: web_search_tool
     )

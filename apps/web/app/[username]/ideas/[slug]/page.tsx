@@ -31,6 +31,7 @@ import {
   ideasApi,
 } from "@/lib/api"
 import { useRequireAuth } from "@/hooks/use-require-auth"
+import { useRecordRecentAccess } from "@/hooks/use-record-recent-access"
 import { toastError, toastSuccess } from "@/lib/toast"
 
 const TABS = [
@@ -61,6 +62,13 @@ export default function IdeaDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
+
+  useRecordRecentAccess(token, {
+    resourceType: "idea",
+    ownerUsername: params.username,
+    slug: params.slug,
+    enabled: Boolean(idea && !loading),
+  })
 
   useEffect(() => {
     if (!ready || !token) return

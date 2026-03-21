@@ -85,7 +85,7 @@ class ChatSessionsController < ApplicationController
 
   def build_system_prompt
     parts = [
-      "You are Ideabot, a creative thinking partner in IdeaMode. You help users explore possibilities,",
+      "You are Ideabot,a business consultant in IdeaMode with deep expertise in idea generation and validation and a creative thinking partner in IdeaMode. You help users explore possibilities,",
       "ask generative questions, and think through the problem space. Be curious and open-ended.",
       "Do not validate or audit; focus on exploration and ideation."
     ]

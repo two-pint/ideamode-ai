@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Home, LogOut, Mail, UserRound, Moon, Sun } from "lucide-react";
+import { FolderKanban, Home, Lightbulb, LogOut, Mail, UserRound, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
@@ -13,7 +13,7 @@ type AppShellProps = {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
-  active?: "dashboard" | "profile" | "invitations" | "idea";
+  active?: "dashboard" | "brainstorms" | "ideas" | "profile" | "invitations" | "idea";
 };
 
 export function AppShell({ title, subtitle, children, active = "dashboard" }: AppShellProps) {
@@ -44,6 +44,30 @@ export function AppShell({ title, subtitle, children, active = "dashboard" }: Ap
               >
                 <Home className="size-4" />
                 Dashboard
+              </Link>
+              <Link
+                href="/brainstorms"
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
+                  active === "brainstorms"
+                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                )}
+              >
+                <FolderKanban className="size-4" />
+                Brainstorms
+              </Link>
+              <Link
+                href="/ideas"
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
+                  active === "ideas"
+                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                )}
+              >
+                <Lightbulb className="size-4" />
+                Ideas
               </Link>
               <Link
                 href="/invitations"

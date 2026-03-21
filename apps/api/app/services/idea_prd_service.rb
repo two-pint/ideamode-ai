@@ -93,7 +93,7 @@ class IdeaPrdService
     stream = @client.messages.stream(
       model: "claude-sonnet-4-6",
       max_tokens: 8192,
-      system: system_prompt,
+      system_: system_prompt,
       messages: [ { role: "user", content: user_message } ]
     )
 

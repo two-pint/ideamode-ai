@@ -35,6 +35,7 @@ import {
   type Member,
 } from "@/lib/api";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { useRecordRecentAccess } from "@/hooks/use-record-recent-access";
 import { toastError, toastSuccess } from "@/lib/toast";
 
 const TABS = ["Chat", "Research", "Notes"] as const;
@@ -61,6 +62,13 @@ export default function BrainstormDetailPage() {
   const [note, setNote] = useState<BrainstormNoteResponse["note"] | null>(null);
   const [createIdeaModalOpen, setCreateIdeaModalOpen] = useState(false);
   const [brainstormMembers, setBrainstormMembers] = useState<Member[]>([]);
+
+  useRecordRecentAccess(token, {
+    resourceType: "brainstorm",
+    ownerUsername: params.username,
+    slug: params.slug,
+    enabled: Boolean(brainstorm && !loading),
+  });
 
   const loadResources = useCallback(async () => {
     if (!token || !params.username || !params.slug) return;

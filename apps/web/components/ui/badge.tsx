@@ -13,7 +13,9 @@ const badgeVariants = cva(
         secondary:
           "border-transparent bg-secondary text-secondary-foreground",
         outline: "border-border text-foreground bg-transparent",
-        brainstorm: "border-transparent bg-amber-100 text-amber-800",
+        brainstorm:
+          "border-transparent bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200",
+        idea: "border-transparent bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-200",
         exploring: "border-transparent bg-violet-100 text-violet-800",
         researching: "border-transparent bg-blue-100 text-blue-800",
         ready: "border-transparent bg-emerald-100 text-emerald-800",

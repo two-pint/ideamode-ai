@@ -23,7 +23,7 @@ class BrainstormResearchService
     response = @client.messages.create(
       model: "claude-sonnet-4-6",
       max_tokens: 2048,
-      system: prompt,
+      system_: prompt,
       messages: [{ role: "user", content: user_content }],
       tools: [{ type: "web_search_20250305", name: "web_search" }]
     )

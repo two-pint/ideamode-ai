@@ -290,6 +290,37 @@ export type PendingInviteItem = {
 
 export type PendingInvitesResponse = { invites: PendingInviteItem[] }
 
+export type RecentAccessItem = {
+  resource_type: "brainstorm" | "idea"
+  title: string
+  owner_username: string
+  slug: string
+  accessed_at: string
+}
+
+export type RecentAccessListResponse = { items: RecentAccessItem[] }
+
+export const recentAccessApi = {
+  list(token: string) {
+    return apiFetch<RecentAccessListResponse>("/me/recent_access", { token })
+  },
+
+  record(
+    token: string,
+    body: {
+      resource_type: "brainstorm" | "idea"
+      owner_username: string
+      slug: string
+    }
+  ) {
+    return apiFetch<Record<string, never>>("/me/recent_access", {
+      method: "POST",
+      body: body as Record<string, unknown>,
+      token,
+    })
+  },
+}
+
 export const invitesApi = {
   listMine(token: string) {
     return apiFetch<PendingInvitesResponse>("/me/invites", { token })

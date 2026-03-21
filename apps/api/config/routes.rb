@@ -33,6 +33,10 @@ Rails.application.routes.draw do
   get "users/:username/ideas", to: "users#ideas"
   get "users/:username/brainstorms", to: "users#brainstorms"
 
+  # Recent activity (brainstorm / idea opens)
+  get "me/recent_access", to: "recent_access#index"
+  post "me/recent_access", to: "recent_access#create"
+
   # Invites (list mine, show by token, accept)
   get "me/invites", to: "invites#index"
   get "invites/:token", to: "invites#show"
