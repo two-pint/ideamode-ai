@@ -4,6 +4,7 @@ class DiscussionSessionsController < ApplicationController
   include Authenticatable
   include IdeaFromRoute
   include ActionController::Live
+  include ChatMessageJson
 
   before_action :require_authentication!
   before_action :set_idea, only: %i[index create show create_message pin]
@@ -142,20 +143,11 @@ class DiscussionSessionsController < ApplicationController
     {
       id: session.id,
       idea_id: session.idea_id,
-      messages: (session.messages || []).map { |m| message_json(m) },
+      messages: map_messages_json(session.messages || []),
       archived_at: session.archived_at,
       created_at: session.created_at,
       pinned_message_id: @idea.pinned_message_id,
       pinned_message_content: @idea.pinned_message_content
-    }
-  end
-
-  def message_json(msg)
-    {
-      id: msg["id"],
-      role: msg["role"],
-      user_id: msg["user_id"],
-      content: msg["content"]
     }
   end
 end

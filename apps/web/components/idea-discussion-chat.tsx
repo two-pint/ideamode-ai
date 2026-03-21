@@ -232,18 +232,37 @@ export function IdeaDiscussionChat({
                         : "bg-zinc-900 text-white"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
-                    {canEdit && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="mt-1 size-6 p-0 text-zinc-500"
-                        onClick={() => handlePin(msg.id)}
-                        title="Pin to Overview"
-                      >
-                        <Pin className="size-3" />
-                      </Button>
+                    {(msg.author_name || canEdit) && (
+                      <div className="mb-1 flex items-center gap-2">
+                        {msg.author_name ? (
+                          <p
+                            className={`min-w-0 flex-1 truncate text-xs font-medium ${
+                              msg.role === "assistant" ? "text-zinc-500" : "text-zinc-300"
+                            }`}
+                          >
+                            {msg.author_name}
+                          </p>
+                        ) : (
+                          <span className="min-w-0 flex-1" aria-hidden />
+                        )}
+                        {canEdit && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className={`size-6 shrink-0 p-0 ${
+                              msg.role === "assistant"
+                                ? "text-zinc-500 hover:text-zinc-900"
+                                : "text-zinc-400 hover:text-white"
+                            }`}
+                            onClick={() => handlePin(msg.id)}
+                            title="Pin to Overview"
+                          >
+                            <Pin className="size-3" />
+                          </Button>
+                        )}
+                      </div>
                     )}
+                    <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
                   </div>
                 </div>
               ))}
@@ -252,7 +271,8 @@ export function IdeaDiscussionChat({
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-200">
                     <Bot className="size-4 text-zinc-600" />
                   </div>
-                  <div className="max-w-[85%] rounded-lg bg-white px-3 py-2">
+                  <div className="max-w-[85%] rounded-lg bg-white px-3 py-2 text-zinc-900">
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Ideabot</p>
                     <p className="whitespace-pre-wrap text-sm">
                       {streamingContent}
                       <span className="animate-pulse">▌</span>

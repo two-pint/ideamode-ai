@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FolderKanban, Home, Lightbulb, LogOut, Mail, UserRound, Moon, Sun } from "lucide-react";
@@ -11,12 +12,14 @@ import { cn } from "@/lib/utils";
 
 type AppShellProps = {
   title: string;
+  /** When set, replaces the default title heading (e.g. inline title editing). */
+  titleSlot?: ReactNode;
   subtitle?: string;
   children: React.ReactNode;
   active?: "dashboard" | "brainstorms" | "ideas" | "profile" | "invitations" | "idea";
 };
 
-export function AppShell({ title, subtitle, children, active = "dashboard" }: AppShellProps) {
+export function AppShell({ title, titleSlot, subtitle, children, active = "dashboard" }: AppShellProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -134,7 +137,7 @@ export function AppShell({ title, subtitle, children, active = "dashboard" }: Ap
       </header>
 
       <div className="border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
-        <h1 className="text-xl font-semibold">{title}</h1>
+        {titleSlot ?? <h1 className="text-xl font-semibold">{title}</h1>}
         {subtitle && (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>
         )}

@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, Share2, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Share2, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { BrainstormChat } from "@/components/brainstorm-chat";
 import { BrainstormNotesEditor } from "@/components/brainstorm-notes-editor";
@@ -47,7 +47,6 @@ export default function BrainstormDetailPage() {
   const router = useRouter();
   const { user, token, ready } = useRequireAuth();
   const [brainstorm, setBrainstorm] = useState<Brainstorm | null>(null);
-  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [slug, setSlug] = useState("");
   const [status, setStatus] = useState<BrainstormStatus>("exploring");
@@ -62,6 +61,17 @@ export default function BrainstormDetailPage() {
   const [note, setNote] = useState<BrainstormNoteResponse["note"] | null>(null);
   const [createIdeaModalOpen, setCreateIdeaModalOpen] = useState(false);
   const [brainstormMembers, setBrainstormMembers] = useState<Member[]>([]);
+  const [overviewEditing, setOverviewEditing] = useState(false);
+  const [titleEditing, setTitleEditing] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
+
+  const resetOverviewFormFromBrainstorm = useCallback((b: Brainstorm) => {
+    setDescription(b.description || "");
+    setSlug(b.slug);
+    setStatus(b.status);
+    setVisibility(b.visibility);
+  }, []);
 
   useRecordRecentAccess(token, {
     resourceType: "brainstorm",
@@ -89,7 +99,6 @@ export default function BrainstormDetailPage() {
       .getByOwnerAndSlug(token, params.username, params.slug)
       .then((res) => {
         setBrainstorm(res.brainstorm);
-        setTitle(res.brainstorm.title);
         setDescription(res.brainstorm.description || "");
         setSlug(res.brainstorm.slug);
         setStatus(res.brainstorm.status);
@@ -127,6 +136,39 @@ export default function BrainstormDetailPage() {
 
   const canEditOverview = brainstorm?.can_edit ?? false;
 
+  const cancelTitleEdit = useCallback(() => {
+    setTitleEditing(false);
+    setTitleDraft("");
+  }, []);
+
+  const handleSaveTitle = useCallback(async () => {
+    if (!brainstorm || !token) return;
+    const t = titleDraft.trim();
+    if (!t) {
+      toastError("Title is required");
+      return;
+    }
+    if (t === brainstorm.title.trim()) {
+      cancelTitleEdit();
+      return;
+    }
+    setSavingTitle(true);
+    try {
+      const res = await brainstormsApi.updateByOwnerAndSlug(token, params.username, brainstorm.slug, {
+        title: t,
+      });
+      setBrainstorm(res.brainstorm);
+      cancelTitleEdit();
+      toastSuccess("Title updated");
+    } catch (saveTitleError) {
+      const msg =
+        saveTitleError instanceof Error ? saveTitleError.message : "Failed to update title";
+      toastError(msg);
+    } finally {
+      setSavingTitle(false);
+    }
+  }, [brainstorm, token, params.username, titleDraft, cancelTitleEdit]);
+
   const handleSave = async () => {
     if (!brainstorm || !token) return;
     setSaving(true);
@@ -137,7 +179,7 @@ export default function BrainstormDetailPage() {
         params.username,
         brainstorm.slug,
         {
-          title: title.trim(),
+          title: brainstorm.title.trim(),
           description: description.trim(),
           slug: slug.trim() || undefined,
           status,
@@ -145,7 +187,6 @@ export default function BrainstormDetailPage() {
         }
       );
       setBrainstorm(res.brainstorm);
-      setTitle(res.brainstorm.title);
       setDescription(res.brainstorm.description || "");
       setSlug(res.brainstorm.slug);
       setStatus(res.brainstorm.status);
@@ -153,6 +194,7 @@ export default function BrainstormDetailPage() {
       if (res.brainstorm.slug !== params.slug) {
         router.replace(`/${params.username}/brainstorms/${res.brainstorm.slug}`);
       }
+      setOverviewEditing(false);
       toastSuccess("Brainstorm updated");
     } catch (saveError) {
       const msg = saveError instanceof Error ? saveError.message : "Failed to save";
@@ -205,117 +247,165 @@ export default function BrainstormDetailPage() {
     );
   }
 
+  const titleSlot =
+    canEditOverview &&
+    (titleEditing ? (
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          value={titleDraft}
+          onChange={(e) => setTitleDraft(e.target.value)}
+          className="h-9 max-w-md text-base font-semibold sm:max-w-xl"
+          disabled={savingTitle}
+          aria-label="Brainstorm title"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void handleSaveTitle();
+            }
+            if (e.key === "Escape") {
+              cancelTitleEdit();
+            }
+          }}
+        />
+        <Button
+          type="button"
+          size="sm"
+          disabled={savingTitle || !titleDraft.trim()}
+          onClick={() => void handleSaveTitle()}
+        >
+          {savingTitle ? <Loader2 className="size-4 animate-spin" /> : null}
+          Save
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={savingTitle}
+          onClick={cancelTitleEdit}
+        >
+          Cancel
+        </Button>
+      </div>
+    ) : (
+      <div className="flex flex-wrap items-center gap-1">
+        <h1 className="text-xl font-semibold">{brainstorm.title}</h1>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8 shrink-0 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          aria-label="Edit title"
+          onClick={() => {
+            setTitleDraft(brainstorm.title);
+            setTitleEditing(true);
+          }}
+        >
+          <Pencil className="size-4" />
+        </Button>
+      </div>
+    ));
+
   return (
     <AppShell
       title={brainstorm.title}
+      titleSlot={titleSlot || undefined}
       subtitle={`@${params.username}/brainstorms/${brainstorm.slug}`}
       active={user.username === params.username ? "profile" : "idea"}
     >
-      {/* Overview card: always full width at top */}
-      <Card className="mb-4 w-full">
+      {/* Overview: plain view by default; Card only while editing (when user can edit) */}
+      {canEditOverview && overviewEditing ? (
+        <Card className="mb-4 w-full">
           <CardHeader className="flex flex-row flex-wrap items-center gap-2">
             <CardTitle className="sr-only">Overview</CardTitle>
-            {canEditOverview ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <Button disabled={saving} size="sm" onClick={handleSave}>
-                  {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-                  Save changes
-                </Button>
-                {user?.username === params.username && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={async () => {
-                      try {
-                        const res = await membersApi.list(
-                          token!,
-                          params.username,
-                          params.slug,
-                          "brainstorm"
-                        );
-                        setBrainstormMembers(res.members);
-                        setCreateIdeaModalOpen(true);
-                      } catch (e) {
-                        console.error(e);
-                        setCreateIdeaModalOpen(true);
-                      }
-                    }}
-                  >
-                    Create idea from brainstorm
-                  </Button>
-                )}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button disabled={saving} size="sm" onClick={handleSave}>
+                {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+                Save changes
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={saving}
+                onClick={() => {
+                  resetOverviewFormFromBrainstorm(brainstorm);
+                  setOverviewEditing(false);
+                  setError(null);
+                }}
+              >
+                Cancel
+              </Button>
+              {user?.username === params.username && (
                 <Button
                   type="button"
-                  variant="destructive"
+                  variant="outline"
                   size="sm"
-                  disabled={deleting || saving}
-                  onClick={handleDelete}
+                  onClick={async () => {
+                    try {
+                      const res = await membersApi.list(
+                        token!,
+                        params.username,
+                        params.slug,
+                        "brainstorm"
+                      );
+                      setBrainstormMembers(res.members);
+                      setCreateIdeaModalOpen(true);
+                    } catch (e) {
+                      console.error(e);
+                      setCreateIdeaModalOpen(true);
+                    }
+                  }}
                 >
-                  {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                  Delete brainstorm
+                  Create idea from brainstorm
                 </Button>
-              </div>
-            ) : (
-              <p className="text-sm text-zinc-500">You have read-only access.</p>
-            )}
+              )}
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                disabled={deleting || saving}
+                onClick={handleDelete}
+              >
+                {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                Delete brainstorm
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4">
-              <div className="min-w-0 flex-1 space-y-1">
-                <p className="text-sm font-medium">Title</p>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  readOnly={!canEditOverview}
-                />
+            <div className="flex flex-wrap items-end gap-2 sm:gap-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Status</p>
+                <Select value={status} onValueChange={(v) => setStatus(v as BrainstormStatus)}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex flex-wrap items-end gap-2 sm:gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Status</p>
-                  {canEditOverview ? (
-                    <Select value={status} onValueChange={(v) => setStatus(v as BrainstormStatus)}>
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUS_OPTIONS.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <span className="rounded bg-zinc-100 px-2 py-1 text-xs uppercase">
-                      {brainstorm.status}
-                    </span>
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Visibility</p>
-                  {canEditOverview ? (
-                    <Select
-                      value={visibility}
-                      onValueChange={(v) => setVisibility(v as BrainstormVisibility)}
-                    >
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Visibility" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {VISIBILITY_OPTIONS.map((v) => (
-                          <SelectItem key={v} value={v}>
-                            {v}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <span className="rounded bg-zinc-100 px-2 py-1 text-xs uppercase">
-                      {brainstorm.visibility}
-                    </span>
-                  )}
-                </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Visibility</p>
+                <Select
+                  value={visibility}
+                  onValueChange={(v) => setVisibility(v as BrainstormVisibility)}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Visibility" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VISIBILITY_OPTIONS.map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -324,24 +414,21 @@ export default function BrainstormDetailPage() {
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                readOnly={!canEditOverview}
-                className="min-h-32 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 read-only:bg-zinc-50"
+                className="min-h-32 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20"
               />
             </div>
 
-            {canEditOverview && (
-              <div className="space-y-1">
-                <p className="text-sm font-medium">Slug</p>
-                <Input
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder="url-friendly-slug"
-                />
-                <p className="text-xs text-zinc-500">
-                  URL: /{params.username}/brainstorms/{slug || brainstorm.slug}
-                </p>
-              </div>
-            )}
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Slug</p>
+              <Input
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder="url-friendly-slug"
+              />
+              <p className="text-xs text-zinc-500">
+                URL: /{params.username}/brainstorms/{slug || brainstorm.slug}
+              </p>
+            </div>
 
             {brainstorm.pinned_message_content && (
               <div className="rounded-md border border-zinc-200 bg-amber-50/50 p-3">
@@ -353,6 +440,51 @@ export default function BrainstormDetailPage() {
             {error && <p className="text-destructive text-sm">{error}</p>}
           </CardContent>
         </Card>
+      ) : (
+        <div className="mb-4 w-full space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1 space-y-2">
+              {!canEditOverview && (
+                <p className="text-sm text-zinc-500">You have read-only access.</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded bg-zinc-100 px-2 py-1 text-xs uppercase dark:bg-zinc-800">
+                  {brainstorm.status}
+                </span>
+                <span className="rounded bg-zinc-100 px-2 py-1 text-xs uppercase dark:bg-zinc-800">
+                  {brainstorm.visibility}
+                </span>
+              </div>
+            </div>
+            {canEditOverview && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() => setOverviewEditing(true)}
+              >
+                <Pencil className="mr-1.5 size-4" aria-hidden />
+                Edit overview
+              </Button>
+            )}
+          </div>
+          <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">
+            {brainstorm.description?.trim()
+              ? brainstorm.description
+              : "No description yet."}
+          </p>
+
+          {brainstorm.pinned_message_content && (
+            <div className="rounded-md border border-zinc-200 bg-amber-50/50 p-3 dark:border-zinc-700 dark:bg-amber-950/30">
+              <p className="text-xs font-medium uppercase text-zinc-500">Pinned insight</p>
+              <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+                {brainstorm.pinned_message_content}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Main content: tabs (Chat, Research, Notes) + content, with Resources and People to the right */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
@@ -443,7 +575,7 @@ export default function BrainstormDetailPage() {
         <CreateIdeaFromBrainstormModal
           open={createIdeaModalOpen}
           onOpenChange={setCreateIdeaModalOpen}
-          brainstormTitle={title}
+          brainstormTitle={brainstorm.title}
           brainstormDescription={description}
           username={params.username}
           slug={params.slug}

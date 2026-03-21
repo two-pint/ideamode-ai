@@ -148,6 +148,8 @@ export type ChatMessage = {
   role: "user" | "assistant"
   user_id: number | null
   content: string
+  /** Display name for the message author (users: name or username; assistant: Ideabot). */
+  author_name?: string | null
 }
 
 export type ChatSessionResponse = {

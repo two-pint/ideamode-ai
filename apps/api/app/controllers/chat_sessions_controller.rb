@@ -4,6 +4,7 @@ class ChatSessionsController < ApplicationController
   include Authenticatable
   include BrainstormFromRoute
   include ActionController::Live
+  include ChatMessageJson
 
   before_action :require_authentication!
   before_action :set_brainstorm, only: %i[show create_message pin]
@@ -25,7 +26,7 @@ class ChatSessionsController < ApplicationController
     session.save!
 
     unless ClaudeChatService.ideabot_trigger?(content)
-      return render json: { message: message_json(user_message), session: chat_session_json(session) }
+      return render json: { message: map_messages_json([user_message]).first, session: chat_session_json(session) }
     end
 
     # Stream assistant reply via SSE
@@ -105,20 +106,11 @@ class ChatSessionsController < ApplicationController
     str.to_s.gsub("\n", "\\n").to_json
   end
 
-  def message_json(msg)
-    {
-      id: msg["id"],
-      role: msg["role"],
-      user_id: msg["user_id"],
-      content: msg["content"]
-    }
-  end
-
   def chat_session_json(session)
     {
       id: session.id,
       brainstorm_id: session.brainstorm_id,
-      messages: (session.messages || []).map { |m| message_json(m) },
+      messages: map_messages_json(session.messages || []),
       pinned_message_id: @brainstorm.pinned_message_id,
       pinned_message_content: @brainstorm.pinned_message_content
     }

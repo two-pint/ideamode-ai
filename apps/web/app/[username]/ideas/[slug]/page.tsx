@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { Loader2, Share2, Trash2 } from "lucide-react"
+import { Loader2, Pencil, Share2, Trash2 } from "lucide-react"
 import { AppShell } from "@/components/app-shell"
 import { IdeaAnalysisTab } from "@/components/idea-analysis-tab"
 import { IdeaDiscussionChat } from "@/components/idea-discussion-chat"
@@ -51,7 +51,6 @@ export default function IdeaDetailPage() {
   const router = useRouter()
   const { user, token, ready } = useRequireAuth()
   const [idea, setIdea] = useState<Idea | null>(null)
-  const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [slug, setSlug] = useState("")
   const [status, setStatus] = useState<IdeaStatus>("validating")
@@ -62,6 +61,9 @@ export default function IdeaDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [titleEditing, setTitleEditing] = useState(false)
+  const [titleDraft, setTitleDraft] = useState("")
+  const [savingTitle, setSavingTitle] = useState(false)
 
   useRecordRecentAccess(token, {
     resourceType: "idea",
@@ -79,7 +81,6 @@ export default function IdeaDetailPage() {
       .getByOwnerAndSlug(token, params.username, params.slug)
       .then((res) => {
         setIdea(res.idea)
-        setTitle(res.idea.title)
         setDescription(res.idea.description || "")
         setSlug(res.idea.slug)
         setStatus(res.idea.status)
@@ -101,6 +102,44 @@ export default function IdeaDetailPage() {
   )
 
   const canEditIdea = idea?.can_edit === true
+
+  const cancelTitleEdit = useCallback(() => {
+    setTitleEditing(false)
+    setTitleDraft("")
+  }, [])
+
+  const handleSaveTitle = useCallback(async () => {
+    if (!idea || !token) return
+    const t = titleDraft.trim()
+    if (!t) {
+      toastError("Title is required")
+      return
+    }
+    if (t === idea.title.trim()) {
+      cancelTitleEdit()
+      return
+    }
+    setSavingTitle(true)
+    try {
+      const res = await ideasApi.updateByOwnerAndSlug(
+        token,
+        params.username,
+        idea.slug,
+        { title: t },
+      )
+      setIdea(res.idea)
+      cancelTitleEdit()
+      toastSuccess("Title updated")
+    } catch (saveTitleError) {
+      const msg =
+        saveTitleError instanceof Error
+          ? saveTitleError.message
+          : "Failed to update title"
+      toastError(msg)
+    } finally {
+      setSavingTitle(false)
+    }
+  }, [idea, token, params.username, titleDraft, cancelTitleEdit])
 
   const refreshIdea = useCallback(async () => {
     if (!token || !params.username || !params.slug) return
@@ -126,7 +165,7 @@ export default function IdeaDetailPage() {
         params.username,
         idea.slug,
         {
-          title: title.trim(),
+          title: idea.title.trim(),
           description: description.trim(),
           slug: slug.trim() || undefined,
           status,
@@ -134,7 +173,6 @@ export default function IdeaDetailPage() {
         },
       )
       setIdea(res.idea)
-      setTitle(res.idea.title)
       setDescription(res.idea.description || "")
       setSlug(res.idea.slug)
       setStatus(res.idea.status)
@@ -196,9 +234,69 @@ export default function IdeaDetailPage() {
     )
   }
 
+  const titleSlot =
+    canEditIdea &&
+    (titleEditing ? (
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          value={titleDraft}
+          onChange={(e) => setTitleDraft(e.target.value)}
+          className="h-9 max-w-md text-base font-semibold sm:max-w-xl"
+          disabled={savingTitle}
+          aria-label="Idea title"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault()
+              void handleSaveTitle()
+            }
+            if (e.key === "Escape") {
+              cancelTitleEdit()
+            }
+          }}
+        />
+        <Button
+          type="button"
+          size="sm"
+          disabled={savingTitle || !titleDraft.trim()}
+          onClick={() => void handleSaveTitle()}
+        >
+          {savingTitle ? <Loader2 className="size-4 animate-spin" /> : null}
+          Save
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={savingTitle}
+          onClick={cancelTitleEdit}
+        >
+          Cancel
+        </Button>
+      </div>
+    ) : (
+      <div className="flex flex-wrap items-center gap-1">
+        <h1 className="text-xl font-semibold">{idea.title}</h1>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8 shrink-0 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          aria-label="Edit title"
+          onClick={() => {
+            setTitleDraft(idea.title)
+            setTitleEditing(true)
+          }}
+        >
+          <Pencil className="size-4" />
+        </Button>
+      </div>
+    ))
+
   return (
     <AppShell
       title={idea.title}
+      titleSlot={titleSlot || undefined}
       subtitle={`@${params.username}/ideas/${idea.slug}`}
       active={user.username === params.username ? "profile" : "idea"}
     >
@@ -290,15 +388,6 @@ export default function IdeaDetailPage() {
                     </p>
                   </div>
                 )}
-
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Title</p>
-                  <Input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    readOnly={!canEditOverview}
-                  />
-                </div>
 
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Description</p>
