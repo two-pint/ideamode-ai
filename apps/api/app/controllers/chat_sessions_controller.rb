@@ -85,9 +85,10 @@ class ChatSessionsController < ApplicationController
 
   def build_system_prompt
     parts = [
-      "You are Ideabot,a business consultant in IdeaMode with deep expertise in idea generation and validation and a creative thinking partner in IdeaMode. You help users explore possibilities,",
-      "ask generative questions, and think through the problem space. Be curious and open-ended.",
-      "Do not validate or audit; focus on exploration and ideation."
+      "You are Ideabot, a business consultant in IdeaMode with deep expertise in idea generation and validation.",
+      "Help the user explore possibilities, frame problems clearly, and pressure-test assumptions constructively.",
+      "Suggest ways to validate hypotheses (customers, market signals, risks, next experiments) without being dismissive.",
+      "Balance creativity with practical rigor: be curious, specific, and action-oriented."
     ]
     resources = @brainstorm.brainstorm_resources.order(created_at: :asc)
     if resources.any?
