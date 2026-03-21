@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { Loader2, Share2, Trash2 } from "lucide-react"
+import { Loader2, Pencil, PinOff, Share2, Trash2 } from "lucide-react"
 import { AppShell } from "@/components/app-shell"
 import { IdeaAnalysisTab } from "@/components/idea-analysis-tab"
 import { IdeaDiscussionChat } from "@/components/idea-discussion-chat"
@@ -28,9 +28,12 @@ import {
   type IdeaStatus,
   type IdeaVisibility,
   ApiError,
+  discussionSessionsApi,
   ideasApi,
 } from "@/lib/api"
 import { useRequireAuth } from "@/hooks/use-require-auth"
+import { useRecordRecentAccess } from "@/hooks/use-record-recent-access"
+import { toastError, toastSuccess } from "@/lib/toast"
 
 const TABS = [
   "Overview",
@@ -40,6 +43,7 @@ const TABS = [
   "PRD",
   "Notes",
   "Tasks",
+  "Sharing",
 ] as const
 const STATUS_OPTIONS: IdeaStatus[] = ["validating", "validated", "shelved"]
 const VISIBILITY_OPTIONS: IdeaVisibility[] = ["private", "shared"]
@@ -49,7 +53,6 @@ export default function IdeaDetailPage() {
   const router = useRouter()
   const { user, token, ready } = useRequireAuth()
   const [idea, setIdea] = useState<Idea | null>(null)
-  const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [slug, setSlug] = useState("")
   const [status, setStatus] = useState<IdeaStatus>("validating")
@@ -60,6 +63,17 @@ export default function IdeaDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [titleEditing, setTitleEditing] = useState(false)
+  const [titleDraft, setTitleDraft] = useState("")
+  const [savingTitle, setSavingTitle] = useState(false)
+  const [unpinning, setUnpinning] = useState(false)
+
+  useRecordRecentAccess(token, {
+    resourceType: "idea",
+    ownerUsername: params.username,
+    slug: params.slug,
+    enabled: Boolean(idea && !loading),
+  })
 
   useEffect(() => {
     if (!ready || !token) return
@@ -70,7 +84,6 @@ export default function IdeaDetailPage() {
       .getByOwnerAndSlug(token, params.username, params.slug)
       .then((res) => {
         setIdea(res.idea)
-        setTitle(res.idea.title)
         setDescription(res.idea.description || "")
         setSlug(res.idea.slug)
         setStatus(res.idea.status)
@@ -92,6 +105,44 @@ export default function IdeaDetailPage() {
   )
 
   const canEditIdea = idea?.can_edit === true
+
+  const cancelTitleEdit = useCallback(() => {
+    setTitleEditing(false)
+    setTitleDraft("")
+  }, [])
+
+  const handleSaveTitle = useCallback(async () => {
+    if (!idea || !token) return
+    const t = titleDraft.trim()
+    if (!t) {
+      toastError("Title is required")
+      return
+    }
+    if (t === idea.title.trim()) {
+      cancelTitleEdit()
+      return
+    }
+    setSavingTitle(true)
+    try {
+      const res = await ideasApi.updateByOwnerAndSlug(
+        token,
+        params.username,
+        idea.slug,
+        { title: t },
+      )
+      setIdea(res.idea)
+      cancelTitleEdit()
+      toastSuccess("Title updated")
+    } catch (saveTitleError) {
+      const msg =
+        saveTitleError instanceof Error
+          ? saveTitleError.message
+          : "Failed to update title"
+      toastError(msg)
+    } finally {
+      setSavingTitle(false)
+    }
+  }, [idea, token, params.username, titleDraft, cancelTitleEdit])
 
   const refreshIdea = useCallback(async () => {
     if (!token || !params.username || !params.slug) return
@@ -117,7 +168,7 @@ export default function IdeaDetailPage() {
         params.username,
         idea.slug,
         {
-          title: title.trim(),
+          title: idea.title.trim(),
           description: description.trim(),
           slug: slug.trim() || undefined,
           status,
@@ -125,7 +176,6 @@ export default function IdeaDetailPage() {
         },
       )
       setIdea(res.idea)
-      setTitle(res.idea.title)
       setDescription(res.idea.description || "")
       setSlug(res.idea.slug)
       setStatus(res.idea.status)
@@ -133,10 +183,12 @@ export default function IdeaDetailPage() {
       if (res.idea.slug !== params.slug) {
         router.replace(`/${params.username}/ideas/${res.idea.slug}`)
       }
+      toastSuccess("Idea updated")
     } catch (saveError) {
-      setError(
-        saveError instanceof Error ? saveError.message : "Failed to save",
-      )
+      const msg =
+        saveError instanceof Error ? saveError.message : "Failed to save"
+      setError(msg)
+      toastError(msg)
     } finally {
       setSaving(false)
     }
@@ -149,15 +201,37 @@ export default function IdeaDetailPage() {
     setError(null)
     try {
       await ideasApi.deleteByOwnerAndSlug(token, params.username, idea.slug)
+      toastSuccess("Idea deleted")
       router.replace("/dashboard")
     } catch (deleteError) {
-      setError(
-        deleteError instanceof Error ? deleteError.message : "Failed to delete",
-      )
+      const msg =
+        deleteError instanceof Error ? deleteError.message : "Failed to delete"
+      setError(msg)
+      toastError(msg)
     } finally {
       setDeleting(false)
     }
   }
+
+  const handleUnpinPinned = useCallback(async () => {
+    if (!idea || !token) return
+    setUnpinning(true)
+    try {
+      await discussionSessionsApi.unpinPinned(token, params.username, idea.slug)
+      setIdea((prev) =>
+        prev
+          ? { ...prev, pinned_message_id: null, pinned_message_content: null }
+          : null,
+      )
+      toastSuccess("Pinned message removed")
+    } catch (unpinError) {
+      const msg =
+        unpinError instanceof Error ? unpinError.message : "Failed to unpin"
+      toastError(msg)
+    } finally {
+      setUnpinning(false)
+    }
+  }, [idea, token, params.username])
 
   if (!ready || !user || !token) {
     return (
@@ -183,71 +257,174 @@ export default function IdeaDetailPage() {
     )
   }
 
+  const titleSlot =
+    canEditIdea &&
+    (titleEditing ? (
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          value={titleDraft}
+          onChange={(e) => setTitleDraft(e.target.value)}
+          className="h-9 max-w-md text-base font-semibold sm:max-w-xl"
+          disabled={savingTitle}
+          aria-label="Idea title"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault()
+              void handleSaveTitle()
+            }
+            if (e.key === "Escape") {
+              cancelTitleEdit()
+            }
+          }}
+        />
+        <Button
+          type="button"
+          size="sm"
+          disabled={savingTitle || !titleDraft.trim()}
+          onClick={() => void handleSaveTitle()}
+        >
+          {savingTitle ? <Loader2 className="size-4 animate-spin" /> : null}
+          Save
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={savingTitle}
+          onClick={cancelTitleEdit}
+        >
+          Cancel
+        </Button>
+      </div>
+    ) : (
+      <div className="flex flex-wrap items-center gap-1">
+        <h1 className="text-xl font-semibold">{idea.title}</h1>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8 shrink-0 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          aria-label="Edit title"
+          onClick={() => {
+            setTitleDraft(idea.title)
+            setTitleEditing(true)
+          }}
+        >
+          <Pencil className="size-4" />
+        </Button>
+      </div>
+    ))
+
   return (
     <AppShell
       title={idea.title}
+      titleSlot={titleSlot || undefined}
       subtitle={`@${params.username}/ideas/${idea.slug}`}
       active={user.username === params.username ? "profile" : "idea"}
+      fillHeight
     >
-      <div className="mb-4 flex flex-wrap gap-2">
-        {TABS.map((tab) => (
-          <Button
-            key={tab}
-            variant={tab === activeTab ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab}
-          </Button>
-        ))}
-      </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {TABS.map((tab) => (
+            <Button
+              key={tab}
+              variant={tab === activeTab ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </Button>
+          ))}
+        </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
-        <div className="min-w-0">
-          {activeTab === "Discussion" ? (
-            <IdeaDiscussionChat
-              username={params.username}
-              slug={params.slug}
-              token={token}
-              canEdit={canEditIdea}
-              onPinned={refreshIdea}
-            />
-          ) : activeTab === "Analysis" ? (
-            <IdeaAnalysisTab
-              username={params.username}
-              slug={params.slug}
-              token={token}
-              canEdit={canEditIdea}
-            />
-          ) : activeTab === "Notes" ? (
-            <IdeaNotesTab
-              username={params.username}
-              slug={params.slug}
-              token={token}
-              canEdit={canEditIdea}
-            />
-          ) : activeTab === "Tasks" ? (
-            <IdeaTasksTab
-              username={params.username}
-              slug={params.slug}
-              token={token}
-              canEdit={canEditIdea}
-            />
-          ) : activeTab === "Wireframes" ? (
-            <IdeaWireframesTab
-              username={params.username}
-              slug={params.slug}
-              token={token}
-              canEdit={canEditIdea}
-            />
-          ) : activeTab === "PRD" ? (
-            <IdeaPrdTab
-              username={params.username}
-              slug={params.slug}
-              token={token}
-              canEdit={canEditIdea}
-            />
-          ) : (
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+            {activeTab === "Discussion" ? (
+              <IdeaDiscussionChat
+                className="min-h-0 flex-1"
+                username={params.username}
+                slug={params.slug}
+                token={token}
+                canEdit={canEditIdea}
+                onPinned={refreshIdea}
+              />
+            ) : activeTab === "Analysis" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <IdeaAnalysisTab
+                  username={params.username}
+                  slug={params.slug}
+                  token={token}
+                  canEdit={canEditIdea}
+                />
+              </div>
+            ) : activeTab === "Notes" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <IdeaNotesTab
+                  username={params.username}
+                  slug={params.slug}
+                  token={token}
+                  canEdit={canEditIdea}
+                />
+              </div>
+            ) : activeTab === "Tasks" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <IdeaTasksTab
+                  username={params.username}
+                  slug={params.slug}
+                  token={token}
+                  canEdit={canEditIdea}
+                />
+              </div>
+            ) : activeTab === "Wireframes" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <IdeaWireframesTab
+                  username={params.username}
+                  slug={params.slug}
+                  token={token}
+                  canEdit={canEditIdea}
+                />
+              </div>
+            ) : activeTab === "PRD" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <IdeaPrdTab
+                  username={params.username}
+                  slug={params.slug}
+                  token={token}
+                  canEdit={canEditIdea}
+                />
+              </div>
+            ) : activeTab === "Sharing" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <Card className="h-fit">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle>People with access</CardTitle>
+                    {user.username === params.username && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShareDialogOpen(true)}
+                        disabled={saving}
+                      >
+                        <Share2 className="size-4" />
+                        Share
+                      </Button>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <ResourceAccessList
+                      resourceType="idea"
+                      ownerUsername={params.username}
+                      slug={params.slug}
+                      token={token}
+                      canManage={user?.username === params.username}
+                      refreshTrigger={shareDialogOpen}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="min-h-0 flex-1 overflow-y-auto">
             <Card>
               <CardHeader>
                 <CardTitle>Overview</CardTitle>
@@ -269,23 +446,34 @@ export default function IdeaDetailPage() {
 
                 {idea.pinned_message_content && (
                   <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
-                    <p className="text-xs font-medium uppercase text-zinc-500">
-                      Pinned from Discussion
-                    </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-medium uppercase text-zinc-500">
+                        Pinned from Discussion
+                      </p>
+                      {canEditOverview && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 shrink-0 gap-1 px-2 text-zinc-600 hover:text-zinc-900"
+                          disabled={unpinning}
+                          onClick={() => void handleUnpinPinned()}
+                          title="Remove pinned message"
+                        >
+                          {unpinning ? (
+                            <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                          ) : (
+                            <PinOff className="size-3.5" aria-hidden />
+                          )}
+                          Unpin
+                        </Button>
+                      )}
+                    </div>
                     <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-800">
                       {idea.pinned_message_content}
                     </p>
                   </div>
                 )}
-
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Title</p>
-                  <Input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    readOnly={!canEditOverview}
-                  />
-                </div>
 
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Description</p>
@@ -365,7 +553,7 @@ export default function IdeaDetailPage() {
                   )}
                 </div>
 
-                {error && <p className="text-sm text-red-600">{error}</p>}
+                {error && <p className="text-destructive text-sm">{error}</p>}
 
                 {canEditOverview ? (
                   <div className="flex flex-wrap items-center gap-2">
@@ -377,8 +565,7 @@ export default function IdeaDetailPage() {
                     </Button>
                     <Button
                       type="button"
-                      variant="outline"
-                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                      variant="destructive"
                       disabled={deleting || saving}
                       onClick={handleDelete}
                     >
@@ -397,36 +584,9 @@ export default function IdeaDetailPage() {
                 )}
               </CardContent>
             </Card>
-          )}
-        </div>
-
-        <Card className="h-fit">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>People with access</CardTitle>
-            {user.username === params.username && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShareDialogOpen(true)}
-                disabled={saving}
-              >
-                <Share2 className="size-4" />
-                Share
-              </Button>
+              </div>
             )}
-          </CardHeader>
-          <CardContent>
-            <ResourceAccessList
-              resourceType="idea"
-              ownerUsername={params.username}
-              slug={params.slug}
-              token={token}
-              canManage={user?.username === params.username}
-              refreshTrigger={shareDialogOpen}
-            />
-          </CardContent>
-        </Card>
+        </div>
       </div>
 
       {user.username === params.username && (

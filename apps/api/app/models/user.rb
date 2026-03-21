@@ -6,6 +6,7 @@ class User < ApplicationRecord
   has_many :ideas, dependent: :destroy
   has_many :idea_members, dependent: :destroy
   has_many :brainstorm_members, dependent: :destroy
+  has_many :user_recent_accesses, dependent: :delete_all
 
   validates :email, presence: true, uniqueness: true,
     format: { with: URI::MailTo::EMAIL_REGEXP }

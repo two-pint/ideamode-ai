@@ -9,6 +9,7 @@ import {
   membersApi,
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { toastError, toastSuccess } from "@/lib/toast";
 
 type ResourceAccessListProps = {
   resourceType: ResourceType;
@@ -59,6 +60,9 @@ export function ResourceAccessList({
     try {
       await membersApi.remove(token, ownerUsername, slug, resourceType, id);
       await fetchList();
+      toastSuccess("Access updated");
+    } catch {
+      toastError("Couldn’t remove access");
     } finally {
       setRemovingId(null);
     }
@@ -106,7 +110,7 @@ export function ResourceAccessList({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-8 shrink-0 text-zinc-500 hover:text-red-600"
+                  className="size-8 shrink-0 text-destructive hover:bg-destructive/10"
                   onClick={() => handleRemove(m.id)}
                   disabled={removingId === m.id}
                   aria-label={`Remove ${m.username || m.name || `user ${m.user_id}`}`}
@@ -138,7 +142,7 @@ export function ResourceAccessList({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-8 shrink-0 text-zinc-500 hover:text-red-600"
+                  className="size-8 shrink-0 text-destructive hover:bg-destructive/10"
                   onClick={() => handleRemove(inv.id)}
                   disabled={removingId === inv.id}
                   aria-label={`Cancel invite for ${inv.email}`}

@@ -4,9 +4,10 @@ class ChatSessionsController < ApplicationController
   include Authenticatable
   include BrainstormFromRoute
   include ActionController::Live
+  include ChatMessageJson
 
   before_action :require_authentication!
-  before_action :set_brainstorm, only: %i[show create_message pin]
+  before_action :set_brainstorm, only: %i[show create_message pin unpin]
 
   def show
     session = find_or_create_session
@@ -25,7 +26,7 @@ class ChatSessionsController < ApplicationController
     session.save!
 
     unless ClaudeChatService.ideabot_trigger?(content)
-      return render json: { message: message_json(user_message), session: chat_session_json(session) }
+      return render json: { message: map_messages_json([user_message]).first, session: chat_session_json(session) }
     end
 
     # Stream assistant reply via SSE
@@ -58,14 +59,39 @@ class ChatSessionsController < ApplicationController
     session = @brainstorm.chat_session
     return render json: { errors: ["No chat session"] }, status: :unprocessable_entity unless session
 
-    msg = (session.messages || []).find { |m| m["id"] == message_id }
-    return render json: { errors: ["Message not found"] }, status: :unprocessable_entity unless msg
+    @brainstorm.sync_legacy_pinned_message_to_chat_session!
 
-    @brainstorm.update!(
-      pinned_message_id: message_id,
-      pinned_message_content: msg["content"].to_s.truncate(500)
-    )
-    render json: { pinned_message_id: message_id, pinned_message_content: @brainstorm.pinned_message_content }
+    msgs = session.messages || []
+    idx = msgs.index { |m| m["id"].to_s == message_id }
+    return render json: { errors: ["Message not found"] }, status: :unprocessable_entity if idx.nil?
+
+    msg = msgs[idx].stringify_keys
+    currently_pinned = ActiveModel::Type::Boolean.new.cast(msg["pinned"])
+    updated_msg = if currently_pinned
+                    msg.except("pinned")
+                  else
+                    msg.merge("pinned" => true)
+                  end
+
+    new_msgs = msgs.each_with_index.map { |m, i| i == idx ? updated_msg : m }
+    session.update!(messages: new_msgs)
+    @brainstorm.update_columns(pinned_message_id: nil, pinned_message_content: nil) if @brainstorm.pinned_message_id.present?
+
+    render json: { session: chat_session_json(session.reload) }
+  end
+
+  def unpin
+    return head :forbidden unless @brainstorm.editable_by?(current_user)
+
+    session = @brainstorm.chat_session
+    if session && session.messages.present?
+      new_msgs = session.messages.map { |m| m.stringify_keys.except("pinned") }
+      session.update!(messages: new_msgs)
+    end
+    @brainstorm.update!(pinned_message_id: nil, pinned_message_content: nil)
+
+    sess = @brainstorm.chat_session
+    render json: { session: chat_session_json(sess ? sess.reload : find_or_create_session) }
   end
 
   private
@@ -85,9 +111,10 @@ class ChatSessionsController < ApplicationController
 
   def build_system_prompt
     parts = [
-      "You are Ideabot, a creative thinking partner in IdeaMode. You help users explore possibilities,",
-      "ask generative questions, and think through the problem space. Be curious and open-ended.",
-      "Do not validate or audit; focus on exploration and ideation."
+      "You are Ideabot, a business consultant in IdeaMode with deep expertise in idea generation and validation.",
+      "Help the user explore possibilities, frame problems clearly, and pressure-test assumptions constructively.",
+      "Suggest ways to validate hypotheses (customers, market signals, risks, next experiments) without being dismissive.",
+      "Balance creativity with practical rigor: be curious, specific, and action-oriented."
     ]
     resources = @brainstorm.brainstorm_resources.order(created_at: :asc)
     if resources.any?
@@ -104,22 +131,16 @@ class ChatSessionsController < ApplicationController
     str.to_s.gsub("\n", "\\n").to_json
   end
 
-  def message_json(msg)
-    {
-      id: msg["id"],
-      role: msg["role"],
-      user_id: msg["user_id"],
-      content: msg["content"]
-    }
-  end
-
   def chat_session_json(session)
+    @brainstorm.sync_legacy_pinned_message_to_chat_session!
+    session.reload if session.persisted?
+
     {
       id: session.id,
       brainstorm_id: session.brainstorm_id,
-      messages: (session.messages || []).map { |m| message_json(m) },
-      pinned_message_id: @brainstorm.pinned_message_id,
-      pinned_message_content: @brainstorm.pinned_message_content
+      messages: map_messages_json(session.messages || []),
+      pinned_message_id: nil,
+      pinned_message_content: nil
     }
   end
 end

@@ -213,7 +213,7 @@ Brainstorm chat is **one shared thread per brainstorm**: all users with access (
 **Tasks:**
 - `ChatSession` model: `brainstorm_id` (nullable), `idea_id` (nullable), `messages` (jsonb) — check constraint: exactly one of `brainstorm_id` or `idea_id` must be set. One session per brainstorm (single shared thread). Each message in `messages`: `role` (user | assistant), `user_id` (nullable; set for user messages), `content`, `id`.
 - **@ideabot trigger:** Invoke Claude only when the message content contains `@ideabot`. Messages without `@ideabot` are persisted as user messages only; no API call or assistant reply. Reduces unnecessary UI/API usage.
-- System prompt: creative thinking partner — exploratory and curious, not evaluative. When building context, include linked resources (Module 2.6) as reference material for the AI.
+- System prompt: Ideabot as a business consultant — strong on idea generation and validation (explore options, pressure-test assumptions, suggest validation steps). When building context, include linked resources (Module 2.6) as reference material for the AI.
 - Streaming response via Server-Sent Events when @ideabot is present; otherwise return success after persisting the user message.
 - Suggested starter prompts on empty state (e.g. "I have a rough idea — @ideabot help me think it through")
 - Pin message to Overview as key insight

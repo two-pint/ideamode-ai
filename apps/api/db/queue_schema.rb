@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_18_100008) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_19_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -330,6 +330,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_18_100008) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "user_recent_accesses", force: :cascade do |t|
+    t.datetime "accessed_at", null: false
+    t.bigint "trackable_id", null: false
+    t.string "trackable_type", null: false
+    t.bigint "user_id", null: false
+    t.index ["trackable_type", "trackable_id"], name: "index_user_recent_accesses_on_trackable"
+    t.index ["user_id", "accessed_at"], name: "index_user_recent_accesses_on_user_id_and_accessed_at"
+    t.index ["user_id", "trackable_type", "trackable_id"], name: "index_user_recent_accesses_on_user_and_trackable", unique: true
+    t.index ["user_id"], name: "index_user_recent_accesses_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "avatar_url"
     t.text "bio"
@@ -379,4 +390,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_18_100008) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "user_recent_accesses", "users"
 end

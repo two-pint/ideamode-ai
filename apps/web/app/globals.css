@@ -21,6 +21,9 @@
   --accent-foreground: #18181b;
   --destructive: #dc2626;
   --destructive-foreground: #fafafa;
+  /* Success: emerald-600 on light for readable filled controls */
+  --success: #059669;
+  --success-foreground: #fafafa;
   --border: #e4e4e7; /* zinc-200 */
   --input: #e4e4e7;
   --ring: #71717a;
@@ -44,6 +47,8 @@
   --accent-foreground: #fafafa;
   --destructive: #dc2626;
   --destructive-foreground: #fafafa;
+  --success: #10b981; /* emerald-500 */
+  --success-foreground: #022c22; /* near-emerald-950 for contrast */
   --border: #3f3f46; /* zinc-700 */
   --input: #3f3f46;
   --ring: #71717a;
@@ -67,6 +72,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

@@ -412,11 +412,11 @@ The same roles apply to both brainstorms and ideas:
 
 ### 9.6 Brainstorm Chat
 
-**Description:** An open-ended conversational AI interface for exploring concepts, questioning assumptions, and developing raw ideas. The tone is exploratory and curious — not evaluative.
+**Description:** An open-ended conversational AI interface for exploring concepts, questioning assumptions, and developing raw ideas. Ideabot acts as a business consultant: creative exploration plus practical validation guidance.
 
 **Requirements:**
 - Chat interface with Claude (streaming via SSE)
-- System prompt primes Claude as a creative thinking partner — helps the user explore possibilities, ask generative questions, surface adjacent ideas, and think through the problem space. Not a validator or auditor
+- System prompt primes Claude as Ideabot, a business consultant with expertise in idea generation and validation — explore possibilities, ask generative questions, stress-test assumptions constructively, and suggest how to validate hypotheses
 - Suggested starter prompts on empty state:
   - "I have a rough idea — help me think it through"
   - "What problems exist in [space] that nobody is solving well?"

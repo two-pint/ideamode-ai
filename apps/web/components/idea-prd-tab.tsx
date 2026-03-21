@@ -5,6 +5,7 @@ import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ideaPrdsApi, type IdeaPrdItem } from "@/lib/api";
+import { toastError, toastSuccess } from "@/lib/toast";
 import ReactMarkdown from "react-markdown";
 
 type Props = {
@@ -61,9 +62,11 @@ export function IdeaPrdTab({ username, slug, token, canEdit }: Props) {
         setCurrent(latest);
         setContent(latest.content);
       }
+      toastSuccess("PRD generated");
     } catch (e) {
       console.error(e);
       setContent((prev) => prev || "[Generation failed. Please try again.]");
+      toastError(e instanceof Error ? e.message : "PRD generation failed");
     } finally {
       setGenerating(false);
     }
@@ -76,8 +79,10 @@ export function IdeaPrdTab({ username, slug, token, canEdit }: Props) {
       const res = await ideaPrdsApi.update(token, username, slug, current.version, content);
       setCurrent(res.prd);
       await loadList();
+      toastSuccess("PRD saved");
     } catch (e) {
       console.error(e);
+      toastError(e instanceof Error ? e.message : "Couldn’t save PRD");
     } finally {
       setSaving(false);
     }
@@ -98,8 +103,10 @@ export function IdeaPrdTab({ username, slug, token, canEdit }: Props) {
       a.download = `prd-v${current.version}.${format === "pdf" ? "pdf" : "md"}`;
       a.click();
       URL.revokeObjectURL(url);
+      toastSuccess(`Exported ${format.toUpperCase()}`);
     } catch (e) {
       console.error(e);
+      toastError(e instanceof Error ? e.message : "Export failed");
     }
   };
 

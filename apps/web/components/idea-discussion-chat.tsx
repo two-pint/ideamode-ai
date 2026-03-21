@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bot, Pin, Send, User } from "lucide-react";
+import { Bot, Loader2, Pin, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
   type ChatMessage,
   type DiscussionSessionResponse,
@@ -23,6 +24,7 @@ type Props = {
   token: string;
   canEdit: boolean;
   onPinned?: () => void;
+  className?: string;
 };
 
 export function IdeaDiscussionChat({
@@ -31,6 +33,7 @@ export function IdeaDiscussionChat({
   token,
   canEdit,
   onPinned,
+  className,
 }: Props) {
   const [sessions, setSessions] = useState<DiscussionSessionResponse[]>([]);
   const [currentSession, setCurrentSession] = useState<DiscussionSessionResponse | null>(null);
@@ -83,7 +86,7 @@ export function IdeaDiscussionChat({
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [currentSession?.messages, streamingContent]);
+  }, [currentSession?.messages, streamingContent, sending]);
 
   const handleSend = async () => {
     const text = content.trim();
@@ -94,7 +97,7 @@ export function IdeaDiscussionChat({
 
     setContent("");
     setSending(true);
-    setStreamingContent(null);
+    setStreamingContent("");
 
     try {
       await discussionSessionsApi.postMessage(
@@ -146,14 +149,19 @@ export function IdeaDiscussionChat({
   const showStreaming = streamingContent !== null;
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className={cn("flex min-h-0 flex-col", className)}>
+      <CardHeader className="shrink-0">
         <CardTitle>Discussion</CardTitle>
         <p className="text-xs text-zinc-500">
           A critical thinking partner: challenges assumptions and helps articulate the problem and customer.
         </p>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent
+        className={cn(
+          "space-y-3",
+          currentSession && "flex min-h-0 flex-1 flex-col gap-3 space-y-0",
+        )}
+      >
         {loading ? (
           <p className="text-sm text-zinc-500">Loading…</p>
         ) : !currentSession && !canEdit ? (
@@ -174,7 +182,7 @@ export function IdeaDiscussionChat({
         ) : (
           <>
             {sessions.length > 1 && (
-              <div className="flex flex-wrap gap-2 border-b border-zinc-100 pb-2">
+              <div className="flex shrink-0 flex-wrap gap-2 border-b border-zinc-100 pb-2">
                 <span className="text-xs text-zinc-500">Sessions:</span>
                 {sessions.map((s) => (
                   <Button
@@ -194,7 +202,7 @@ export function IdeaDiscussionChat({
                 )}
               </div>
             )}
-            <div className="max-h-[400px] space-y-3 overflow-y-auto rounded-md border border-zinc-100 bg-zinc-50/50 p-3">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-md border border-zinc-100 bg-zinc-50/50 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
               {messages.length === 0 && !showStreaming && (
                 <div className="space-y-2">
                   <p className="text-sm text-zinc-500">No messages yet. Try:</p>
@@ -232,18 +240,37 @@ export function IdeaDiscussionChat({
                         : "bg-zinc-900 text-white"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
-                    {canEdit && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="mt-1 size-6 p-0 text-zinc-500"
-                        onClick={() => handlePin(msg.id)}
-                        title="Pin to Overview"
-                      >
-                        <Pin className="size-3" />
-                      </Button>
+                    {(msg.author_name || canEdit) && (
+                      <div className="mb-1 flex items-center gap-2">
+                        {msg.author_name ? (
+                          <p
+                            className={`min-w-0 flex-1 truncate text-xs font-medium ${
+                              msg.role === "assistant" ? "text-zinc-500" : "text-zinc-300"
+                            }`}
+                          >
+                            {msg.author_name}
+                          </p>
+                        ) : (
+                          <span className="min-w-0 flex-1" aria-hidden />
+                        )}
+                        {canEdit && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className={`size-6 shrink-0 p-0 ${
+                              msg.role === "assistant"
+                                ? "text-zinc-500 hover:text-zinc-900"
+                                : "text-zinc-400 hover:text-white"
+                            }`}
+                            onClick={() => handlePin(msg.id)}
+                            title="Pin to Overview"
+                          >
+                            <Pin className="size-3" />
+                          </Button>
+                        )}
+                      </div>
                     )}
+                    <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
                   </div>
                 </div>
               ))}
@@ -252,18 +279,30 @@ export function IdeaDiscussionChat({
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-200">
                     <Bot className="size-4 text-zinc-600" />
                   </div>
-                  <div className="max-w-[85%] rounded-lg bg-white px-3 py-2">
-                    <p className="whitespace-pre-wrap text-sm">
-                      {streamingContent}
-                      <span className="animate-pulse">▌</span>
-                    </p>
+                  <div className="max-w-[85%] rounded-lg bg-white px-3 py-2 text-zinc-900">
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Ideabot</p>
+                    {!streamingContent ? (
+                      <div
+                        className="flex items-center gap-2 text-sm text-zinc-500"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+                        <span>Thinking…</span>
+                      </div>
+                    ) : (
+                      <p className="whitespace-pre-wrap text-sm">
+                        {streamingContent}
+                        {sending ? <span className="animate-pulse">▌</span> : null}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
             </div>
-            <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} className="shrink-0" />
             {canEdit && (
-              <div className="flex gap-2">
+              <div className="flex shrink-0 gap-2">
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -282,8 +321,13 @@ export function IdeaDiscussionChat({
                   size="sm"
                   disabled={sending || !content.trim()}
                   onClick={handleSend}
+                  aria-busy={sending}
                 >
-                  <Send className="size-4" />
+                  {sending ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Send className="size-4" />
+                  )}
                 </Button>
               </div>
             )}

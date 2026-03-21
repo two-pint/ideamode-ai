@@ -11,13 +11,13 @@
 
 ### Ticket 2.1 — Shared Brainstorm Chat (backend & streaming, @ideabot trigger)
 
-**Description:** Implement one **shared chat thread per brainstorm**: owner and collaborators (and the AI) participate in the same conversation. The AI (Ideabot) is invoked **only when a message contains @ideabot** — otherwise the message is saved but no Claude call is made, reducing unnecessary API usage. ChatSession supports both brainstorms and ideas (exactly one of `brainstorm_id` or `idea_id` set). System prompt is exploratory and curious. Users can pin messages to Overview. This primes the concept for "Create Idea" in 2.4.
+**Description:** Implement one **shared chat thread per brainstorm**: owner and collaborators (and the AI) participate in the same conversation. The AI (Ideabot) is invoked **only when a message contains @ideabot** — otherwise the message is saved but no Claude call is made, reducing unnecessary API usage. ChatSession supports both brainstorms and ideas (exactly one of `brainstorm_id` or `idea_id` set). System prompt positions Ideabot as a business consultant focused on idea generation and validation. Users can pin messages to Overview. This primes the concept for "Create Idea" in 2.4.
 
 **Tasks:**
 
 - [x] Create ChatSession model: `brainstorm_id` (nullable), `idea_id` (nullable), `messages` (jsonb array), timestamps. Check constraint: exactly one of `brainstorm_id` or `idea_id` set. One session per brainstorm (shared thread). Each message: `role` (user | assistant), `user_id` (nullable; set for user messages), `content`, `id`.
 - [x] **@ideabot trigger:** When posting a message, invoke Claude and stream via SSE only if the message content contains `@ideabot`. If not, persist the user message and return success without calling the API.
-- [x] Design system prompt so Claude acts as a creative thinking partner (explore possibilities, ask generative questions). Include linked resources (Ticket 2.6) in context when present.
+- [x] Design system prompt so Claude acts as Ideabot, a business consultant for idea generation and validation. Include linked resources (Ticket 2.6) in context when present.
 - [x] Implement endpoints: `GET /:username/brainstorms/:slug/chat/session`, `POST /:username/brainstorms/:slug/chat/session/messages` (body: content; stream SSE only when message contains @ideabot), `POST /:username/brainstorms/:slug/chat/session/pin` (body: message_id). Persist user message always; append assistant message when @ideabot triggered.
 - [x] Support "pin message to Overview" (store pinned message id or content; display on brainstorm Overview tab).
 - [x] Enforce authorization: only owner and collaborators can post; viewers read-only.

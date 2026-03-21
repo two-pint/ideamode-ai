@@ -13,7 +13,12 @@ class ClaudeChatService
   end
 
   def stream_chat(system_prompt:, messages:, &block)
-    return unless @client
+    unless @client
+      msg = "[Ideabot is not configured: set ANTHROPIC_API_KEY in apps/api/.env and restart the API server.]"
+      Rails.logger.warn("[ClaudeChatService] #{msg}")
+      block&.call(msg)
+      return
+    end
 
     api_messages = messages.map do |m|
       { role: m["role"] == "assistant" ? "assistant" : "user", content: m["content"].to_s }
@@ -22,13 +27,13 @@ class ClaudeChatService
     stream = @client.messages.stream(
       model: "claude-sonnet-4-6",
       max_tokens: 2048,
-      system: system_prompt,
+      system_: system_prompt,
       messages: api_messages
     )
 
-    stream.text.each { |chunk| block.call(chunk) }
+    stream.text.each { |chunk| block&.call(chunk) }
   rescue StandardError => e
-    Rails.logger.error("[ClaudeChatService] #{e.message}")
-    block.call("\n\n[Sorry, I encountered an error. Please try again.]") if block
+    Rails.logger.error("[ClaudeChatService] #{e.class}: #{e.message}")
+    block&.call("\n\n[Sorry, I encountered an error. Please try again.]")
   end
 end

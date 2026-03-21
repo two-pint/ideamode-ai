@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ideaNotesApi, type IdeaNoteResponse } from "@/lib/api";
+import { toastAutosaveError, toastAutosaveSuccess } from "@/lib/toast";
 
 const DEBOUNCE_MS = 1500;
 
@@ -73,8 +74,13 @@ export function IdeaNotesEditor({
     try {
       await ideaNotesApi.update(token, username, slug, json);
       setLastSaved(new Date());
+      toastAutosaveSuccess("ideaNoteAutosave", "Notes saved");
     } catch (e) {
       console.error(e);
+      toastAutosaveError(
+        "ideaNoteAutosave",
+        e instanceof Error ? e.message : "Couldn’t save notes",
+      );
     } finally {
       setSaving(false);
     }

@@ -17,6 +17,7 @@ class Idea < ApplicationRecord
   has_many :idea_tasks, dependent: :destroy
   has_many :idea_wireframes, dependent: :destroy
   has_many :idea_prds, dependent: :destroy
+  has_many :user_recent_accesses, as: :trackable, dependent: :delete_all
 
   # Ownership is immutable after creation (no transfer in v1).
   attr_readonly :user_id

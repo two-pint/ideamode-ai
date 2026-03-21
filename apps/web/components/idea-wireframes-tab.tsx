@@ -6,6 +6,7 @@ import { Loader2, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ideaWireframesApi, type IdeaWireframeItem } from "@/lib/api";
+import { toastAutosaveError, toastAutosaveSuccess, toastError, toastSuccess } from "@/lib/toast";
 
 import "@excalidraw/excalidraw/index.css";
 
@@ -75,8 +76,13 @@ export function IdeaWireframesTab({ username, slug, token, canEdit }: Props) {
         setWireframes((prev) => prev.map((w) => (w.id === wireframe.id ? res.wireframe : w)));
         if (selected?.id === wireframe.id) setSelected(res.wireframe);
         lastSavedDataRef.current = JSON.stringify(canvasData);
+        toastAutosaveSuccess("wireframeAutosave", "Wireframe saved");
       } catch (e) {
         console.error(e);
+        toastAutosaveError(
+          "wireframeAutosave",
+          e instanceof Error ? e.message : "Couldn’t save wireframe",
+        );
       } finally {
         setSaving(false);
       }
@@ -105,8 +111,10 @@ export function IdeaWireframesTab({ username, slug, token, canEdit }: Props) {
       });
       setWireframes((prev) => [res.wireframe, ...prev]);
       setSelected(res.wireframe);
+      toastSuccess("Wireframe created");
     } catch (e) {
       console.error(e);
+      toastError(e instanceof Error ? e.message : "Couldn’t create wireframe");
     }
   };
 
