@@ -7,7 +7,7 @@ class ChatSessionsController < ApplicationController
   include ChatMessageJson
 
   before_action :require_authentication!
-  before_action :set_brainstorm, only: %i[show create_message pin]
+  before_action :set_brainstorm, only: %i[show create_message pin unpin]
 
   def show
     session = find_or_create_session
@@ -67,6 +67,13 @@ class ChatSessionsController < ApplicationController
       pinned_message_content: msg["content"].to_s.truncate(500)
     )
     render json: { pinned_message_id: message_id, pinned_message_content: @brainstorm.pinned_message_content }
+  end
+
+  def unpin
+    return head :forbidden unless @brainstorm.editable_by?(current_user)
+
+    @brainstorm.update!(pinned_message_id: nil, pinned_message_content: nil)
+    render json: { pinned_message_id: nil, pinned_message_content: nil }
   end
 
   private

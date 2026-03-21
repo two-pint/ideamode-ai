@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { Loader2, Pencil, Share2, Trash2 } from "lucide-react"
+import { Loader2, Pencil, PinOff, Share2, Trash2 } from "lucide-react"
 import { AppShell } from "@/components/app-shell"
 import { IdeaAnalysisTab } from "@/components/idea-analysis-tab"
 import { IdeaDiscussionChat } from "@/components/idea-discussion-chat"
@@ -28,6 +28,7 @@ import {
   type IdeaStatus,
   type IdeaVisibility,
   ApiError,
+  discussionSessionsApi,
   ideasApi,
 } from "@/lib/api"
 import { useRequireAuth } from "@/hooks/use-require-auth"
@@ -64,6 +65,7 @@ export default function IdeaDetailPage() {
   const [titleEditing, setTitleEditing] = useState(false)
   const [titleDraft, setTitleDraft] = useState("")
   const [savingTitle, setSavingTitle] = useState(false)
+  const [unpinning, setUnpinning] = useState(false)
 
   useRecordRecentAccess(token, {
     resourceType: "idea",
@@ -209,6 +211,26 @@ export default function IdeaDetailPage() {
       setDeleting(false)
     }
   }
+
+  const handleUnpinPinned = useCallback(async () => {
+    if (!idea || !token) return
+    setUnpinning(true)
+    try {
+      await discussionSessionsApi.unpinPinned(token, params.username, idea.slug)
+      setIdea((prev) =>
+        prev
+          ? { ...prev, pinned_message_id: null, pinned_message_content: null }
+          : null,
+      )
+      toastSuccess("Pinned message removed")
+    } catch (unpinError) {
+      const msg =
+        unpinError instanceof Error ? unpinError.message : "Failed to unpin"
+      toastError(msg)
+    } finally {
+      setUnpinning(false)
+    }
+  }, [idea, token, params.username])
 
   if (!ready || !user || !token) {
     return (
@@ -380,9 +402,29 @@ export default function IdeaDetailPage() {
 
                 {idea.pinned_message_content && (
                   <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
-                    <p className="text-xs font-medium uppercase text-zinc-500">
-                      Pinned from Discussion
-                    </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-medium uppercase text-zinc-500">
+                        Pinned from Discussion
+                      </p>
+                      {canEditOverview && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 shrink-0 gap-1 px-2 text-zinc-600 hover:text-zinc-900"
+                          disabled={unpinning}
+                          onClick={() => void handleUnpinPinned()}
+                          title="Remove pinned message"
+                        >
+                          {unpinning ? (
+                            <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                          ) : (
+                            <PinOff className="size-3.5" aria-hidden />
+                          )}
+                          Unpin
+                        </Button>
+                      )}
+                    </div>
                     <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-800">
                       {idea.pinned_message_content}
                     </p>

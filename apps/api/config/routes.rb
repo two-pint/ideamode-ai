@@ -64,6 +64,7 @@ Rails.application.routes.draw do
     get ":username/brainstorms/:slug/chat/session", to: "chat_sessions#show"
     post ":username/brainstorms/:slug/chat/session/messages", to: "chat_sessions#create_message"
     post ":username/brainstorms/:slug/chat/session/pin", to: "chat_sessions#pin"
+    delete ":username/brainstorms/:slug/chat/session/pin", to: "chat_sessions#unpin"
 
     get ":username/brainstorms/:slug/note", to: "brainstorm_notes#show"
     put ":username/brainstorms/:slug/note", to: "brainstorm_notes#update"
@@ -87,6 +88,7 @@ Rails.application.routes.draw do
     get ":username/ideas/:slug/discussion/sessions/:id", to: "discussion_sessions#show"
     post ":username/ideas/:slug/discussion/sessions/:id/messages", to: "discussion_sessions#create_message"
     post ":username/ideas/:slug/discussion/sessions/:id/pin", to: "discussion_sessions#pin"
+    delete ":username/ideas/:slug/discussion/pin", to: "discussion_sessions#unpin_pinned"
 
     get ":username/ideas/:slug/analyses", to: "idea_analyses#index"
     post ":username/ideas/:slug/analyses", to: "idea_analyses#create"

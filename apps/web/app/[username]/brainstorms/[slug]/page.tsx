@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, Pencil, Share2, Trash2 } from "lucide-react";
+import { Loader2, Pencil, PinOff, Share2, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { BrainstormChat } from "@/components/brainstorm-chat";
 import { BrainstormNotesEditor } from "@/components/brainstorm-notes-editor";
@@ -30,6 +30,7 @@ import {
   brainstormsApi,
   brainstormResourcesApi,
   brainstormNotesApi,
+  chatSessionsApi,
   membersApi,
   type BrainstormNoteResponse,
   type Member,
@@ -65,6 +66,7 @@ export default function BrainstormDetailPage() {
   const [titleEditing, setTitleEditing] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [savingTitle, setSavingTitle] = useState(false);
+  const [unpinning, setUnpinning] = useState(false);
 
   const resetOverviewFormFromBrainstorm = useCallback((b: Brainstorm) => {
     setDescription(b.description || "");
@@ -168,6 +170,24 @@ export default function BrainstormDetailPage() {
       setSavingTitle(false);
     }
   }, [brainstorm, token, params.username, titleDraft, cancelTitleEdit]);
+
+  const handleUnpinPinned = useCallback(async () => {
+    if (!brainstorm || !token) return;
+    setUnpinning(true);
+    try {
+      await chatSessionsApi.unpin(token, params.username, brainstorm.slug);
+      setBrainstorm((b) =>
+        b ? { ...b, pinned_message_id: null, pinned_message_content: null } : null
+      );
+      toastSuccess("Pinned insight removed");
+    } catch (unpinError) {
+      const msg =
+        unpinError instanceof Error ? unpinError.message : "Failed to unpin";
+      toastError(msg);
+    } finally {
+      setUnpinning(false);
+    }
+  }, [brainstorm, token, params.username]);
 
   const handleSave = async () => {
     if (!brainstorm || !token) return;
@@ -432,7 +452,27 @@ export default function BrainstormDetailPage() {
 
             {brainstorm.pinned_message_content && (
               <div className="rounded-md border border-zinc-200 bg-amber-50/50 p-3">
-                <p className="text-xs font-medium uppercase text-zinc-500">Pinned insight</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-xs font-medium uppercase text-zinc-500">Pinned insight</p>
+                  {canEditOverview && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 shrink-0 gap-1 px-2 text-zinc-600 hover:text-zinc-900"
+                      disabled={unpinning}
+                      onClick={() => void handleUnpinPinned()}
+                      title="Remove pinned insight"
+                    >
+                      {unpinning ? (
+                        <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                      ) : (
+                        <PinOff className="size-3.5" aria-hidden />
+                      )}
+                      Unpin
+                    </Button>
+                  )}
+                </div>
                 <p className="mt-1 text-sm text-zinc-900">{brainstorm.pinned_message_content}</p>
               </div>
             )}
@@ -477,7 +517,27 @@ export default function BrainstormDetailPage() {
 
           {brainstorm.pinned_message_content && (
             <div className="rounded-md border border-zinc-200 bg-amber-50/50 p-3 dark:border-zinc-700 dark:bg-amber-950/30">
-              <p className="text-xs font-medium uppercase text-zinc-500">Pinned insight</p>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-xs font-medium uppercase text-zinc-500">Pinned insight</p>
+                {canEditOverview && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 shrink-0 gap-1 px-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                    disabled={unpinning}
+                    onClick={() => void handleUnpinPinned()}
+                    title="Remove pinned insight"
+                  >
+                    {unpinning ? (
+                      <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                    ) : (
+                      <PinOff className="size-3.5" aria-hidden />
+                    )}
+                    Unpin
+                  </Button>
+                )}
+              </div>
               <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
                 {brainstorm.pinned_message_content}
               </p>

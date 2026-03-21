@@ -7,9 +7,9 @@ class DiscussionSessionsController < ApplicationController
   include ChatMessageJson
 
   before_action :require_authentication!
-  before_action :set_idea, only: %i[index create show create_message pin]
+  before_action :set_idea, only: %i[index create show create_message pin unpin_pinned]
   before_action :set_session, only: %i[show create_message pin]
-  before_action :require_editable!, only: %i[create create_message pin]
+  before_action :require_editable!, only: %i[create create_message pin unpin_pinned]
 
   def index
     sessions = @idea.chat_sessions.order(created_at: :desc)
@@ -72,6 +72,11 @@ class DiscussionSessionsController < ApplicationController
       pinned_message_content: msg["content"].to_s.truncate(500)
     )
     render json: { pinned_message_id: message_id, pinned_message_content: @idea.pinned_message_content }
+  end
+
+  def unpin_pinned
+    @idea.update!(pinned_message_id: nil, pinned_message_content: nil)
+    render json: { pinned_message_id: nil, pinned_message_content: nil }
   end
 
   private

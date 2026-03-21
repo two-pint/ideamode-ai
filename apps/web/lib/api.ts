@@ -704,6 +704,13 @@ export const chatSessionsApi = {
       { method: "POST", token, body: { message_id: messageId } }
     )
   },
+
+  unpin(token: string, username: string, slug: string) {
+    return apiFetch<{ pinned_message_id: null; pinned_message_content: null }>(
+      `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/chat/session/pin`,
+      { method: "DELETE", token }
+    )
+  },
 }
 
 export type DiscussionSessionResponse = {
@@ -813,6 +820,13 @@ export const discussionSessionsApi = {
     return apiFetch<{ pinned_message_id: string; pinned_message_content: string | null }>(
       `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/discussion/sessions/${sessionId}/pin`,
       { method: "POST", token, body: { message_id: messageId } }
+    )
+  },
+
+  unpinPinned(token: string, username: string, slug: string) {
+    return apiFetch<{ pinned_message_id: null; pinned_message_content: null }>(
+      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/discussion/pin`,
+      { method: "DELETE", token }
     )
   },
 }

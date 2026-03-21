@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bot, Pin, Send, User } from "lucide-react";
+import { Bot, Loader2, Pin, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -83,7 +83,7 @@ export function IdeaDiscussionChat({
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [currentSession?.messages, streamingContent]);
+  }, [currentSession?.messages, streamingContent, sending]);
 
   const handleSend = async () => {
     const text = content.trim();
@@ -94,7 +94,7 @@ export function IdeaDiscussionChat({
 
     setContent("");
     setSending(true);
-    setStreamingContent(null);
+    setStreamingContent("");
 
     try {
       await discussionSessionsApi.postMessage(
@@ -273,10 +273,21 @@ export function IdeaDiscussionChat({
                   </div>
                   <div className="max-w-[85%] rounded-lg bg-white px-3 py-2 text-zinc-900">
                     <p className="mb-1 text-xs font-medium text-zinc-500">Ideabot</p>
-                    <p className="whitespace-pre-wrap text-sm">
-                      {streamingContent}
-                      <span className="animate-pulse">▌</span>
-                    </p>
+                    {!streamingContent ? (
+                      <div
+                        className="flex items-center gap-2 text-sm text-zinc-500"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+                        <span>Thinking…</span>
+                      </div>
+                    ) : (
+                      <p className="whitespace-pre-wrap text-sm">
+                        {streamingContent}
+                        {sending ? <span className="animate-pulse">▌</span> : null}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -302,8 +313,13 @@ export function IdeaDiscussionChat({
                   size="sm"
                   disabled={sending || !content.trim()}
                   onClick={handleSend}
+                  aria-busy={sending}
                 >
-                  <Send className="size-4" />
+                  {sending ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Send className="size-4" />
+                  )}
                 </Button>
               </div>
             )}
