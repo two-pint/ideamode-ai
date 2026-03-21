@@ -38,7 +38,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useRecordRecentAccess } from "@/hooks/use-record-recent-access";
 import { toastError, toastSuccess } from "@/lib/toast";
 
-const TABS = ["Chat", "Research", "Notes"] as const;
+const TABS = ["Chat", "Research", "Notes", "Resources", "Sharing"] as const;
 const STATUS_OPTIONS: BrainstormStatus[] = ["exploring", "researching", "ready", "archived"];
 const VISIBILITY_OPTIONS: BrainstormVisibility[] = ["private", "shared"];
 
@@ -469,89 +469,102 @@ export default function BrainstormDetailPage() {
       subtitle={`@${params.username}/brainstorms/${brainstorm.slug}`}
       headerExtension={overviewHeaderSection}
       active={user.username === params.username ? "profile" : "idea"}
+      fillHeight
     >
-      {/* Main: tabs + content; resources sidebar */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
-        <div className="min-w-0 space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {TABS.map((tab) => (
-              <Button
-                key={tab}
-                variant={tab === activeTab ? "default" : "outline"}
-                size="sm"
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-              </Button>
-            ))}
-          </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {TABS.map((tab) => (
+            <Button
+              key={tab}
+              variant={tab === activeTab ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </Button>
+          ))}
+        </div>
+
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
           {activeTab === "Chat" && (
             <BrainstormChat
+              className="min-h-0 flex-1"
               username={params.username}
               slug={params.slug}
               token={token!}
               canEdit={brainstorm.can_edit ?? false}
               onPinned={() => {
-                brainstormsApi.getByOwnerAndSlug(token!, params.username, params.slug).then((r) => setBrainstorm(r.brainstorm));
+                brainstormsApi
+                  .getByOwnerAndSlug(token!, params.username, params.slug)
+                  .then((r) => setBrainstorm(r.brainstorm));
               }}
             />
           )}
           {activeTab === "Research" && (
-            <BrainstormResearchTab
-              username={params.username}
-              slug={params.slug}
-              token={token!}
-              canEdit={brainstorm.can_edit ?? false}
-            />
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <BrainstormResearchTab
+                username={params.username}
+                slug={params.slug}
+                token={token!}
+                canEdit={brainstorm.can_edit ?? false}
+              />
+            </div>
           )}
           {activeTab === "Notes" && (
-            <BrainstormNotesEditor
-              username={params.username}
-              slug={params.slug}
-              token={token!}
-              canEdit={brainstorm.can_edit ?? false}
-              initialNote={note}
-              onLoad={loadNote}
-            />
-          )}
-        </div>
-
-        <div className="space-y-4">
-          <BrainstormResources
-            username={params.username}
-            slug={params.slug}
-            token={token!}
-            resources={resources}
-            canEdit={brainstorm.can_edit ?? false}
-            onUpdate={loadResources}
-          />
-          <Card className="h-fit">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>People with access</CardTitle>
-              {user.username === params.username && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShareDialogOpen(true)}
-                  disabled={saving}
-                >
-                  <Share2 className="size-4" />
-                  Share
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              <ResourceAccessList
-                resourceType="brainstorm"
-                ownerUsername={params.username}
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <BrainstormNotesEditor
+                username={params.username}
                 slug={params.slug}
-                token={token}
-                canManage={user?.username === params.username}
-                refreshTrigger={shareDialogOpen}
+                token={token!}
+                canEdit={brainstorm.can_edit ?? false}
+                initialNote={note}
+                onLoad={loadNote}
               />
-            </CardContent>
-          </Card>
+            </div>
+          )}
+          {activeTab === "Resources" && (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <BrainstormResources
+                username={params.username}
+                slug={params.slug}
+                token={token!}
+                resources={resources}
+                canEdit={brainstorm.can_edit ?? false}
+                onUpdate={loadResources}
+              />
+            </div>
+          )}
+          {activeTab === "Sharing" && (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <Card className="h-fit">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle>People with access</CardTitle>
+                  {user.username === params.username && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShareDialogOpen(true)}
+                      disabled={saving}
+                    >
+                      <Share2 className="size-4" />
+                      Share
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <ResourceAccessList
+                    resourceType="brainstorm"
+                    ownerUsername={params.username}
+                    slug={params.slug}
+                    token={token}
+                    canManage={user?.username === params.username}
+                    refreshTrigger={shareDialogOpen}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
 

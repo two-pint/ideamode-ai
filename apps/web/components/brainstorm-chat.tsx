@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Bot, Loader2, Pin, PinOff, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
   type ChatMessage,
   type ChatSessionResponse,
@@ -19,6 +20,8 @@ type Props = {
   token: string;
   canEdit: boolean;
   onPinned?: () => void;
+  /** When the parent is a flex column with a bounded height, pass e.g. min-h-0 flex-1 for a full-height chat card. */
+  className?: string;
 };
 
 export function BrainstormChat({
@@ -27,6 +30,7 @@ export function BrainstormChat({
   token,
   canEdit,
   onPinned,
+  className,
 }: Props) {
   const [session, setSession] = useState<ChatSessionResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -105,8 +109,8 @@ export function BrainstormChat({
   const pinnedCount = messages.filter((m) => m.pinned).length;
 
   return (
-    <Card>
-      <CardHeader className="space-y-2">
+    <Card className={cn("flex min-h-0 flex-col", className)}>
+      <CardHeader className="shrink-0 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle>Chat</CardTitle>
           {pinnedCount > 0 && (
@@ -124,12 +128,12 @@ export function BrainstormChat({
           Include &quot;{IDEABOT_TRIGGER}&quot; in a message to get an AI reply. Messages without it are saved only.
         </p>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-3">
         {loading ? (
           <p className="text-sm text-zinc-500">Loading…</p>
         ) : (
           <>
-            <div className="max-h-[400px] space-y-3 overflow-y-auto rounded-md border border-zinc-100 bg-zinc-50/50 p-3">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-md border border-zinc-100 bg-zinc-50/50 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
               {messages.length === 0 && !showStreaming && (
                 <p className="text-sm text-zinc-500">No messages yet. Send one to start.</p>
               )}
@@ -226,9 +230,9 @@ export function BrainstormChat({
                 </div>
               )}
             </div>
-            <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} className="shrink-0" />
             {canEdit ? (
-              <div className="flex gap-2">
+              <div className="flex shrink-0 gap-2">
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}

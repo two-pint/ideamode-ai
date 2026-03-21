@@ -43,6 +43,7 @@ const TABS = [
   "PRD",
   "Notes",
   "Tasks",
+  "Sharing",
 ] as const
 const STATUS_OPTIONS: IdeaStatus[] = ["validating", "validated", "shelved"]
 const VISIBILITY_OPTIONS: IdeaVisibility[] = ["private", "shared"]
@@ -321,66 +322,109 @@ export default function IdeaDetailPage() {
       titleSlot={titleSlot || undefined}
       subtitle={`@${params.username}/ideas/${idea.slug}`}
       active={user.username === params.username ? "profile" : "idea"}
+      fillHeight
     >
-      <div className="mb-4 flex flex-wrap gap-2">
-        {TABS.map((tab) => (
-          <Button
-            key={tab}
-            variant={tab === activeTab ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab}
-          </Button>
-        ))}
-      </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {TABS.map((tab) => (
+            <Button
+              key={tab}
+              variant={tab === activeTab ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </Button>
+          ))}
+        </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
-        <div className="min-w-0">
-          {activeTab === "Discussion" ? (
-            <IdeaDiscussionChat
-              username={params.username}
-              slug={params.slug}
-              token={token}
-              canEdit={canEditIdea}
-              onPinned={refreshIdea}
-            />
-          ) : activeTab === "Analysis" ? (
-            <IdeaAnalysisTab
-              username={params.username}
-              slug={params.slug}
-              token={token}
-              canEdit={canEditIdea}
-            />
-          ) : activeTab === "Notes" ? (
-            <IdeaNotesTab
-              username={params.username}
-              slug={params.slug}
-              token={token}
-              canEdit={canEditIdea}
-            />
-          ) : activeTab === "Tasks" ? (
-            <IdeaTasksTab
-              username={params.username}
-              slug={params.slug}
-              token={token}
-              canEdit={canEditIdea}
-            />
-          ) : activeTab === "Wireframes" ? (
-            <IdeaWireframesTab
-              username={params.username}
-              slug={params.slug}
-              token={token}
-              canEdit={canEditIdea}
-            />
-          ) : activeTab === "PRD" ? (
-            <IdeaPrdTab
-              username={params.username}
-              slug={params.slug}
-              token={token}
-              canEdit={canEditIdea}
-            />
-          ) : (
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+            {activeTab === "Discussion" ? (
+              <IdeaDiscussionChat
+                className="min-h-0 flex-1"
+                username={params.username}
+                slug={params.slug}
+                token={token}
+                canEdit={canEditIdea}
+                onPinned={refreshIdea}
+              />
+            ) : activeTab === "Analysis" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <IdeaAnalysisTab
+                  username={params.username}
+                  slug={params.slug}
+                  token={token}
+                  canEdit={canEditIdea}
+                />
+              </div>
+            ) : activeTab === "Notes" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <IdeaNotesTab
+                  username={params.username}
+                  slug={params.slug}
+                  token={token}
+                  canEdit={canEditIdea}
+                />
+              </div>
+            ) : activeTab === "Tasks" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <IdeaTasksTab
+                  username={params.username}
+                  slug={params.slug}
+                  token={token}
+                  canEdit={canEditIdea}
+                />
+              </div>
+            ) : activeTab === "Wireframes" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <IdeaWireframesTab
+                  username={params.username}
+                  slug={params.slug}
+                  token={token}
+                  canEdit={canEditIdea}
+                />
+              </div>
+            ) : activeTab === "PRD" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <IdeaPrdTab
+                  username={params.username}
+                  slug={params.slug}
+                  token={token}
+                  canEdit={canEditIdea}
+                />
+              </div>
+            ) : activeTab === "Sharing" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <Card className="h-fit">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle>People with access</CardTitle>
+                    {user.username === params.username && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShareDialogOpen(true)}
+                        disabled={saving}
+                      >
+                        <Share2 className="size-4" />
+                        Share
+                      </Button>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <ResourceAccessList
+                      resourceType="idea"
+                      ownerUsername={params.username}
+                      slug={params.slug}
+                      token={token}
+                      canManage={user?.username === params.username}
+                      refreshTrigger={shareDialogOpen}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="min-h-0 flex-1 overflow-y-auto">
             <Card>
               <CardHeader>
                 <CardTitle>Overview</CardTitle>
@@ -540,36 +584,9 @@ export default function IdeaDetailPage() {
                 )}
               </CardContent>
             </Card>
-          )}
-        </div>
-
-        <Card className="h-fit">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>People with access</CardTitle>
-            {user.username === params.username && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShareDialogOpen(true)}
-                disabled={saving}
-              >
-                <Share2 className="size-4" />
-                Share
-              </Button>
+              </div>
             )}
-          </CardHeader>
-          <CardContent>
-            <ResourceAccessList
-              resourceType="idea"
-              ownerUsername={params.username}
-              slug={params.slug}
-              token={token}
-              canManage={user?.username === params.username}
-              refreshTrigger={shareDialogOpen}
-            />
-          </CardContent>
-        </Card>
+        </div>
       </div>
 
       {user.username === params.username && (

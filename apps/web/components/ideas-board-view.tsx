@@ -147,14 +147,13 @@ export function IdeasBoardView() {
         title="Ideas"
         subtitle="Drag cards between lanes to update validation status."
         active="ideas"
-      >
-        <div className="mb-6 flex justify-end">
+        headerActions={
           <Button onClick={() => setIdeaModalOpen(true)}>
             <Plus className="size-4" />
             New Idea
           </Button>
-        </div>
-
+        }
+      >
         <section className="space-y-3">
           {loadingIdeas ? (
             <p className="text-sm text-zinc-500">Loading ideas...</p>

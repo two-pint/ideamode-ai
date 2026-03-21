@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Bot, Loader2, Pin, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
   type ChatMessage,
   type DiscussionSessionResponse,
@@ -23,6 +24,7 @@ type Props = {
   token: string;
   canEdit: boolean;
   onPinned?: () => void;
+  className?: string;
 };
 
 export function IdeaDiscussionChat({
@@ -31,6 +33,7 @@ export function IdeaDiscussionChat({
   token,
   canEdit,
   onPinned,
+  className,
 }: Props) {
   const [sessions, setSessions] = useState<DiscussionSessionResponse[]>([]);
   const [currentSession, setCurrentSession] = useState<DiscussionSessionResponse | null>(null);
@@ -146,14 +149,19 @@ export function IdeaDiscussionChat({
   const showStreaming = streamingContent !== null;
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className={cn("flex min-h-0 flex-col", className)}>
+      <CardHeader className="shrink-0">
         <CardTitle>Discussion</CardTitle>
         <p className="text-xs text-zinc-500">
           A critical thinking partner: challenges assumptions and helps articulate the problem and customer.
         </p>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent
+        className={cn(
+          "space-y-3",
+          currentSession && "flex min-h-0 flex-1 flex-col gap-3 space-y-0",
+        )}
+      >
         {loading ? (
           <p className="text-sm text-zinc-500">Loading…</p>
         ) : !currentSession && !canEdit ? (
@@ -174,7 +182,7 @@ export function IdeaDiscussionChat({
         ) : (
           <>
             {sessions.length > 1 && (
-              <div className="flex flex-wrap gap-2 border-b border-zinc-100 pb-2">
+              <div className="flex shrink-0 flex-wrap gap-2 border-b border-zinc-100 pb-2">
                 <span className="text-xs text-zinc-500">Sessions:</span>
                 {sessions.map((s) => (
                   <Button
@@ -194,7 +202,7 @@ export function IdeaDiscussionChat({
                 )}
               </div>
             )}
-            <div className="max-h-[400px] space-y-3 overflow-y-auto rounded-md border border-zinc-100 bg-zinc-50/50 p-3">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-md border border-zinc-100 bg-zinc-50/50 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
               {messages.length === 0 && !showStreaming && (
                 <div className="space-y-2">
                   <p className="text-sm text-zinc-500">No messages yet. Try:</p>
@@ -292,9 +300,9 @@ export function IdeaDiscussionChat({
                 </div>
               )}
             </div>
-            <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} className="shrink-0" />
             {canEdit && (
-              <div className="flex gap-2">
+              <div className="flex shrink-0 gap-2">
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}

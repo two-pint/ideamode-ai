@@ -166,14 +166,13 @@ export function BrainstormsBoardView() {
         title="Brainstorms"
         subtitle="Drag cards between lanes to update status."
         active="brainstorms"
-      >
-        <div className="mb-6 flex justify-end">
+        headerActions={
           <Button onClick={() => setBrainstormModalOpen(true)}>
             <Plus className="size-4" />
             New Brainstorm
           </Button>
-        </div>
-
+        }
+      >
         <section className="space-y-3">
           {loadingBrainstorms ? (
             <p className="text-sm text-zinc-500">Loading brainstorms...</p>
