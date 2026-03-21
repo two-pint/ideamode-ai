@@ -57,7 +57,7 @@ export function BrainstormChat({
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [session?.messages, streamingContent, sending]);
+  }, [session?.messages, streamingContent, sending, showPinnedOnly]);
 
   const handleSend = async () => {
     const text = content.trim();
