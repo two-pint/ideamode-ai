@@ -32,6 +32,24 @@ class Brainstorm < ApplicationRecord
   before_validation :normalize_slug
   before_validation :apply_defaults
 
+  # One-time migration from legacy brainstorm.pinned_message_* to message["pinned"] in chat session.
+  def sync_legacy_pinned_message_to_chat_session!
+    legacy_id = pinned_message_id.presence&.to_s
+    return if legacy_id.blank?
+
+    session = chat_session
+    return unless session
+
+    msgs = session.messages || []
+    return unless msgs.any? { |m| m["id"].to_s == legacy_id }
+
+    new_msgs = msgs.map do |m|
+      m["id"].to_s == legacy_id ? m.merge("pinned" => true) : m
+    end
+    session.update!(messages: new_msgs)
+    update_columns(pinned_message_id: nil, pinned_message_content: nil)
+  end
+
   private
 
   def apply_defaults

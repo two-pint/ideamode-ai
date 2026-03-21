@@ -15,11 +15,20 @@ type AppShellProps = {
   /** When set, replaces the default title heading (e.g. inline title editing). */
   titleSlot?: ReactNode;
   subtitle?: string;
+  /** Renders below the title/subtitle inside the page header strip (e.g. resource overview). */
+  headerExtension?: ReactNode;
   children: React.ReactNode;
   active?: "dashboard" | "brainstorms" | "ideas" | "profile" | "invitations" | "idea";
 };
 
-export function AppShell({ title, titleSlot, subtitle, children, active = "dashboard" }: AppShellProps) {
+export function AppShell({
+  title,
+  titleSlot,
+  subtitle,
+  headerExtension,
+  children,
+  active = "dashboard",
+}: AppShellProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -139,8 +148,13 @@ export function AppShell({ title, titleSlot, subtitle, children, active = "dashb
       <div className="border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
         {titleSlot ?? <h1 className="text-xl font-semibold">{title}</h1>}
         {subtitle && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>
+          <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>
         )}
+        {headerExtension != null ? (
+          <div className="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+            {headerExtension}
+          </div>
+        ) : null}
       </div>
 
       <main className="p-6">{children}</main>

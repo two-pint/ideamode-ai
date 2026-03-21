@@ -114,6 +114,25 @@ export type Idea = {
 export type BrainstormStatus = "exploring" | "researching" | "ready" | "archived"
 export type BrainstormVisibility = "private" | "shared"
 
+export type ChatMessage = {
+  id: string
+  role: "user" | "assistant"
+  user_id: number | null
+  content: string
+  /** Display name for the message author (users: name or username; assistant: Ideabot). */
+  author_name?: string | null
+  pinned?: boolean
+}
+
+export type ChatSessionResponse = {
+  id: number
+  brainstorm_id: number
+  messages: ChatMessage[]
+  /** Legacy; always null for brainstorm chat (pins live on messages). */
+  pinned_message_id?: string | null
+  pinned_message_content?: string | null
+}
+
 export type Brainstorm = {
   id: number
   title: string
@@ -121,6 +140,8 @@ export type Brainstorm = {
   slug: string
   status: BrainstormStatus
   visibility: BrainstormVisibility
+  /** Messages marked pinned in chat (snippets for overview). */
+  pinned_messages?: ChatMessage[]
   pinned_message_id?: string | null
   pinned_message_content?: string | null
   can_edit?: boolean
@@ -141,23 +162,6 @@ export type BrainstormResource = {
   notes: string | null
   created_at: string
   updated_at: string
-}
-
-export type ChatMessage = {
-  id: string
-  role: "user" | "assistant"
-  user_id: number | null
-  content: string
-  /** Display name for the message author (users: name or username; assistant: Ideabot). */
-  author_name?: string | null
-}
-
-export type ChatSessionResponse = {
-  id: number
-  brainstorm_id: number
-  messages: ChatMessage[]
-  pinned_message_id: string | null
-  pinned_message_content: string | null
 }
 
 export type Member = {
@@ -699,14 +703,14 @@ export const chatSessionsApi = {
   },
 
   pinMessage(token: string, username: string, slug: string, messageId: string) {
-    return apiFetch<{ pinned_message_id: string; pinned_message_content: string | null }>(
+    return apiFetch<{ session: ChatSessionResponse }>(
       `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/chat/session/pin`,
       { method: "POST", token, body: { message_id: messageId } }
     )
   },
 
   unpin(token: string, username: string, slug: string) {
-    return apiFetch<{ pinned_message_id: null; pinned_message_content: null }>(
+    return apiFetch<{ session: ChatSessionResponse }>(
       `/${encodeURIComponent(username)}/brainstorms/${encodeURIComponent(slug)}/chat/session/pin`,
       { method: "DELETE", token }
     )

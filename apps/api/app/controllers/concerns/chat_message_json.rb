@@ -33,7 +33,8 @@ module ChatMessageJson
       role: msg["role"],
       user_id: msg["user_id"],
       content: msg["content"],
-      author_name:
+      author_name:,
+      pinned: ActiveModel::Type::Boolean.new.cast(msg["pinned"])
     }
   end
 

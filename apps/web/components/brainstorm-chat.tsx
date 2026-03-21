@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bot, Loader2, Pin, Send, User } from "lucide-react";
+import { Bot, Loader2, Pin, PinOff, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -33,6 +33,8 @@ export function BrainstormChat({
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
   const [streamingContent, setStreamingContent] = useState<string | null>(null);
+  const [showPinnedOnly, setShowPinnedOnly] = useState(false);
+  const [pinningId, setPinningId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const loadSession = useCallback(async () => {
@@ -84,22 +86,40 @@ export function BrainstormChat({
     }
   };
 
-  const handlePin = async (messageId: string) => {
+  const handleTogglePin = async (messageId: string) => {
+    setPinningId(messageId);
     try {
-      await chatSessionsApi.pinMessage(token, username, slug, messageId);
+      const res = await chatSessionsApi.pinMessage(token, username, slug, messageId);
+      if (res.session) setSession(res.session);
       onPinned?.();
     } catch (e) {
       console.error(e);
+    } finally {
+      setPinningId(null);
     }
   };
 
   const messages = session?.messages ?? [];
+  const displayedMessages = showPinnedOnly ? messages.filter((m) => m.pinned) : messages;
   const showStreaming = streamingContent !== null;
+  const pinnedCount = messages.filter((m) => m.pinned).length;
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Chat</CardTitle>
+      <CardHeader className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>Chat</CardTitle>
+          {pinnedCount > 0 && (
+            <Button
+              type="button"
+              variant={showPinnedOnly ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowPinnedOnly((v) => !v)}
+            >
+              {showPinnedOnly ? "Show all messages" : `Pinned only (${pinnedCount})`}
+            </Button>
+          )}
+        </div>
         <p className="text-xs text-zinc-500">
           Include &quot;{IDEABOT_TRIGGER}&quot; in a message to get an AI reply. Messages without it are saved only.
         </p>
@@ -113,7 +133,10 @@ export function BrainstormChat({
               {messages.length === 0 && !showStreaming && (
                 <p className="text-sm text-zinc-500">No messages yet. Send one to start.</p>
               )}
-              {messages.map((msg) => (
+              {messages.length > 0 && showPinnedOnly && displayedMessages.length === 0 && !showStreaming && (
+                <p className="text-sm text-zinc-500">No pinned messages. Pin any message from the full chat.</p>
+              )}
+              {displayedMessages.map((msg) => (
                 <div
                   key={msg.id}
                   className={`flex gap-2 ${msg.role === "assistant" ? "flex-row" : "flex-row-reverse"}`}
@@ -126,11 +149,11 @@ export function BrainstormChat({
                     )}
                   </div>
                   <div
-                    className={`max-w-[85%] rounded-lg px-3 py-2 ${
+                    className={`max-w-[85%] rounded-lg px-3 py-2 ring-2 ring-transparent ${
                       msg.role === "assistant"
                         ? "bg-white text-zinc-900"
                         : "bg-zinc-900 text-white"
-                    }`}
+                    } ${msg.pinned ? "ring-amber-400/80 dark:ring-amber-500/60" : ""}`}
                   >
                     {(msg.author_name || canEdit) && (
                       <div className="mb-1 flex items-center gap-2">
@@ -149,15 +172,26 @@ export function BrainstormChat({
                           <Button
                             size="sm"
                             variant="ghost"
+                            disabled={pinningId === msg.id}
                             className={`size-6 shrink-0 p-0 ${
                               msg.role === "assistant"
-                                ? "text-zinc-500 hover:text-zinc-900"
-                                : "text-zinc-400 hover:text-white"
+                                ? msg.pinned
+                                  ? "text-amber-600 hover:text-amber-800"
+                                  : "text-zinc-500 hover:text-zinc-900"
+                                : msg.pinned
+                                  ? "text-amber-300 hover:text-amber-100"
+                                  : "text-zinc-400 hover:text-white"
                             }`}
-                            onClick={() => handlePin(msg.id)}
-                            title="Pin to Overview"
+                            onClick={() => void handleTogglePin(msg.id)}
+                            title={msg.pinned ? "Unpin" : "Pin"}
                           >
-                            <Pin className="size-3" />
+                            {pinningId === msg.id ? (
+                              <Loader2 className="size-3 animate-spin" aria-hidden />
+                            ) : msg.pinned ? (
+                              <PinOff className="size-3" />
+                            ) : (
+                              <Pin className="size-3" />
+                            )}
                           </Button>
                         )}
                       </div>
