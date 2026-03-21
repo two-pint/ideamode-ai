@@ -35,6 +35,7 @@ import {
   type Member,
 } from "@/lib/api";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { toastError, toastSuccess } from "@/lib/toast";
 
 const TABS = ["Chat", "Research", "Notes"] as const;
 const STATUS_OPTIONS: BrainstormStatus[] = ["exploring", "researching", "ready", "archived"];
@@ -144,8 +145,11 @@ export default function BrainstormDetailPage() {
       if (res.brainstorm.slug !== params.slug) {
         router.replace(`/${params.username}/brainstorms/${res.brainstorm.slug}`);
       }
+      toastSuccess("Brainstorm updated");
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Failed to save");
+      const msg = saveError instanceof Error ? saveError.message : "Failed to save";
+      setError(msg);
+      toastError(msg);
     } finally {
       setSaving(false);
     }
@@ -158,9 +162,12 @@ export default function BrainstormDetailPage() {
     setError(null);
     try {
       await brainstormsApi.deleteByOwnerAndSlug(token, params.username, brainstorm.slug);
+      toastSuccess("Brainstorm deleted");
       router.replace("/dashboard");
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Failed to delete");
+      const msg = deleteError instanceof Error ? deleteError.message : "Failed to delete";
+      setError(msg);
+      toastError(msg);
     } finally {
       setDeleting(false);
     }
@@ -232,9 +239,8 @@ export default function BrainstormDetailPage() {
                 )}
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="destructive"
                   size="sm"
-                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
                   disabled={deleting || saving}
                   onClick={handleDelete}
                 >
@@ -336,7 +342,7 @@ export default function BrainstormDetailPage() {
               </div>
             )}
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-destructive text-sm">{error}</p>}
           </CardContent>
         </Card>
 

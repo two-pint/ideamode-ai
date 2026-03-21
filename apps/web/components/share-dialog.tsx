@@ -10,6 +10,7 @@ import {
   membersApi,
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { toastError, toastSuccess } from "@/lib/toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -89,6 +90,7 @@ export function ShareDialog({
       });
       setInviteEmailOrUsername("");
       await fetchList();
+      toastSuccess("Invite sent");
     } catch (err) {
       setInviteError(
         err instanceof ApiError ? err.message : "Failed to send invite."
@@ -111,6 +113,9 @@ export function ShareDialog({
         role
       );
       await fetchList();
+      toastSuccess("Role updated");
+    } catch {
+      toastError("Couldn’t update role");
     } finally {
       setUpdatingId(null);
     }
@@ -121,6 +126,7 @@ export function ShareDialog({
     const url = `${window.location.origin}/invites/${inv.token}`;
     void navigator.clipboard.writeText(url).then(() => {
       setCopiedInviteId(inv.id);
+      toastSuccess("Invite link copied");
       setTimeout(() => setCopiedInviteId(null), 2000);
     });
   };
@@ -131,6 +137,9 @@ export function ShareDialog({
     try {
       await membersApi.remove(token, ownerUsername, slug, resourceType, id);
       await fetchList();
+      toastSuccess("Access updated");
+    } catch {
+      toastError("Couldn’t remove access");
     } finally {
       setRemovingId(null);
     }
@@ -159,7 +168,7 @@ export function ShareDialog({
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {error && (
-            <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+            <p className="text-destructive text-sm" role="alert">
               {error}
             </p>
           )}
@@ -213,7 +222,7 @@ export function ShareDialog({
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="size-8 text-zinc-500 hover:text-red-600"
+                          className="size-8 text-destructive hover:bg-destructive/10"
                           onClick={() => handleRemove(m.id)}
                           disabled={removingId === m.id}
                           aria-label={`Remove ${m.name || m.username}`}
@@ -264,7 +273,7 @@ export function ShareDialog({
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="size-8 text-zinc-500 hover:text-red-600"
+                            className="size-8 text-destructive hover:bg-destructive/10"
                             onClick={() => handleRemove(inv.id)}
                             disabled={removingId === inv.id}
                             aria-label={`Cancel invite for ${inv.email}`}
@@ -315,7 +324,7 @@ export function ShareDialog({
                     </Select>
                   </div>
                   {inviteError && (
-                    <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+                    <p className="text-destructive text-sm" role="alert">
                       {inviteError}
                     </p>
                   )}

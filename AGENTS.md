@@ -28,6 +28,13 @@ This rule applies to all code generation, refactors, and suggestions in this rep
 
 - **Web:** Use `lucide-react` for all icons. Do not use other icon sets (e.g. Heroicons, Feather, custom SVGs) unless there is no Lucide equivalent and the product owner approves.
 - **Mobile:** Use `lucide-react-native` for all icons. Same rule: Lucide only.
+- **Sizes and documented exceptions:** See [docs/ui/icons.md](./docs/ui/icons.md).
+
+## Semantic colors & buttons (web)
+
+- **Primary / secondary / success / destructive** are defined as CSS variables in `apps/web/app/globals.css` and mapped for Tailwind (`bg-success`, `text-destructive`, etc.).
+- Use **Button** variants consistently: `default` (primary), `secondary`, `success`, `destructive`, plus `outline` / `ghost` / `link` as needed.
+- Full guidance: [docs/ui/semantic-ui.md](./docs/ui/semantic-ui.md).
 
 ---
 

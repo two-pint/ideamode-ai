@@ -21,6 +21,7 @@ import {
   brainstormNotesApi,
   type BrainstormNoteResponse,
 } from "@/lib/api";
+import { toastAutosaveError, toastAutosaveSuccess } from "@/lib/toast";
 
 const DEBOUNCE_MS = 1500;
 
@@ -71,8 +72,13 @@ export function BrainstormNotesEditor({
     try {
       await brainstormNotesApi.update(token, username, slug, json);
       setLastSaved(new Date());
+      toastAutosaveSuccess("brainstormNoteAutosave", "Notes saved");
     } catch (e) {
       console.error(e);
+      toastAutosaveError(
+        "brainstormNoteAutosave",
+        e instanceof Error ? e.message : "Couldn’t save notes",
+      );
     } finally {
       setSaving(false);
     }

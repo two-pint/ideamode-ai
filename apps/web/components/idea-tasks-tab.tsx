@@ -1,11 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Calendar, ChevronDown, ChevronRight, Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  Calendar,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Loader2,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ideaTasksApi, type IdeaTaskItem } from "@/lib/api";
+import { toastError, toastSuccess } from "@/lib/toast";
 
 type Props = {
   username: string;
@@ -48,8 +57,10 @@ export function IdeaTasksTab({ username, slug, token, canEdit }: Props) {
     try {
       const res = await ideaTasksApi.create(token, username, slug, { title, due_date });
       setTasks((prev) => [...prev, res.task]);
+      toastSuccess("Task added");
     } catch (e) {
       console.error(e);
+      toastError(e instanceof Error ? e.message : "Couldn’t add task");
     }
   };
 
@@ -62,6 +73,7 @@ export function IdeaTasksTab({ username, slug, token, canEdit }: Props) {
       setTasks((prev) => prev.map((t) => (t.id === task.id ? res.task : t)));
     } catch (e) {
       console.error(e);
+      toastError(e instanceof Error ? e.message : "Couldn’t update task");
     } finally {
       setUpdatingId(null);
     }
@@ -71,8 +83,10 @@ export function IdeaTasksTab({ username, slug, token, canEdit }: Props) {
     try {
       await ideaTasksApi.delete(token, username, slug, task.id);
       setTasks((prev) => prev.filter((t) => t.id !== task.id));
+      toastSuccess("Task deleted");
     } catch (e) {
       console.error(e);
+      toastError(e instanceof Error ? e.message : "Couldn’t delete task");
     }
   };
 
@@ -197,13 +211,17 @@ function TaskRow({
           {updating ? (
             <Loader2 className="size-4 animate-spin text-zinc-400" />
           ) : task.completed ? (
-            <span className="block size-4 rounded bg-green-500 text-white">✓</span>
+            <span className="flex size-4 items-center justify-center rounded bg-success text-success-foreground">
+              <Check className="size-3" strokeWidth={3} aria-hidden />
+            </span>
           ) : (
             <span className="block size-4 rounded border border-zinc-400" />
           )}
         </button>
       ) : task.completed ? (
-        <span className="flex-shrink-0 text-green-600">✓</span>
+        <span className="text-success flex-shrink-0" aria-hidden>
+          <Check className="size-4" strokeWidth={2.5} />
+        </span>
       ) : null}
       <span className={task.completed ? "flex-1 text-zinc-500 line-through" : "flex-1 text-zinc-900"}>
         {task.title}
@@ -219,7 +237,7 @@ function TaskRow({
           type="button"
           variant="ghost"
           size="sm"
-          className="size-8 p-0 text-zinc-500 hover:text-red-600"
+          className="size-8 p-0 text-destructive hover:bg-destructive/10"
           onClick={onDelete}
           aria-label="Delete task"
         >

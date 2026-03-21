@@ -31,6 +31,7 @@ import {
   ideasApi,
 } from "@/lib/api"
 import { useRequireAuth } from "@/hooks/use-require-auth"
+import { toastError, toastSuccess } from "@/lib/toast"
 
 const TABS = [
   "Overview",
@@ -133,10 +134,12 @@ export default function IdeaDetailPage() {
       if (res.idea.slug !== params.slug) {
         router.replace(`/${params.username}/ideas/${res.idea.slug}`)
       }
+      toastSuccess("Idea updated")
     } catch (saveError) {
-      setError(
-        saveError instanceof Error ? saveError.message : "Failed to save",
-      )
+      const msg =
+        saveError instanceof Error ? saveError.message : "Failed to save"
+      setError(msg)
+      toastError(msg)
     } finally {
       setSaving(false)
     }
@@ -149,11 +152,13 @@ export default function IdeaDetailPage() {
     setError(null)
     try {
       await ideasApi.deleteByOwnerAndSlug(token, params.username, idea.slug)
+      toastSuccess("Idea deleted")
       router.replace("/dashboard")
     } catch (deleteError) {
-      setError(
-        deleteError instanceof Error ? deleteError.message : "Failed to delete",
-      )
+      const msg =
+        deleteError instanceof Error ? deleteError.message : "Failed to delete"
+      setError(msg)
+      toastError(msg)
     } finally {
       setDeleting(false)
     }
@@ -365,7 +370,7 @@ export default function IdeaDetailPage() {
                   )}
                 </div>
 
-                {error && <p className="text-sm text-red-600">{error}</p>}
+                {error && <p className="text-destructive text-sm">{error}</p>}
 
                 {canEditOverview ? (
                   <div className="flex flex-wrap items-center gap-2">
@@ -377,8 +382,7 @@ export default function IdeaDetailPage() {
                     </Button>
                     <Button
                       type="button"
-                      variant="outline"
-                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                      variant="destructive"
                       disabled={deleting || saving}
                       onClick={handleDelete}
                     >

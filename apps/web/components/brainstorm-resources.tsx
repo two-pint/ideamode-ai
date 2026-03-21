@@ -10,6 +10,7 @@ import {
   brainstormResourcesApi,
   ApiError,
 } from "@/lib/api";
+import { toastError, toastSuccess } from "@/lib/toast";
 
 type Props = {
   username: string;
@@ -51,8 +52,12 @@ export function BrainstormResources({
       setTitle("");
       setNotes("");
       onUpdate();
+      toastSuccess("Resource added");
     } catch (e) {
       console.error(e);
+      toastError(
+        e instanceof ApiError ? e.message : "Couldn’t add resource",
+      );
     } finally {
       setSaving(false);
     }
@@ -76,8 +81,12 @@ export function BrainstormResources({
       });
       setEditingId(null);
       onUpdate();
+      toastSuccess("Resource updated");
     } catch (e) {
       console.error(e);
+      toastError(
+        e instanceof ApiError ? e.message : "Couldn’t save resource",
+      );
     } finally {
       setSaving(false);
     }
@@ -88,8 +97,12 @@ export function BrainstormResources({
     try {
       await brainstormResourcesApi.delete(token, username, slug, id);
       onUpdate();
+      toastSuccess("Resource removed");
     } catch (e) {
       console.error(e);
+      toastError(
+        e instanceof ApiError ? e.message : "Couldn’t remove resource",
+      );
     }
   };
 
@@ -194,7 +207,7 @@ export function BrainstormResources({
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="size-7 p-0 text-red-600"
+                          className="size-7 p-0 text-destructive hover:bg-destructive/10"
                           onClick={() => handleDelete(r.id)}
                         >
                           <Trash2 className="size-3" />
