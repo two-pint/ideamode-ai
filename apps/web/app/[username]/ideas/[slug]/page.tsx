@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { Loader2, Pencil, PinOff, Share2, Trash2 } from "lucide-react"
@@ -36,7 +36,6 @@ import { useRecordRecentAccess } from "@/hooks/use-record-recent-access"
 import { toastError, toastSuccess } from "@/lib/toast"
 
 const TABS = [
-  "Overview",
   "Discussion",
   "Analysis",
   "Wireframes",
@@ -57,16 +56,24 @@ export default function IdeaDetailPage() {
   const [slug, setSlug] = useState("")
   const [status, setStatus] = useState<IdeaStatus>("validating")
   const [visibility, setVisibility] = useState<IdeaVisibility>("private")
-  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("Overview")
+  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("Discussion")
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [overviewEditing, setOverviewEditing] = useState(false)
   const [titleEditing, setTitleEditing] = useState(false)
   const [titleDraft, setTitleDraft] = useState("")
   const [savingTitle, setSavingTitle] = useState(false)
   const [unpinning, setUnpinning] = useState(false)
+
+  const resetOverviewFormFromIdea = useCallback((i: Idea) => {
+    setDescription(i.description || "")
+    setSlug(i.slug)
+    setStatus(i.status)
+    setVisibility(i.visibility)
+  }, [])
 
   useRecordRecentAccess(token, {
     resourceType: "idea",
@@ -98,11 +105,6 @@ export default function IdeaDetailPage() {
       })
       .finally(() => setLoading(false))
   }, [params.slug, params.username, ready, router, token])
-
-  const canEditOverview = useMemo(
-    () => idea?.can_edit === true && activeTab === "Overview",
-    [activeTab, idea?.can_edit],
-  )
 
   const canEditIdea = idea?.can_edit === true
 
@@ -183,6 +185,7 @@ export default function IdeaDetailPage() {
       if (res.idea.slug !== params.slug) {
         router.replace(`/${params.username}/ideas/${res.idea.slug}`)
       }
+      setOverviewEditing(false)
       toastSuccess("Idea updated")
     } catch (saveError) {
       const msg =
@@ -316,11 +319,234 @@ export default function IdeaDetailPage() {
       </div>
     ))
 
+  const overviewHeaderSection =
+    canEditIdea && overviewEditing ? (
+      <Card className="w-full border-zinc-200 shadow-sm dark:border-zinc-700">
+        <CardHeader className="flex flex-row flex-wrap items-center gap-2">
+          <CardTitle className="sr-only">Overview</CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button disabled={saving} size="sm" onClick={() => void handleSave()}>
+              {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+              Save changes
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={saving}
+              onClick={() => {
+                resetOverviewFormFromIdea(idea)
+                setOverviewEditing(false)
+                setError(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              disabled={deleting || saving}
+              onClick={() => void handleDelete()}
+            >
+              {deleting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Trash2 className="size-4" />
+              )}
+              Delete idea
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {idea.brainstorm_id != null &&
+            idea.brainstorm_slug &&
+            idea.owner?.username && (
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                From brainstorm:{" "}
+                <Link
+                  href={`/${idea.owner.username}/brainstorms/${idea.brainstorm_slug}`}
+                  className="font-medium text-zinc-900 underline hover:no-underline dark:text-zinc-100"
+                >
+                  {idea.brainstorm_title ?? "View linked brainstorm"}
+                </Link>
+              </p>
+            )}
+
+          {idea.pinned_message_content && (
+            <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900/50">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-xs font-medium uppercase text-zinc-500">
+                  Pinned from Discussion
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 shrink-0 gap-1 px-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  disabled={unpinning}
+                  onClick={() => void handleUnpinPinned()}
+                  title="Remove pinned message"
+                >
+                  {unpinning ? (
+                    <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                  ) : (
+                    <PinOff className="size-3.5" aria-hidden />
+                  )}
+                  Unpin
+                </Button>
+              </div>
+              <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-800 dark:text-zinc-200">
+                {idea.pinned_message_content}
+              </p>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-end gap-2 sm:gap-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Status</p>
+              <Select value={status} onValueChange={(v) => setStatus(v as IdeaStatus)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Visibility</p>
+              <Select
+                value={visibility}
+                onValueChange={(v) => setVisibility(v as IdeaVisibility)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Visibility" />
+                </SelectTrigger>
+                <SelectContent>
+                  {VISIBILITY_OPTIONS.map((v) => (
+                    <SelectItem key={v} value={v}>
+                      {v}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Description</p>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="min-h-32 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:border-zinc-600 dark:bg-zinc-900"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Slug</p>
+            <Input
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              placeholder="url-friendly-slug"
+            />
+            <p className="text-xs text-zinc-500">
+              URL: /{params.username}/ideas/{slug || idea.slug}
+            </p>
+          </div>
+
+          {error && <p className="text-destructive text-sm">{error}</p>}
+        </CardContent>
+      </Card>
+    ) : (
+      <div className="w-full space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1 space-y-2">
+            {!canEditIdea && (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">You have read-only access.</p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded bg-zinc-100 px-2 py-1 text-xs uppercase dark:bg-zinc-800">
+                {idea.status}
+              </span>
+              <span className="rounded bg-zinc-100 px-2 py-1 text-xs uppercase dark:bg-zinc-800">
+                {idea.visibility}
+              </span>
+            </div>
+          </div>
+          {canEditIdea && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={() => setOverviewEditing(true)}
+            >
+              <Pencil className="mr-1.5 size-4" aria-hidden />
+              Edit overview
+            </Button>
+          )}
+        </div>
+
+        {idea.brainstorm_id != null &&
+          idea.brainstorm_slug &&
+          idea.owner?.username && (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              From brainstorm:{" "}
+              <Link
+                href={`/${idea.owner.username}/brainstorms/${idea.brainstorm_slug}`}
+                className="font-medium text-zinc-900 underline hover:no-underline dark:text-zinc-100"
+              >
+                {idea.brainstorm_title ?? "View linked brainstorm"}
+              </Link>
+            </p>
+          )}
+
+        {idea.pinned_message_content && (
+          <div className="rounded-md border border-zinc-200 bg-zinc-50/80 p-3 dark:border-zinc-700 dark:bg-zinc-900/40">
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-xs font-medium uppercase text-zinc-500">Pinned from Discussion</p>
+              {canEditIdea && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 shrink-0 gap-1 px-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  disabled={unpinning}
+                  onClick={() => void handleUnpinPinned()}
+                  title="Remove pinned message"
+                >
+                  {unpinning ? (
+                    <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                  ) : (
+                    <PinOff className="size-3.5" aria-hidden />
+                  )}
+                  Unpin
+                </Button>
+              )}
+            </div>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-800 dark:text-zinc-200">
+              {idea.pinned_message_content}
+            </p>
+          </div>
+        )}
+
+        <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">
+          {idea.description?.trim() ? idea.description : "No description yet."}
+        </p>
+      </div>
+    )
+
   return (
     <AppShell
       title={idea.title}
       titleSlot={titleSlot || undefined}
       subtitle={`@${params.username}/ideas/${idea.slug}`}
+      headerExtension={overviewHeaderSection}
       active={user.username === params.username ? "profile" : "idea"}
       fillHeight
     >
@@ -339,253 +565,97 @@ export default function IdeaDetailPage() {
         </div>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-            {activeTab === "Discussion" ? (
-              <IdeaDiscussionChat
-                className="min-h-0 flex-1"
+          {activeTab === "Discussion" && (
+            <IdeaDiscussionChat
+              className="min-h-0 flex-1"
+              username={params.username}
+              slug={params.slug}
+              token={token}
+              canEdit={canEditIdea}
+              onPinned={refreshIdea}
+            />
+          )}
+          {activeTab === "Analysis" && (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <IdeaAnalysisTab
                 username={params.username}
                 slug={params.slug}
                 token={token}
                 canEdit={canEditIdea}
-                onPinned={refreshIdea}
               />
-            ) : activeTab === "Analysis" ? (
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <IdeaAnalysisTab
-                  username={params.username}
-                  slug={params.slug}
-                  token={token}
-                  canEdit={canEditIdea}
-                />
-              </div>
-            ) : activeTab === "Notes" ? (
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <IdeaNotesTab
-                  username={params.username}
-                  slug={params.slug}
-                  token={token}
-                  canEdit={canEditIdea}
-                />
-              </div>
-            ) : activeTab === "Tasks" ? (
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <IdeaTasksTab
-                  username={params.username}
-                  slug={params.slug}
-                  token={token}
-                  canEdit={canEditIdea}
-                />
-              </div>
-            ) : activeTab === "Wireframes" ? (
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <IdeaWireframesTab
-                  username={params.username}
-                  slug={params.slug}
-                  token={token}
-                  canEdit={canEditIdea}
-                />
-              </div>
-            ) : activeTab === "PRD" ? (
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <IdeaPrdTab
-                  username={params.username}
-                  slug={params.slug}
-                  token={token}
-                  canEdit={canEditIdea}
-                />
-              </div>
-            ) : activeTab === "Sharing" ? (
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <Card className="h-fit">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle>People with access</CardTitle>
-                    {user.username === params.username && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShareDialogOpen(true)}
-                        disabled={saving}
-                      >
-                        <Share2 className="size-4" />
-                        Share
-                      </Button>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <ResourceAccessList
-                      resourceType="idea"
-                      ownerUsername={params.username}
-                      slug={params.slug}
-                      token={token}
-                      canManage={user?.username === params.username}
-                      refreshTrigger={shareDialogOpen}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-            ) : (
-              <div className="min-h-0 flex-1 overflow-y-auto">
-            <Card>
-              <CardHeader>
-                <CardTitle>Overview</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {idea.brainstorm_id != null &&
-                  idea.brainstorm_slug &&
-                  idea.owner?.username && (
-                    <p className="text-sm text-zinc-600">
-                      From brainstorm:{" "}
-                      <Link
-                        href={`/${idea.owner.username}/brainstorms/${idea.brainstorm_slug}`}
-                        className="font-medium text-zinc-900 underline hover:no-underline"
-                      >
-                        {idea.brainstorm_title ?? "View linked brainstorm"}
-                      </Link>
-                    </p>
-                  )}
-
-                {idea.pinned_message_content && (
-                  <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-medium uppercase text-zinc-500">
-                        Pinned from Discussion
-                      </p>
-                      {canEditOverview && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 shrink-0 gap-1 px-2 text-zinc-600 hover:text-zinc-900"
-                          disabled={unpinning}
-                          onClick={() => void handleUnpinPinned()}
-                          title="Remove pinned message"
-                        >
-                          {unpinning ? (
-                            <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                          ) : (
-                            <PinOff className="size-3.5" aria-hidden />
-                          )}
-                          Unpin
-                        </Button>
-                      )}
-                    </div>
-                    <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-800">
-                      {idea.pinned_message_content}
-                    </p>
-                  </div>
-                )}
-
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Description</p>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    readOnly={!canEditOverview}
-                    className="min-h-32 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 read-only:bg-zinc-50"
-                  />
-                </div>
-
-                {canEditOverview && (
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Slug</p>
-                    <Input
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                      placeholder="url-friendly-slug"
-                    />
-                    <p className="text-xs text-zinc-500">
-                      URL: /{params.username}/ideas/{slug || idea.slug}
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {canEditOverview ? (
-                    <>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Status</p>
-                        <Select
-                          value={status}
-                          onValueChange={(v) => setStatus(v as IdeaStatus)}
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STATUS_OPTIONS.map((s) => (
-                              <SelectItem key={s} value={s}>
-                                {s}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Visibility</p>
-                        <Select
-                          value={visibility}
-                          onValueChange={(v) =>
-                            setVisibility(v as IdeaVisibility)
-                          }
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Visibility" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {VISIBILITY_OPTIONS.map((v) => (
-                              <SelectItem key={v} value={v}>
-                                {v}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <span className="rounded bg-zinc-100 px-2 py-1 text-xs uppercase">
-                        {idea.status}
-                      </span>
-                      <span className="rounded bg-zinc-100 px-2 py-1 text-xs uppercase">
-                        {idea.visibility}
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                {error && <p className="text-destructive text-sm">{error}</p>}
-
-                {canEditOverview ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button disabled={saving} onClick={handleSave}>
-                      {saving ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : null}
-                      Save changes
-                    </Button>
+            </div>
+          )}
+          {activeTab === "Notes" && (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <IdeaNotesTab
+                username={params.username}
+                slug={params.slug}
+                token={token}
+                canEdit={canEditIdea}
+              />
+            </div>
+          )}
+          {activeTab === "Tasks" && (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <IdeaTasksTab
+                username={params.username}
+                slug={params.slug}
+                token={token}
+                canEdit={canEditIdea}
+              />
+            </div>
+          )}
+          {activeTab === "Wireframes" && (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <IdeaWireframesTab
+                username={params.username}
+                slug={params.slug}
+                token={token}
+                canEdit={canEditIdea}
+              />
+            </div>
+          )}
+          {activeTab === "PRD" && (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <IdeaPrdTab
+                username={params.username}
+                slug={params.slug}
+                token={token}
+                canEdit={canEditIdea}
+              />
+            </div>
+          )}
+          {activeTab === "Sharing" && (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <Card className="h-fit">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle>People with access</CardTitle>
+                  {user.username === params.username && (
                     <Button
                       type="button"
-                      variant="destructive"
-                      disabled={deleting || saving}
-                      onClick={handleDelete}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShareDialogOpen(true)}
+                      disabled={saving}
                     >
-                      {deleting ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="size-4" />
-                      )}
-                      Delete idea
+                      <Share2 className="size-4" />
+                      Share
                     </Button>
-                  </div>
-                ) : (
-                  <p className="text-sm text-zinc-500">
-                    You have read-only access.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-              </div>
-            )}
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <ResourceAccessList
+                    resourceType="idea"
+                    ownerUsername={params.username}
+                    slug={params.slug}
+                    token={token}
+                    canManage={user?.username === params.username}
+                    refreshTrigger={shareDialogOpen}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
 
