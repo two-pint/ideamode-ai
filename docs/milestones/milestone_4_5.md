@@ -4,7 +4,7 @@
 
 **Timeline:** End of Week 5 (after M4 deliverables)  
 **Depends on:** Milestone 4 (Productivity Layer)  
-**Status:** Implemented in repo (see **Delivered** below). Further polish can follow in Milestone 5.
+**Status:** Implemented in repo (see **Delivered** below). Further polish can follow in Milestone 6.
 
 ---
 
@@ -75,7 +75,7 @@
 
 ### Ticket 4.5.4 — Toasts & mutation feedback
 
-**Description:** Use **Sonner** (shadcn pattern) for lightweight feedback on mutations: saved, deleted, created, updated, and errors so users trust async actions. Milestone 5 Ticket 5.2 may extend coverage; this ticket establishes the pattern and provider.
+**Description:** Use **Sonner** (shadcn pattern) for lightweight feedback on mutations: saved, deleted, created, updated, and errors so users trust async actions. Milestone 6 Ticket 6.2 may extend coverage; this ticket establishes the pattern and provider.
 
 **Tasks:**
 
@@ -101,7 +101,7 @@
 - [x] Semantic colors (primary, secondary, success, destructive) are defined and usable.
 - [x] `Button` variants are standardized, including `success` and `destructive`.
 - [x] Lucide-only icon policy is applied or exceptions are documented.
-- [x] Sonner toasts are integrated and cover baseline mutation feedback; M5 can expand breadth.
+- [x] Sonner toasts are integrated and cover baseline mutation feedback; M6 can expand breadth.
 
 ---
 
@@ -121,4 +121,4 @@
 | **Overview save/delete** | [`ideas/[slug]/page.tsx`](../../apps/web/app/[username]/ideas/[slug]/page.tsx), [`brainstorms/[slug]/page.tsx`](../../apps/web/app/[username]/brainstorms/[slug]/page.tsx) — `variant="destructive"` for delete |
 | **Resources & sharing** | [`brainstorm-resources.tsx`](../../apps/web/components/brainstorm-resources.tsx), [`share-dialog.tsx`](../../apps/web/components/share-dialog.tsx), [`resource-access-list.tsx`](../../apps/web/components/resource-access-list.tsx) |
 
-**Follow-ups (optional, M5 or later):** Broader toast coverage (modals, dashboard), full `text-red-*` → `text-destructive` pass, and any remaining icon SVG audits outside documented exceptions.
+**Follow-ups (optional, M6 or later):** Broader toast coverage (modals, dashboard), full `text-red-*` → `text-destructive` pass, and any remaining icon SVG audits outside documented exceptions.

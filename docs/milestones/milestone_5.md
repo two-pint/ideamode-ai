@@ -1,96 +1,113 @@
-# Milestone 5 — Polish & Beta
+# Milestone 5 — Organizations
 
-**Goal:** Invite-only beta launch with onboarding flow, responsive and error polish, and beta/invite gating. App is stable, responsive, and ready for friends to onboard and collaborate on brainstorms and ideas.
+**Goal:** Businesses and teams can have an **organization** that owns or groups **brainstorms** and **ideas**; **users are members** of one or more orgs with roles. Personal workspaces keep today’s behavior: resources with no organization remain user-scoped at `/:username/...`.
 
-**Timeline:** Week 6  
+**Timeline:** TBD (after UI baseline)  
 **Depends on:** Milestone 4.5 (UI Standardization & Polish)
+
+---
+
+## Context
+
+Today brainstorms and ideas are owned by a single user (`user_id`) with slugs unique per user; authorization uses [`ResourceAccess`](../../apps/api/app/models/concerns/resource_access.rb) (owner + per-resource members). This milestone adds an optional **org scope** via nullable `organization_id` on brainstorms and ideas so existing rows stay valid (personal = `organization_id` NULL).
+
+**URL strategy (mandated for implementation):** Use a dedicated path prefix for org-scoped resources so org slugs never collide with usernames — e.g. **`/o/[orgSlug]/brainstorms/[slug]`** and **`/o/[orgSlug]/ideas/[slug]`** alongside existing **`/[username]/brainstorms/...`** and **`/[username]/ideas/...`**. Do not overload `[username]` for orgs without a global uniqueness rule across `users.username` and `organizations.slug`.
 
 ---
 
 ## Tickets
 
-### Ticket 5.1 — Onboarding Flow
+### Ticket 5.1 — Organizations & membership (backend)
 
-**Description:** Add a post-signup username selection screen, first brainstorm or idea creation wizard, empty-state CTAs on all tabs (brainstorms and ideas), and a welcome banner so new users are guided to set a username and create their first brainstorm or idea. It matters to reduce drop-off and make the first session successful.
+**Description:** Add `Organization` and `OrganizationMember` models, migrations, and APIs so orgs can be created, named, and joined with roles. Mirror proven patterns from [`brainstorm_members`](../../apps/api/db/schema.rb) / [`idea_members`](../../apps/api/db/schema.rb) (invited_by, accepted_at, role). This matters because every other org feature hangs off membership and roles.
 
 **Tasks:**
 
-- [ ] After first Google sign-in, redirect to username selection screen before dashboard. Validate unique, URL-safe, 3–30 chars; show errors in real time. On success, persist username and redirect to dashboard.
-- [ ] First-creation wizard: stepped flow (title → description → status) that creates a **brainstorm or idea** (user choice) and redirects to its detail. Trigger from empty dashboard or welcome banner.
-- [ ] Empty states: every tab on **brainstorm** detail (Overview, Chat, Research, Notes) and every tab on **idea** detail (Overview, Discussion, Analysis, Wireframes, PRD, Notes, Tasks) has a clear CTA when there is no content (e.g. "Start a conversation", "Run your first research", "Run your first analysis", "Add a note").
-- [ ] Welcome banner on dashboard for new users with suggested first actions (e.g. "Start a Brainstorm", "Create an Idea", "Run analysis"). Dismissible or hidden after first resource exists.
+- [ ] Add `organizations` table: `name`, URL-safe `slug` (**unique globally** in the app namespace used for `/o/:orgSlug`), timestamps, optional `settings` jsonb.
+- [ ] Add `organization_members`: `organization_id`, `user_id`, `role` (`owner` | `admin` | `member`), `invited_by_id`, `accepted_at`, unique index on `[organization_id, user_id]`.
+- [ ] Optional: `organization_invites` (email, token, expires_at, invited_by, role) following [`BrainstormInvite`](../../apps/api/app/models/brainstorm_invite.rb) / [`IdeaInvite`](../../apps/api/app/models/idea_invite.rb); or document reuse of a generic invite pattern.
+- [ ] Model validations: slug format (URL-safe), role inclusion; on create org, creator becomes `owner` with accepted membership.
+- [ ] Endpoints (illustrative): list orgs for current user, create org, get/patch org (name, settings), delete or archive policy (document whether delete is hard or soft). List/add/remove/change-role members; accept invite if using invite table.
+- [ ] API tests for happy paths and forbidden cases (non-member cannot read org; only admin/owner can invite or remove, per chosen rules).
 
 **Acceptance criteria:**
 
-- New user completing Google sign-in is forced to set username before accessing the app; duplicate or invalid username is rejected with clear message.
-- Dashboard empty state offers wizard or buttons to create first brainstorm or first idea; wizard creates the resource and navigates to it. Each tab (brainstorm and idea) has an empty state with a relevant CTA.
-- Welcome banner appears for new users and suggests next steps; behavior is consistent and non-blocking after first use.
+- Authenticated user can create an org and appears as `owner` with an accepted membership.
+- Members can be listed; invites (if implemented) can be created, accepted, and expired tokens rejected.
+- Slug is unique among organizations; documented rules for changing slug (if allowed) or immutability.
 
 **Test plan (manual):**
 
-1. Sign in with a new Google account; confirm redirect to username screen. Enter short or invalid username; confirm validation. Enter valid unique username; confirm redirect to dashboard.
-2. On empty dashboard, use "Create first brainstorm" or "Create first idea" or wizard; complete title, description, status. Confirm resource is created and you land on its detail page.
-3. Open each tab on a brainstorm (Chat, Research, Notes) and each tab on an idea (Discussion, Analysis, Notes, Tasks, Wireframes, PRD) with no data; confirm empty state and CTA are visible and make sense.
-4. Confirm welcome banner appears and can be dismissed or disappears after first action; repeat with another new user if needed.
+1. Create org via API; confirm owner membership and org appears in “my orgs.”
+2. Invite a second user (or add by user id in dev); accept invite; confirm role and access.
+3. Attempt to access org as non-member; confirm 404 or 403 per product convention.
 
 ---
 
-### Ticket 5.2 — Responsive & Error Polish
+### Ticket 5.2 — Org-scoped brainstorms & ideas (backend)
 
-**Description:** Ensure mobile-responsive layout, loading skeletons for async data, error boundaries with retry, optimistic UI for task toggle and note save, toasts for key events, and dedicated 404/access-denied pages so the app feels solid and recoverable on all devices. Apply to both brainstorm and idea flows.
+**Description:** Add nullable `organization_id` to `brainstorms` and `ideas`, fix slug uniqueness for personal vs org scope, extend authorization in [`ResourceAccess`](../../apps/api/app/models/concerns/resource_access.rb), and expose list/create/show/update/delete for org-scoped resources. Keep `user_id` as creator/primary owner for compatibility with existing invite and member rows.
 
 **Tasks:**
 
-- [ ] Audit and fix layout for mobile: sidebar collapses or becomes drawer; tables/cards stack; touch targets adequate. All main pages (dashboard with both tabs, brainstorm detail, idea detail) pass a simple responsive check (e.g. 320px, 768px, 1024px).
-- [ ] Add loading skeletons (or spinners) for dashboard brainstorm/idea lists, brainstorm/idea detail, analysis results, PRD, research, and any other async-heavy views. Replace raw spinners where skeleton is more appropriate.
-- [ ] Add error boundaries (React error boundary) with retry and optional "Go to dashboard" link so failures don't leave a blank screen.
-- [ ] Optimistic UI: task toggle (complete/incomplete) and note save reflect in UI immediately; revert and show error if request fails. Toasts: "Note saved", "Invite accepted", "Analysis complete", "Idea created from brainstorm" (or similar) for key actions.
-- [ ] Design and implement 404 page (brainstorm or idea not found or no access) and access-denied page if used elsewhere. Use product theme (zinc-50, zinc-900).
+- [ ] Migrations: `brainstorms.organization_id`, `ideas.organization_id` (nullable FKs to `organizations`). Backfill: all existing rows remain NULL (personal).
+- [ ] **Slug uniqueness:** Retain unique `(user_id, slug)` where `organization_id` IS NULL. Add unique `(organization_id, slug)` where `organization_id` IS NOT NULL (partial unique indexes in PostgreSQL). Document that personal and org namespaces are independent.
+- [ ] Extend [`Idea#brainstorm_belongs_to_same_owner`](../../apps/api/app/models/idea.rb): linked brainstorm and idea must share the **same org scope** (both `organization_id` NULL and same `user_id`, or both same non-null `organization_id` and same creator rules as product defines).
+- [ ] **Authorization (MVP):** Document and implement one clear rule, e.g. any **accepted org member** can `accessible_by?` org-scoped resources; **`editable_by?`** = creator (`user_id`) or org **admin/owner**, plus existing per-resource collaborators (`brainstorm_members` / `idea_members`) where applicable. Adjust if product prefers stricter edit rules.
+- [ ] API: query params or routes to list/create brainstorms and ideas under an org (`organization_id` set on create). Show/update/delete authorize via extended `ResourceAccess` + org membership.
+- [ ] Update any services/controllers that assume only user-scoped lists (dashboard aggregations, recent access, etc.) to include org context where required.
+- [ ] Automated tests: slug collisions across personal vs org; link validation idea↔brainstorm; access denial for non-members.
 
 **Acceptance criteria:**
 
-- All primary flows are usable on a narrow viewport (e.g. 375px width). No horizontal scroll or clipped critical content.
-- Async views show skeleton or loading state; errors show boundary with retry. Task toggle and note save feel instant; toasts confirm save and key events.
-- Visiting a non-existent or unauthorized brainstorm or idea URL shows the 404 page, not a generic browser 404.
+- Personal brainstorms and ideas behave as today (NULL `organization_id`).
+- Org-scoped resources are visible to org members per documented rules; slugs are unique within the org.
+- Linking an idea to a brainstorm fails if org scope does not match.
 
 **Test plan (manual):**
 
-1. Resize browser to mobile width; go through dashboard (both tabs), brainstorm detail, idea detail, and at least one of each tab. Confirm layout adapts and nothing is unreachable.
-2. Throttle network to "Slow 3G"; open dashboard and idea detail. Confirm skeletons or loading states appear. Trigger a failure (e.g. disconnect); confirm error boundary and retry work.
-3. Toggle a task and edit a note; confirm immediate UI update and toast on save. Disconnect and save; confirm revert and error message if implemented.
-4. Open a URL for a brainstorm or idea you don't have access to; confirm custom 404 page with theme styling.
+1. Create org-scoped brainstorm and idea; confirm both list under org and URLs resolve (once web routing exists).
+2. As non-member, request org resource; confirm no access.
+3. Link idea to brainstorm in same org; confirm success. Try linking to personal brainstorm from org idea (or mismatched org); confirm validation error.
 
 ---
 
-### Ticket 5.3 — Beta Access & Invite Gate
+### Ticket 5.3 — Organizations UI (web)
 
-**Description:** Add allowlist for beta access, waitlist form on marketing page, beta invite email, and admin endpoint to grant/revoke access so launch is invite-only. Ensure collaborator invite emails and in-app pending-invite banner work for **both brainstorm and idea** invites. It matters to control load and create a clear beta cohort.
+**Description:** In [`apps/web`](../../apps/web), add org creation and selection, org dashboard (brainstorms and ideas lists for the active org), and navigation to org-scoped detail pages under **`/o/[orgSlug]/...`**. Use **Client Components** and **shadcn/ui** per [AGENTS.md](../../AGENTS.md). Empty states should match the tone of existing dashboard patterns.
 
 **Tasks:**
 
-- [ ] Create allowlist table or model: `email`, `invited_by` (optional), `used_at` (nullable; set when user signs up with that email). Admin can add/remove emails.
-- [ ] After Google OAuth, if user's email is not on allowlist, show "You're not in the beta yet" (or waitlist) and do not create session / do not grant access. Optionally add them to waitlist.
-- [ ] Waitlist form on marketing/login page: submit email; store in waitlist table; show "We'll be in touch" or similar. No sign-in until allowed.
-- [ ] Beta invite email: Action Mailer sends email to allowlisted address with sign-in link or instructions. Admin endpoint (e.g. `POST /admin/invites`) to grant access (add email to allowlist) and optionally send invite email; endpoint to revoke (remove from allowlist).
-- [ ] **Brainstorm and idea** collaborator invites: existing flow (from M1) sends email to invitee; if not registered, email contains link with token. In-app: pending **brainstorm/idea** invite banner for logged-in user when they have an invite link to accept (e.g. "You have N pending invites").
-- [ ] Document admin flow: how to add/remove beta users and send invite emails.
+- [ ] **Org switcher** (or equivalent) in app shell: switch between personal workspace (`/[username]/...`) and orgs the user belongs to.
+- [ ] Routes: `/o/[orgSlug]` dashboard (tabs or sections for brainstorms and ideas); `/o/[orgSlug]/brainstorms/[slug]`, `/o/[orgSlug]/ideas/[slug]` reusing existing detail UIs with org scoped API calls.
+- [ ] Flows: create organization (name → slug); manage members (list, invite by email if backend supports); leave org or remove member per permissions (if in scope).
+- [ ] Create brainstorm / create idea under active org context sets `organization_id` on API payloads.
+- [ ] Loading and error states consistent with Milestone 4.5 patterns; empty states for org dashboard.
 
 **Acceptance criteria:**
 
-- Only allowlisted emails can sign in and use the app. Non-allowlisted user sees waitlist or "not in beta" message after OAuth. Waitlist form stores email and shows confirmation.
-- Admin can add email to allowlist (and optionally trigger invite email) and remove email (revoke). Invite email contains clear next step (e.g. sign in link).
-- Brainstorm and idea invite flows work: invitee gets email; accepting invite grants access. Logged-in user with pending brainstorm or idea invite sees banner or notification; accepting works.
+- User can create an org, see it in the switcher, and open org dashboard with lists.
+- User can open org-scoped brainstorm and idea detail pages and perform the same core actions as personal resources (within permissions).
+- Personal URLs and org URLs coexist without slug collisions between username and org slug namespaces (enforced by `/o/` prefix).
 
 **Test plan (manual):**
 
-1. As admin, add an email to allowlist and trigger invite. As that user, open invite email and sign in; confirm access to app. Remove email from allowlist; sign out and try to sign in again; confirm access denied and appropriate message.
-2. Submit email via waitlist form; confirm success message and email stored. Confirm that email cannot sign in until allowlisted.
-3. As owner, invite a non-user by email to a brainstorm; confirm invite email is sent. As invitee, use token link and complete sign-up/sign-in; confirm added to brainstorm. Repeat for an idea. As existing user, invite to a second brainstorm or idea; confirm in-app pending invite is visible and accept flow works.
+1. Create org from UI; switch from personal to org; create brainstorm and idea; open detail pages from `/o/...` links.
+2. Add a second account as member; confirm they see org resources per membership.
+3. Confirm personal `/:username/...` resources unchanged for legacy data.
+
+---
+
+## Out of scope (defer unless pulled in)
+
+- Billing, seats, or usage limits per org (may reference future Pro “team workspaces”).
+- Bulk migration of existing personal brainstorms into an org (MVP: recreate or manual).
+- **Expo mobile:** out of scope for this milestone unless explicitly added later.
 
 ---
 
 ## Milestone 5 completion checklist
 
 - [ ] All three tickets (5.1–5.3) are implemented and accepted.
-- [ ] New users are guided through username and first brainstorm or idea; empty states and welcome banner are in place for both brainstorms and ideas.
-- [ ] App is responsive, has loading and error handling, and uses 404/access-denied pages. Beta is gated by allowlist with waitlist and admin controls. Invite flow works for both brainstorms and ideas.
+- [ ] Organizations exist with membership and roles; org-scoped brainstorms and ideas are authorized and slugged correctly.
+- [ ] Web app exposes org switcher and `/o/[orgSlug]/...` routes for org workspace; personal workspace remains at `/:username/...`.

@@ -12,7 +12,8 @@ This folder breaks the [High-Level Design](../ideamode-hld.md) into **logical mi
 | 3 | [milestone_3.md](./milestone_3.md) | **Idea AI value** — Discussion chat, Analysis engine, Analysis UI | M2 |
 | 4 | [milestone_4.md](./milestone_4.md) | **Productivity layer** — Notes (ideas), Tasks, Wireframes, PRD generator | M3 |
 | 4.5 | [milestone_4_5.md](./milestone_4_5.md) | **UI standardization** — Semantic colors, buttons, Lucide icons, mutation toasts | M4 |
-| 5 | [milestone_5.md](./milestone_5.md) | **Polish & beta** — Onboarding, responsive/error polish, beta invite gate | M4.5 |
+| 5 | [milestone_5.md](./milestone_5.md) | **Organizations** — Orgs, org membership, org-scoped brainstorms & ideas (`/o/...`) | M4.5 |
+| 6 | [milestone_6.md](./milestone_6.md) | **Polish & beta** — Onboarding, responsive/error polish, beta invite gate | M4.5 |
 
 ## Ticket structure (per ticket)
 
@@ -30,6 +31,7 @@ This folder breaks the [High-Level Design](../ideamode-hld.md) into **logical mi
 - **Milestone 3:** 3 tickets (Discussion chat, Analysis engine, Analysis UI)
 - **Milestone 4:** 4 tickets (Notes ideas, Tasks, Wireframes, PRD)
 - **Milestone 4.5:** 4 tickets (Design tokens, Buttons, Lucide icons, Toasts)
-- **Milestone 5:** 3 tickets (Onboarding, Responsive/error, Beta gate)
+- **Milestone 5:** 3 tickets (Organizations & membership backend, Org-scoped brainstorms & ideas backend, Organizations UI)
+- **Milestone 6:** 3 tickets (Onboarding, Responsive/error, Beta gate)
 
-**Total: 7 milestone docs, 29 tickets.**
+**Total: 8 milestone docs, 32 tickets.**
