@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { ApiError, authApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { theme } from "@/lib/theme";
 
 export default function SetUsernameScreen() {
   const router = useRouter();
@@ -50,51 +51,75 @@ export default function SetUsernameScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Choose a username</Text>
-      <Text style={styles.sub}>This appears in your URLs: /{username || "username"}/…</Text>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <TextInput
-        style={styles.input}
-        autoCapitalize="none"
-        autoCorrect={false}
-        value={username}
-        onChangeText={setUsername}
-        placeholder="your-handle"
-        placeholderTextColor="#a1a1aa"
-      />
-      <Pressable
-        style={[styles.button, loading && styles.disabled]}
-        onPress={() => void handleSubmit()}
-        disabled={loading}
-      >
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Continue</Text>}
-      </Pressable>
+    <View style={styles.outer}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Choose a username</Text>
+        <Text style={styles.sub}>This appears in your URLs: /{username || "username"}/…</Text>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <TextInput
+          style={styles.input}
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={username}
+          onChangeText={setUsername}
+          placeholder="your-handle"
+          placeholderTextColor={theme.subtleForeground}
+        />
+        <Pressable
+          style={[styles.button, loading && styles.disabled]}
+          onPress={() => void handleSubmit()}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color={theme.primaryForeground} />
+          ) : (
+            <Text style={styles.buttonText}>Continue</Text>
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, paddingTop: 48, backgroundColor: "#fafafa" },
-  title: { fontSize: 22, fontWeight: "700", color: "#18181b", marginBottom: 8 },
-  sub: { fontSize: 14, color: "#71717a", marginBottom: 20 },
+  outer: {
+    flex: 1,
+    padding: 16,
+    paddingTop: 40,
+    backgroundColor: theme.background,
+    justifyContent: "center",
+  },
+  card: {
+    maxWidth: 400,
+    width: "100%",
+    alignSelf: "center",
+    backgroundColor: theme.card,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.border,
+    padding: 24,
+  },
+  title: { fontSize: 20, fontWeight: "600", color: theme.foreground, marginBottom: 8 },
+  sub: { fontSize: 14, color: theme.mutedForeground, marginBottom: 20, lineHeight: 20 },
   input: {
     borderWidth: 1,
-    borderColor: "#e4e4e7",
-    borderRadius: 8,
+    borderColor: theme.input,
+    borderRadius: theme.radius.md,
     padding: 12,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: theme.card,
     marginBottom: 16,
-    color: "#18181b",
+    color: theme.foreground,
   },
   button: {
-    backgroundColor: "#18181b",
-    borderRadius: 8,
+    backgroundColor: theme.primary,
+    borderRadius: theme.radius.md,
     paddingVertical: 14,
     alignItems: "center",
+    minHeight: 44,
+    justifyContent: "center",
   },
   disabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  error: { color: "#b91c1c", marginBottom: 12 },
+  buttonText: { color: theme.primaryForeground, fontSize: 16, fontWeight: "600" },
+  error: { color: theme.destructive, marginBottom: 12, fontSize: 14 },
 });

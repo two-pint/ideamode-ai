@@ -6,6 +6,7 @@
   "exports": {
     "./ideamode_icon.svg": "./ideamode_icon.svg",
     "./ideamode_logo.svg": "./ideamode_logo.svg",
+    "./ideamode_logo_1.svg": "./ideamode_logo_1.svg",
     "./ideamode_logo_light.svg": "./ideamode_logo_light.svg"
   }
 }

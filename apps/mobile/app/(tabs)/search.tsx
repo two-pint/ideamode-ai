@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { ApiError, MAX_SEARCH_QUERY_LENGTH, searchApi, type GlobalSearchResultItem } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { theme } from "@/lib/theme";
 
 const DEBOUNCE_MS = 350;
 
@@ -75,7 +76,7 @@ export default function SearchTab() {
       <TextInput
         style={styles.input}
         placeholder="Search brainstorms and ideas…"
-        placeholderTextColor="#a1a1aa"
+        placeholderTextColor={theme.subtleForeground}
         value={query}
         onChangeText={setQuery}
         autoCapitalize="none"
@@ -117,29 +118,36 @@ export default function SearchTab() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fafafa", padding: 16 },
+  container: { flex: 1, backgroundColor: theme.background, padding: 16 },
   input: {
     borderWidth: 1,
-    borderColor: "#e4e4e7",
-    borderRadius: 10,
+    borderColor: theme.input,
+    borderRadius: theme.radius.md,
     padding: 12,
     fontSize: 16,
-    backgroundColor: "#fff",
-    color: "#18181b",
+    backgroundColor: theme.card,
+    color: theme.foreground,
   },
-  error: { color: "#b91c1c", marginTop: 8 },
+  error: { color: theme.destructive, marginTop: 8, fontSize: 14 },
   list: { flex: 1, marginTop: 12 },
-  heading: { fontSize: 12, fontWeight: "600", color: "#71717a", marginBottom: 8, textTransform: "uppercase" },
-  empty: { color: "#71717a", marginTop: 8 },
+  heading: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: theme.mutedForeground,
+    marginBottom: 8,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  empty: { color: theme.mutedForeground, marginTop: 8 },
   row: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    backgroundColor: theme.card,
+    borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: "#e4e4e7",
+    borderColor: theme.border,
     padding: 12,
     marginBottom: 8,
   },
-  title: { fontSize: 16, fontWeight: "600", color: "#18181b" },
-  preview: { fontSize: 13, color: "#52525b", marginTop: 4 },
-  meta: { fontSize: 12, color: "#a1a1aa", marginTop: 4 },
+  title: { fontSize: 16, fontWeight: "600", color: theme.foreground },
+  preview: { fontSize: 13, color: theme.mutedForeground, marginTop: 4 },
+  meta: { fontSize: 12, color: theme.subtleForeground, marginTop: 4 },
 });

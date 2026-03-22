@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useAuth } from "@/lib/auth-context";
+import { theme } from "@/lib/theme";
 
 export default function ProfileTab() {
   const { user, logout } = useAuth();
@@ -14,45 +15,62 @@ export default function ProfileTab() {
   if (!user) return null;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.name}>{user.name || "—"}</Text>
-      <Text style={styles.username}>@{user.username || "…"}</Text>
-      {user.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
-      <Text style={styles.email}>{user.email}</Text>
+    <View style={styles.screen}>
+      <View style={styles.card}>
+        <Text style={styles.name}>{user.name || "—"}</Text>
+        <Text style={styles.username}>@{user.username || "…"}</Text>
+        {user.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
+        <Text style={styles.email}>{user.email}</Text>
+      </View>
 
-      <Pressable style={styles.secondary} onPress={() => router.push("/invitations")}>
-        <Text style={styles.secondaryText}>Invitations</Text>
+      <Pressable
+        style={({ pressed }) => [styles.outlineButton, pressed && { opacity: 0.92 }]}
+        onPress={() => router.push("/invitations")}
+      >
+        <Text style={styles.outlineButtonText}>Invitations</Text>
       </Pressable>
 
-      <Pressable style={styles.button} onPress={() => void handleLogout()}>
-        <Text style={styles.buttonText}>Sign out</Text>
+      <Pressable
+        style={({ pressed }) => [styles.signOut, pressed && { opacity: 0.92 }]}
+        onPress={() => void handleLogout()}
+      >
+        <Text style={styles.signOutText}>Sign out</Text>
       </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fafafa", padding: 20 },
-  name: { fontSize: 22, fontWeight: "700", color: "#18181b" },
-  username: { fontSize: 15, color: "#71717a", marginTop: 4 },
-  bio: { fontSize: 15, color: "#3f3f46", marginTop: 16, lineHeight: 22 },
-  email: { fontSize: 14, color: "#71717a", marginTop: 12 },
-  secondary: {
-    marginTop: 20,
+  screen: { flex: 1, backgroundColor: theme.background, padding: 16 },
+  card: {
+    backgroundColor: theme.card,
+    borderRadius: theme.radius.lg,
     borderWidth: 1,
-    borderColor: "#e4e4e7",
-    borderRadius: 10,
+    borderColor: theme.border,
+    padding: 20,
+    marginBottom: 16,
+  },
+  name: { fontSize: 20, fontWeight: "600", color: theme.foreground, letterSpacing: -0.2 },
+  username: { fontSize: 15, color: theme.mutedForeground, marginTop: 4 },
+  bio: { fontSize: 15, color: theme.foreground, marginTop: 16, lineHeight: 22, opacity: 0.9 },
+  email: { fontSize: 14, color: theme.mutedForeground, marginTop: 12 },
+  outlineButton: {
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: theme.radius.md,
     paddingVertical: 12,
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: theme.card,
   },
-  secondaryText: { fontSize: 16, fontWeight: "600", color: "#18181b" },
-  button: {
-    marginTop: 32,
-    backgroundColor: "#18181b",
-    borderRadius: 10,
-    paddingVertical: 14,
+  outlineButtonText: { fontSize: 15, fontWeight: "600", color: theme.foreground },
+  signOut: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: theme.radius.md,
+    paddingVertical: 12,
     alignItems: "center",
+    backgroundColor: theme.card,
   },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  signOutText: { fontSize: 15, fontWeight: "600", color: theme.foreground },
 });

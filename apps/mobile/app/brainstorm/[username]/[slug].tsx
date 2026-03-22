@@ -27,6 +27,7 @@ import {
   type Member,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { theme } from "@/lib/theme";
 
 type Tab = "chat" | "research" | "notes" | "resources" | "sharing";
 
@@ -252,7 +253,7 @@ export default function BrainstormDetailScreen() {
                 value={chatInput}
                 onChangeText={setChatInput}
                 placeholder="Message… (@ideabot for AI)"
-                placeholderTextColor="#a1a1aa"
+                placeholderTextColor={theme.subtleForeground}
                 multiline
               />
               <Pressable style={styles.sendBtn} onPress={() => void sendChat()} disabled={sending}>
@@ -361,76 +362,98 @@ export default function BrainstormDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#fafafa" },
+  root: { flex: 1, backgroundColor: theme.background },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  err: { color: "#b91c1c" },
-  tabs: { maxHeight: 48, borderBottomWidth: 1, borderBottomColor: "#e4e4e7", backgroundColor: "#fff" },
+  err: { color: theme.destructive },
+  tabs: {
+    maxHeight: 48,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
+    backgroundColor: theme.card,
+  },
   tab: { paddingHorizontal: 14, paddingVertical: 12 },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: "#18181b" },
-  tabText: { fontSize: 14, color: "#71717a" },
-  tabTextActive: { color: "#18181b", fontWeight: "600" },
+  tabActive: { borderBottomWidth: 2, borderBottomColor: theme.foreground },
+  tabText: { fontSize: 14, color: theme.mutedForeground },
+  tabTextActive: { color: theme.foreground, fontWeight: "600" },
   panel: { flex: 1, padding: 12 },
   msgList: { paddingBottom: 12 },
-  bubble: { marginBottom: 10, padding: 10, borderRadius: 10, maxWidth: "92%" },
-  bubbleUser: { alignSelf: "flex-end", backgroundColor: "#e4e4e7" },
-  bubbleBot: { alignSelf: "flex-start", backgroundColor: "#fff", borderWidth: 1, borderColor: "#e4e4e7" },
-  bubbleAuthor: { fontSize: 11, color: "#71717a", marginBottom: 4 },
-  bubbleText: { fontSize: 15, color: "#18181b" },
-  hint: { color: "#a1a1aa", textAlign: "center", marginTop: 24 },
-  inputRow: { flexDirection: "row", alignItems: "flex-end", gap: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: "#e4e4e7" },
+  bubble: { marginBottom: 10, padding: 10, borderRadius: theme.radius.md, maxWidth: "92%" },
+  bubbleUser: { alignSelf: "flex-end", backgroundColor: theme.border },
+  bubbleBot: {
+    alignSelf: "flex-start",
+    backgroundColor: theme.card,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  bubbleAuthor: { fontSize: 11, color: theme.mutedForeground, marginBottom: 4 },
+  bubbleText: { fontSize: 15, color: theme.foreground },
+  hint: { color: theme.subtleForeground, textAlign: "center", marginTop: 24 },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: theme.border,
+  },
   chatInput: {
     flex: 1,
     minHeight: 40,
     maxHeight: 120,
     borderWidth: 1,
-    borderColor: "#e4e4e7",
-    borderRadius: 8,
+    borderColor: theme.border,
+    borderRadius: theme.radius.md,
     padding: 10,
-    backgroundColor: "#fff",
+    backgroundColor: theme.card,
     fontSize: 15,
-    color: "#18181b",
+    color: theme.foreground,
   },
-  sendBtn: { backgroundColor: "#18181b", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 },
-  sendTxt: { color: "#fff", fontWeight: "600" },
-  readonly: { color: "#71717a", textAlign: "center", marginTop: 12 },
+  sendBtn: {
+    backgroundColor: theme.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: theme.radius.md,
+  },
+  sendTxt: { color: theme.primaryForeground, fontWeight: "600" },
+  readonly: { color: theme.mutedForeground, textAlign: "center", marginTop: 12 },
   row: { flexDirection: "row", gap: 8, marginBottom: 12, flexWrap: "wrap" },
   input: {
     borderWidth: 1,
-    borderColor: "#e4e4e7",
-    borderRadius: 8,
+    borderColor: theme.border,
+    borderRadius: theme.radius.md,
     padding: 10,
-    backgroundColor: "#fff",
+    backgroundColor: theme.card,
     fontSize: 15,
-    color: "#18181b",
+    color: theme.foreground,
   },
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    backgroundColor: theme.card,
+    borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: "#e4e4e7",
+    borderColor: theme.border,
     padding: 12,
     marginBottom: 10,
   },
-  cardTitle: { fontSize: 15, fontWeight: "600", color: "#18181b" },
-  cardBody: { fontSize: 14, color: "#3f3f46", marginTop: 6 },
+  cardTitle: { fontSize: 15, fontWeight: "600", color: theme.foreground },
+  cardBody: { fontSize: 14, color: theme.mutedForeground, marginTop: 6 },
   noteArea: {
     minHeight: 200,
     borderWidth: 1,
-    borderColor: "#e4e4e7",
-    borderRadius: 8,
+    borderColor: theme.border,
+    borderRadius: theme.radius.md,
     padding: 10,
-    backgroundColor: "#fff",
+    backgroundColor: theme.card,
     fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
     fontSize: 12,
-    color: "#18181b",
+    color: theme.foreground,
   },
-  noteRead: { fontSize: 12, color: "#3f3f46" },
+  noteRead: { fontSize: 12, color: theme.mutedForeground },
   primaryBtn: {
-    backgroundColor: "#18181b",
-    borderRadius: 8,
+    backgroundColor: theme.primary,
+    borderRadius: theme.radius.md,
     padding: 12,
     alignItems: "center",
     marginTop: 12,
   },
-  primaryBtnText: { color: "#fff", fontWeight: "600" },
+  primaryBtnText: { color: theme.primaryForeground, fontWeight: "600" },
 });

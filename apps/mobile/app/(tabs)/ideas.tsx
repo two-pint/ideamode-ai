@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { ideasApi, type Idea } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { theme } from "@/lib/theme";
 
 export default function IdeasTab() {
   const { token, user } = useAuth();
@@ -96,18 +97,24 @@ export default function IdeasTab() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fafafa" },
+  container: { flex: 1, backgroundColor: theme.background },
   content: { padding: 16, paddingBottom: 32 },
-  section: { fontSize: 13, fontWeight: "600", color: "#71717a", textTransform: "uppercase" },
-  empty: { color: "#71717a", marginTop: 8, fontSize: 14 },
+  section: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: theme.mutedForeground,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  empty: { color: theme.mutedForeground, marginTop: 8, fontSize: 14 },
   row: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    backgroundColor: theme.card,
+    borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: "#e4e4e7",
+    borderColor: theme.border,
     padding: 14,
     marginTop: 10,
   },
-  title: { fontSize: 16, fontWeight: "600", color: "#18181b" },
-  meta: { fontSize: 13, color: "#71717a", marginTop: 4 },
+  title: { fontSize: 16, fontWeight: "600", color: theme.foreground },
+  meta: { fontSize: 13, color: theme.mutedForeground, marginTop: 4 },
 });

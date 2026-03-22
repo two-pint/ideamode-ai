@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { ApiError, invitesApi, type PendingInviteItem } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { theme } from "@/lib/theme";
 
 export default function InvitationsScreen() {
   const { token } = useAuth();
@@ -71,7 +72,7 @@ export default function InvitationsScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 24 }} />
+        <ActivityIndicator style={{ marginTop: 24 }} color={theme.primary} />
       ) : invites.length === 0 ? (
         <Text style={styles.empty}>No pending invitations.</Text>
       ) : (
@@ -97,27 +98,27 @@ export default function InvitationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fafafa" },
+  container: { flex: 1, backgroundColor: theme.background },
   content: { padding: 16, paddingBottom: 32 },
-  empty: { color: "#71717a", marginTop: 16 },
+  empty: { color: theme.mutedForeground, marginTop: 16 },
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
+    backgroundColor: theme.card,
+    borderRadius: theme.radius.lg,
     borderWidth: 1,
-    borderColor: "#e4e4e7",
+    borderColor: theme.border,
     padding: 16,
     marginBottom: 12,
   },
-  type: { fontSize: 11, color: "#71717a", textTransform: "uppercase" },
-  title: { fontSize: 17, fontWeight: "600", color: "#18181b", marginTop: 4 },
-  meta: { fontSize: 13, color: "#52525b", marginTop: 6 },
+  type: { fontSize: 11, color: theme.mutedForeground, textTransform: "uppercase" },
+  title: { fontSize: 17, fontWeight: "600", color: theme.foreground, marginTop: 4 },
+  meta: { fontSize: 13, color: theme.mutedForeground, marginTop: 6 },
   btn: {
     marginTop: 12,
-    backgroundColor: "#18181b",
-    borderRadius: 8,
+    backgroundColor: theme.primary,
+    borderRadius: theme.radius.md,
     paddingVertical: 10,
     alignItems: "center",
   },
   btnDisabled: { opacity: 0.6 },
-  btnText: { color: "#fff", fontWeight: "600" },
+  btnText: { color: theme.primaryForeground, fontWeight: "600" },
 });
