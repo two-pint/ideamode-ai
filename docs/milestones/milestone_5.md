@@ -2,8 +2,8 @@
 
 **Goal:** Businesses and teams can have an **organization** that owns or groups **brainstorms** and **ideas**; **users are members** of one or more orgs with roles. Personal workspaces keep today’s behavior: resources with no organization remain user-scoped at `/:username/...`.
 
-**Timeline:** TBD (after UI baseline)  
-**Depends on:** Milestone 4.5 (UI Standardization & Polish)
+**Timeline:** TBD (after global search)  
+**Depends on:** Milestone 4.6 (Global Search)
 
 ---
 
