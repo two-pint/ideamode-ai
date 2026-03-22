@@ -155,33 +155,39 @@ export function IdeaWireframesTab({ username, slug, token, canEdit }: Props) {
   }
 
   return (
-    <Card>
+    <Card className="flex h-full min-h-0 flex-1 flex-col overflow-hidden border-zinc-200">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle>Wireframes</CardTitle>
-        {canEdit && (
-          <Button type="button" size="sm" onClick={handleAdd}>
-            <Plus className="size-4" />
-            New frame
-          </Button>
-        )}
-        {saving && (
-          <span className="flex items-center gap-1 text-xs text-zinc-500">
-            <Loader2 className="size-3 animate-spin" />
-            Saving…
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {saving && (
+            <span className="flex items-center gap-1 text-xs text-zinc-500">
+              <Loader2 className="size-3 animate-spin" />
+              Saving…
+            </span>
+          )}
+          {canEdit && (
+            <Button type="button" size="sm" onClick={handleAdd}>
+              <Plus className="size-4" />
+              New frame
+            </Button>
+          )}
+        </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 pb-4">
         {wireframes.length > 0 && (
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <aside className="flex flex-wrap gap-1 sm:w-40 sm:flex-col">
+          <div className="flex min-h-0 flex-1 flex-col gap-3">
+            <div
+              className="flex shrink-0 flex-wrap gap-2"
+              role="tablist"
+              aria-label="Wireframes in this idea"
+            >
               {wireframes.map((w) => (
                 <div
                   key={w.id}
                   className={
                     selected?.id === w.id
-                      ? "flex items-center gap-1 rounded-md border-2 border-zinc-900 bg-zinc-100"
-                      : "flex items-center gap-1 rounded-md border border-zinc-200"
+                      ? "flex items-center gap-1 rounded-md border-2 border-zinc-900 bg-zinc-100 dark:border-zinc-100 dark:bg-zinc-800"
+                      : "flex items-center gap-1 rounded-md border border-zinc-200 dark:border-zinc-700"
                   }
                 >
                   {editingTitleId === w.id ? (
@@ -195,17 +201,21 @@ export function IdeaWireframesTab({ username, slug, token, canEdit }: Props) {
                         if (e.key === "Escape") cancelRename();
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="min-w-0 flex-1 rounded border-0 bg-transparent px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-zinc-400"
+                      className="min-w-0 flex-1 rounded border-0 bg-transparent px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-zinc-400"
                       autoFocus
                     />
                   ) : (
                     <>
                       <button
                         type="button"
+                        role="tab"
+                        aria-selected={selected?.id === w.id}
                         onClick={() => setSelected(w)}
                         className={
-                          "min-w-0 flex-1 px-2 py-1 text-left text-sm " +
-                          (selected?.id === w.id ? "font-medium text-zinc-900" : "text-zinc-600 hover:bg-zinc-50")
+                          "min-w-0 max-w-[14rem] truncate px-2 py-1.5 text-left text-sm " +
+                          (selected?.id === w.id
+                            ? "font-medium text-zinc-900 dark:text-zinc-100"
+                            : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/80")
                         }
                       >
                         {w.title}
@@ -226,10 +236,10 @@ export function IdeaWireframesTab({ username, slug, token, canEdit }: Props) {
                   )}
                 </div>
               ))}
-            </aside>
-            <div className="min-h-[400px] flex-1 overflow-hidden rounded-md border border-zinc-200 bg-white">
+            </div>
+            <div className="min-h-0 flex-1 overflow-hidden rounded-md border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-950">
               {selected && (
-                <div className="h-[500px] w-full overflow-hidden [&_.excalidraw]:!h-full [&_.excalidraw]:!max-h-full">
+                <div className="h-[min(78vh,56rem)] w-full min-h-[32rem] overflow-hidden [&_.excalidraw]:!h-full [&_.excalidraw]:!max-h-full">
                   <Excalidraw
                     key={selected.id}
                     initialData={{

@@ -10,8 +10,6 @@ module ActiveSupport
   class TestCase
     parallelize(workers: :number_of_processors) if ENV["CI"].present?
 
-    fixtures :none
-
     def create_user(attrs = {})
       User.create!({
         email: "user-#{SecureRandom.hex(4)}@example.com",

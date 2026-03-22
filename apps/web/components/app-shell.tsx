@@ -11,11 +11,13 @@ import {
   Mail,
   Menu,
   Moon,
+  Search,
   Sun,
   UserRound,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { GlobalSearchDialog } from "@/components/global-search-dialog";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { IdeaModeLogo } from "@/components/ideamode-logo";
@@ -68,9 +70,10 @@ export function AppShell({
   fillHeight = false,
 }: AppShellProps) {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const username = user?.username;
 
@@ -93,6 +96,23 @@ export function AppShell({
           <X className="size-5" />
         </Button>
       </div>
+
+      {token ? (
+        <div className="mt-2 px-3 pb-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 w-full justify-start gap-2 text-muted-foreground"
+            onClick={() => setSearchOpen(true)}
+          >
+            <Search className="size-4 shrink-0" />
+            <span className="truncate">Search…</span>
+            <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+              <span className="text-xs">⌘</span>K
+            </kbd>
+          </Button>
+        </div>
+      ) : null}
 
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
         {navItems.map(({ href, label, icon: Icon, match }) => (
@@ -184,9 +204,20 @@ export function AppShell({
           >
             <Menu className="size-5" />
           </Button>
-          <Link href="/dashboard" className="flex min-w-0 items-center">
+          <Link href="/dashboard" className="flex min-w-0 flex-1 items-center">
             <IdeaModeLogo width={112} height={18} priority />
           </Link>
+          {token ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Open search"
+              onClick={() => setSearchOpen(true)}
+            >
+              <Search className="size-5" />
+            </Button>
+          ) : null}
         </header>
 
         <div className="shrink-0 border-b border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900 sm:px-6">
@@ -223,6 +254,10 @@ export function AppShell({
           <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
         )}
       </div>
+
+      {token ? (
+        <GlobalSearchDialog token={token} open={searchOpen} onOpenChange={setSearchOpen} />
+      ) : null}
     </div>
   );
 }
