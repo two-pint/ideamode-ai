@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_21_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_21_120001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -87,6 +87,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_21_120000) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.string "visibility", default: "private", null: false
+    t.index ["description"], name: "index_brainstorms_on_description_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["title"], name: "index_brainstorms_on_title_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["user_id", "slug"], name: "index_brainstorms_on_user_id_and_slug", unique: true
     t.index ["user_id"], name: "index_brainstorms_on_user_id"
@@ -207,6 +208,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_21_120000) do
     t.bigint "user_id", null: false
     t.string "visibility", default: "private", null: false
     t.index ["brainstorm_id"], name: "index_ideas_on_brainstorm_id"
+    t.index ["description"], name: "index_ideas_on_description_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["title"], name: "index_ideas_on_title_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["user_id", "slug"], name: "index_ideas_on_user_id_and_slug", unique: true
     t.index ["user_id"], name: "index_ideas_on_user_id"

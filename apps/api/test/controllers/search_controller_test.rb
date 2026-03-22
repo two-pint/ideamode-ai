@@ -60,6 +60,48 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_equal [], response.parsed_body["results"]
   end
 
+  test "owner finds brainstorm by description substring when title does not match" do
+    user = create_user
+    token = JwtService.encode(user.id)
+    create_brainstorm(
+      user: user,
+      title: "Untitled Project",
+      slug: "untitled-proj",
+      description: "Contains UniqueDescTokenZZZ for search"
+    )
+
+    get "/me/search",
+        params: { q: "UniqueDescTokenZZZ" },
+        headers: { "Authorization" => "Bearer #{token}" }
+    assert_response :success
+    results = response.parsed_body["results"]
+    assert_equal 1, results.length
+    assert_equal "brainstorm", results.first["type"]
+    assert_equal "untitled-proj", results.first["slug"]
+    assert results.first["description_preview"].present?
+    assert_includes results.first["description_preview"], "UniqueDescTokenZZZ"
+  end
+
+  test "owner finds idea by description substring when title does not match" do
+    user = create_user
+    token = JwtService.encode(user.id)
+    create_idea(
+      user: user,
+      title: "Idea Alpha",
+      slug: "idea-alpha",
+      description: "Another UniqueIdeaDescTokenAAA here"
+    )
+
+    get "/me/search",
+        params: { q: "UniqueIdeaDescTokenAAA" },
+        headers: { "Authorization" => "Bearer #{token}" }
+    assert_response :success
+    results = response.parsed_body["results"]
+    assert_equal 1, results.length
+    assert_equal "idea", results.first["type"]
+    assert_equal "idea-alpha", results.first["slug"]
+  end
+
   test "accepted member finds shared brainstorm title" do
     owner = create_user(username: "ownersearch2")
     member = create_user

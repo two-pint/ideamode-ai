@@ -316,6 +316,8 @@ export type GlobalSearchResultItem = {
   slug: string
   owner_username: string
   updated_at: string
+  /** Truncated resource description for disambiguation; null when empty. */
+  description_preview: string | null
 }
 
 export type GlobalSearchResponse = {

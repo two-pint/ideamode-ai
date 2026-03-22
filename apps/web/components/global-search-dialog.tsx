@@ -282,15 +282,20 @@ export function GlobalSearchDialog({ token, open, onOpenChange }: GlobalSearchDi
                     key={`brainstorm-${item.id}`}
                     value={`brainstorm-${item.id}`}
                     onSelect={() => navigateTo(item)}
-                    className="cursor-pointer"
+                    className="cursor-pointer items-start gap-2"
                   >
-                    <FolderKanban className="size-4 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate">
-                      <HighlightTitle title={item.title} query={debouncedTrimmed} />
-                    </span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      @{item.owner_username}
-                    </span>
+                    <FolderKanban className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate">
+                        <HighlightTitle title={item.title} query={debouncedTrimmed} />
+                      </div>
+                      {item.description_preview ? (
+                        <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                          <HighlightTitle title={item.description_preview} query={debouncedTrimmed} />
+                        </div>
+                      ) : null}
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">@{item.owner_username}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -303,15 +308,20 @@ export function GlobalSearchDialog({ token, open, onOpenChange }: GlobalSearchDi
                     key={`idea-${item.id}`}
                     value={`idea-${item.id}`}
                     onSelect={() => navigateTo(item)}
-                    className="cursor-pointer"
+                    className="cursor-pointer items-start gap-2"
                   >
-                    <Lightbulb className="size-4 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate">
-                      <HighlightTitle title={item.title} query={debouncedTrimmed} />
-                    </span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      @{item.owner_username}
-                    </span>
+                    <Lightbulb className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate">
+                        <HighlightTitle title={item.title} query={debouncedTrimmed} />
+                      </div>
+                      {item.description_preview ? (
+                        <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                          <HighlightTitle title={item.description_preview} query={debouncedTrimmed} />
+                        </div>
+                      ) : null}
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">@{item.owner_username}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
