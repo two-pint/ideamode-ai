@@ -380,6 +380,13 @@ export const invitesApi = {
       { method: "POST", token }
     )
   },
+
+  decline(token: string, inviteToken: string) {
+    return apiFetch<Record<string, never>>(`/invites/${encodeURIComponent(inviteToken)}/decline`, {
+      method: "POST",
+      token,
+    })
+  },
 }
 
 export const authApi = {
@@ -1032,56 +1039,6 @@ export const ideaTasksApi = {
     return apiFetch<Record<string, never>>(
       `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/tasks/${id}`,
       { method: "DELETE", token }
-    )
-  },
-}
-
-export type IdeaWireframeItem = {
-  id: number
-  idea_id: number
-  title: string
-  canvas_data: Record<string, unknown>
-  created_at: string
-  updated_at: string
-}
-
-export type IdeaWireframesListResponse = { wireframes: IdeaWireframeItem[] }
-export type IdeaWireframeItemResponse = { wireframe: IdeaWireframeItem }
-
-export const ideaWireframesApi = {
-  list(token: string, username: string, slug: string) {
-    return apiFetch<IdeaWireframesListResponse>(
-      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/wireframes`,
-      { token }
-    )
-  },
-  get(token: string, username: string, slug: string, id: number) {
-    return apiFetch<IdeaWireframeItemResponse>(
-      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/wireframes/${id}`,
-      { token }
-    )
-  },
-  create(
-    token: string,
-    username: string,
-    slug: string,
-    data: { title?: string; canvas_data?: Record<string, unknown> }
-  ) {
-    return apiFetch<IdeaWireframeItemResponse>(
-      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/wireframes`,
-      { method: "POST", token, body: data }
-    )
-  },
-  update(
-    token: string,
-    username: string,
-    slug: string,
-    id: number,
-    data: { title?: string; canvas_data?: Record<string, unknown> }
-  ) {
-    return apiFetch<IdeaWireframeItemResponse>(
-      `/${encodeURIComponent(username)}/ideas/${encodeURIComponent(slug)}/wireframes/${id}`,
-      { method: "PATCH", token, body: data }
     )
   },
 }

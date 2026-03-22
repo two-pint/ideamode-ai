@@ -1,10 +1,14 @@
 import { Redirect } from "expo-router";
+import { useMemo } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useAuth } from "@/lib/auth-context";
-import { theme } from "@/lib/theme";
+import type { AppTheme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 
 export default function Index() {
   const { token, user, loading } = useAuth();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   if (loading) {
     return (
@@ -25,11 +29,13 @@ export default function Index() {
   return <Redirect href="/(tabs)" />;
 }
 
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: theme.background,
-  },
-});
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    center: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.background,
+    },
+  });
+}

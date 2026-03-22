@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,11 +10,14 @@ import {
 } from "react-native";
 import { brainstormsApi, type Brainstorm } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { theme } from "@/lib/theme";
+import type { AppTheme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 
 export default function BrainstormsTab() {
   const { token, user } = useAuth();
   const router = useRouter();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [mine, setMine] = useState<Brainstorm[]>([]);
   const [shared, setShared] = useState<Brainstorm[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,25 +102,27 @@ export default function BrainstormsTab() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.background },
-  content: { padding: 16, paddingBottom: 32 },
-  section: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: theme.mutedForeground,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  empty: { color: theme.mutedForeground, marginTop: 8, fontSize: 14 },
-  row: {
-    backgroundColor: theme.card,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.border,
-    padding: 14,
-    marginTop: 10,
-  },
-  title: { fontSize: 16, fontWeight: "600", color: theme.foreground },
-  meta: { fontSize: 13, color: theme.mutedForeground, marginTop: 4 },
-});
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.background },
+    content: { padding: 16, paddingBottom: 32 },
+    section: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: theme.mutedForeground,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    },
+    empty: { color: theme.mutedForeground, marginTop: 8, fontSize: 14 },
+    row: {
+      backgroundColor: theme.card,
+      borderRadius: theme.radius.md,
+      borderWidth: 1,
+      borderColor: theme.border,
+      padding: 14,
+      marginTop: 10,
+    },
+    title: { fontSize: 16, fontWeight: "600", color: theme.foreground },
+    meta: { fontSize: 13, color: theme.mutedForeground, marginTop: 4 },
+  });
+}

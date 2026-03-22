@@ -74,6 +74,18 @@ class InvitesController < ApplicationController
     end
   end
 
+  # Removes a pending invite for the current user (same email as invite).
+  def decline
+    invite = find_invite_by_token(params[:token])
+    return head :not_found if invite.blank?
+    return head :gone if invite.accepted_at.present?
+    return head :gone if invite.expires_at < Time.current
+    return render json: { error: "Invite was sent to a different email" }, status: :forbidden unless invite.email.downcase == current_user.email.downcase
+
+    invite.destroy!
+    head :no_content
+  end
+
   private
 
   def find_invite_by_token(token)

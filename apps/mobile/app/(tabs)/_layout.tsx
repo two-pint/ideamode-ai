@@ -1,30 +1,35 @@
 import { Tabs, Redirect } from "expo-router";
+import { useMemo } from "react";
 import { Home, FolderKanban, Lightbulb, Search, UserRound } from "lucide-react-native";
 import { useAuth } from "@/lib/auth-context";
 import { renderLucide } from "@/lib/render-lucide";
-import { headerScreenOptions, theme } from "@/lib/theme";
+import { getHeaderScreenOptions } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 
 export default function TabsLayout() {
   const { token, user } = useAuth();
+  const theme = useTheme();
+  const screenOptions = useMemo(
+    () => ({
+      ...getHeaderScreenOptions(theme),
+      tabBarActiveTintColor: theme.foreground,
+      tabBarInactiveTintColor: theme.mutedForeground,
+      tabBarStyle: {
+        backgroundColor: theme.card,
+        borderTopWidth: 1,
+        borderTopColor: theme.border,
+      },
+      tabBarLabelStyle: { fontSize: 11, fontWeight: "500" as const },
+    }),
+    [theme]
+  );
 
   if (!token || !user?.username) {
     return <Redirect href="/login" />;
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        ...headerScreenOptions,
-        tabBarActiveTintColor: theme.foreground,
-        tabBarInactiveTintColor: theme.mutedForeground,
-        tabBarStyle: {
-          backgroundColor: theme.card,
-          borderTopWidth: 1,
-          borderTopColor: theme.border,
-        },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "500" },
-      }}
-    >
+    <Tabs screenOptions={screenOptions}>
       <Tabs.Screen
         name="index"
         options={{

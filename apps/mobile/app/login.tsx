@@ -1,6 +1,6 @@
 import * as AuthSession from "expo-auth-session";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -16,13 +16,16 @@ import * as WebBrowser from "expo-web-browser";
 import { IdeaModeLogo } from "@/components/ideamode-logo";
 import { ApiError, API_URL, authApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { theme } from "@/lib/theme";
+import type { AppTheme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
   const { setAuth } = useAuth();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -162,98 +165,100 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.background },
-  scroll: {
-    flexGrow: 1,
-    padding: 16,
-    paddingTop: 40,
-    justifyContent: "center",
-    alignItems: "stretch",
-  },
-  card: {
-    width: "100%",
-    maxWidth: 400,
-    alignSelf: "center",
-    backgroundColor: theme.card,
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    borderColor: theme.border,
-    padding: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  logoWrap: { alignItems: "center", marginBottom: 4 },
-  title: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: theme.foreground,
-    marginTop: 8,
-    textAlign: "center",
-    letterSpacing: -0.3,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: theme.mutedForeground,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: theme.foreground,
-    marginBottom: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: theme.input,
-    borderRadius: theme.radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    backgroundColor: theme.card,
-    marginBottom: 16,
-    color: theme.foreground,
-  },
-  buttonPrimary: {
-    backgroundColor: theme.primary,
-    borderRadius: theme.radius.md,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginTop: 4,
-    minHeight: 44,
-    justifyContent: "center",
-  },
-  buttonDisabled: { opacity: 0.6 },
-  buttonPrimaryText: { color: theme.primaryForeground, fontSize: 15, fontWeight: "600" },
-  buttonOutline: {
-    borderWidth: 1,
-    borderColor: theme.border,
-    borderRadius: theme.radius.md,
-    paddingVertical: 12,
-    alignItems: "center",
-    backgroundColor: theme.card,
-    minHeight: 44,
-    justifyContent: "center",
-  },
-  buttonOutlineText: { color: theme.foreground, fontSize: 15, fontWeight: "600" },
-  separatorRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
-    gap: 12,
-  },
-  separatorLine: { flex: 1, height: 1, backgroundColor: theme.border },
-  separatorText: { fontSize: 12, color: theme.mutedForeground },
-  error: { color: theme.destructive, marginBottom: 12, textAlign: "center", fontSize: 14 },
-  hint: {
-    fontSize: 12,
-    color: theme.mutedForeground,
-    marginTop: 20,
-    textAlign: "center",
-    lineHeight: 18,
-  },
-});
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.background },
+    scroll: {
+      flexGrow: 1,
+      padding: 16,
+      paddingTop: 40,
+      justifyContent: "center",
+      alignItems: "stretch",
+    },
+    card: {
+      width: "100%",
+      maxWidth: 400,
+      alignSelf: "center",
+      backgroundColor: theme.card,
+      borderRadius: theme.radius.lg,
+      borderWidth: 1,
+      borderColor: theme.border,
+      padding: 24,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 3,
+      elevation: 2,
+    },
+    logoWrap: { alignItems: "center", marginBottom: 4 },
+    title: {
+      fontSize: 20,
+      fontWeight: "600",
+      color: theme.foreground,
+      marginTop: 8,
+      textAlign: "center",
+      letterSpacing: -0.3,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: theme.mutedForeground,
+      marginBottom: 20,
+      textAlign: "center",
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: "500",
+      color: theme.foreground,
+      marginBottom: 6,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: theme.input,
+      borderRadius: theme.radius.md,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 16,
+      backgroundColor: theme.card,
+      marginBottom: 16,
+      color: theme.foreground,
+    },
+    buttonPrimary: {
+      backgroundColor: theme.primary,
+      borderRadius: theme.radius.md,
+      paddingVertical: 12,
+      alignItems: "center",
+      marginTop: 4,
+      minHeight: 44,
+      justifyContent: "center",
+    },
+    buttonDisabled: { opacity: 0.6 },
+    buttonPrimaryText: { color: theme.primaryForeground, fontSize: 15, fontWeight: "600" },
+    buttonOutline: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: theme.radius.md,
+      paddingVertical: 12,
+      alignItems: "center",
+      backgroundColor: theme.card,
+      minHeight: 44,
+      justifyContent: "center",
+    },
+    buttonOutlineText: { color: theme.foreground, fontSize: 15, fontWeight: "600" },
+    separatorRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginVertical: 20,
+      gap: 12,
+    },
+    separatorLine: { flex: 1, height: 1, backgroundColor: theme.border },
+    separatorText: { fontSize: 12, color: theme.mutedForeground },
+    error: { color: theme.destructive, marginBottom: 12, textAlign: "center", fontSize: 14 },
+    hint: {
+      fontSize: 12,
+      color: theme.mutedForeground,
+      marginTop: 20,
+      textAlign: "center",
+      lineHeight: 18,
+    },
+  });
+}

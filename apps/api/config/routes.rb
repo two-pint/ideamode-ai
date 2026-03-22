@@ -44,6 +44,7 @@ Rails.application.routes.draw do
   get "me/invites", to: "invites#index"
   get "invites/:token", to: "invites#show"
   post "invites/:token/accept", to: "invites#accept"
+  post "invites/:token/decline", to: "invites#decline"
 
   # Namespaced resource routes: /:username/brainstorms/:slug and /:username/ideas/:slug
   # Constraints ensure :username doesn't match literal route segments

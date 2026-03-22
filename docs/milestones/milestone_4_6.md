@@ -25,10 +25,10 @@ Today brainstorms and ideas are listed separately on the dashboard; finding a re
 
 **Tasks:**
 
-- [ ] Add `GET /search` (or `GET /me/search`) with query param `q` (min length, max length), optional `limit` / cursor / page.
-- [ ] Implement search across **brainstorms** and **ideas** the user owns or is an **accepted member** of (same rules as dashboard listing + share access). Match `q` against **`title` and `description`** (nullable text on each model) so Persona A can find work by a remembered phrase, not only the title. Return typed results: `{ type: "brainstorm" | "idea", id, title, slug, owner_username, description_preview?, ... }` sufficient for the client to build links to `/:username/brainstorms/:slug` and `/:username/ideas/:slug` and to disambiguate rows.
-- [ ] Add DB indexes to keep search fast as data grows (e.g. trigram on `title` and on `description`, or documented btree / `lower()` patterns per chosen strategy).
-- [ ] Tests: user A cannot see user B’s private resources; shared/member resources appear for allowed users; empty `q` returns 400 or empty list per product choice; **query matches description-only** (no title match) returns the resource when the user has access.
+- [x] Add `GET /search` (or `GET /me/search`) with query param `q` (min length, max length), optional `limit` / cursor / page.
+- [x] Implement search across **brainstorms** and **ideas** the user owns or is an **accepted member** of (same rules as dashboard listing + share access). Match `q` against **`title` and `description`** (nullable text on each model) so Persona A can find work by a remembered phrase, not only the title. Return typed results: `{ type: "brainstorm" | "idea", id, title, slug, owner_username, description_preview?, ... }` sufficient for the client to build links to `/:username/brainstorms/:slug` and `/:username/ideas/:slug` and to disambiguate rows.
+- [x] Add DB indexes to keep search fast as data grows (e.g. trigram on `title` and on `description`, or documented btree / `lower()` patterns per chosen strategy).
+- [x] Tests: user A cannot see user B’s private resources; shared/member resources appear for allowed users; empty `q` returns 400 or empty list per product choice; **query matches description-only** (no title match) returns the resource when the user has access.
 
 **Acceptance criteria:**
 
@@ -52,12 +52,12 @@ Today brainstorms and ideas are listed separately on the dashboard; finding a re
 
 **Tasks:**
 
-- [ ] Implement command dialog (e.g. shadcn `Command` + `Dialog`) or equivalent; register **⌘K / Ctrl+K**; focus trap and Escape to close.
-- [ ] **Discoverability (Persona A must-have):** Search is openable from **a visible control** in the app chrome (e.g. sidebar “Search…” on desktop, search icon on mobile header) **and** via the keyboard shortcut; show a **shortcut hint** (e.g. ⌘K) on the primary trigger where layout allows so users are not required to memorize the shortcut.
-- [ ] Debounced requests to the search API; loading and empty states; handle API errors with toast or inline message per existing patterns.
-- [ ] **Resume (Persona A must-have):** Persist **recent queries** (e.g. localStorage, capped list) and show them when the palette opens so repeat lookups are one click; record a query when the user runs a search or opens a result (product choice: document in UI).
-- [ ] Selecting a result navigates to the correct personal URL; **highlight** matching substrings in **result titles** (and in description preview lines if shown and cheap).
-- [ ] Respect light/dark theme and semantic tokens from M4.5.
+- [x] Implement command dialog (e.g. shadcn `Command` + `Dialog`) or equivalent; register **⌘K / Ctrl+K**; focus trap and Escape to close.
+- [x] **Discoverability (Persona A must-have):** Search is openable from **a visible control** in the app chrome (e.g. sidebar “Search…” on desktop, search icon on mobile header) **and** via the keyboard shortcut; show a **shortcut hint** (e.g. ⌘K) on the primary trigger where layout allows so users are not required to memorize the shortcut.
+- [x] Debounced requests to the search API; loading and empty states; handle API errors with toast or inline message per existing patterns.
+- [x] **Resume (Persona A must-have):** Persist **recent queries** (e.g. localStorage, capped list) and show them when the palette opens so repeat lookups are one click; record a query when the user runs a search or opens a result (product choice: document in UI).
+- [x] Selecting a result navigates to the correct personal URL; **highlight** matching substrings in **result titles** (and in description preview lines if shown and cheap).
+- [x] Respect light/dark theme and semantic tokens from M4.5.
 
 **Acceptance criteria:**
 
@@ -79,9 +79,9 @@ Today brainstorms and ideas are listed separately on the dashboard; finding a re
 
 **Tasks:**
 
-- [ ] Document and enforce max `q` length; return clear validation errors when appropriate.
-- [ ] Define stable default ordering and optional `sort` param if needed later.
-- [ ] Confirm debounce / request coalescing so typing does not hammer the API (complements Persona A “long session” use).
+- [x] Document and enforce max `q` length; return clear validation errors when appropriate.
+- [x] Define stable default ordering and optional `sort` param if needed later.
+- [x] Confirm debounce / request coalescing so typing does not hammer the API (complements Persona A “long session” use).
 
 **Acceptance criteria:**
 
@@ -99,7 +99,7 @@ Today brainstorms and ideas are listed separately on the dashboard; finding a re
 
 ## Milestone 4.6 completion checklist
 
-- [ ] All three tickets (4.6.1–4.6.3) are implemented and accepted.
-- [ ] Search is permission-safe end-to-end; UI is discoverable (**visible entry + keyboard shortcut + shortcut hint** where applicable).
-- [ ] **Persona A bar:** match on **title and resource description**; **recent queries**; **title highlight** in results; disambiguating **description preview** in API/UI as specified.
-- [ ] Organizations ([Milestone 5](./milestone_5.md)) can later extend the same API to include org-scoped resources without redesigning personal search.
+- [x] All three tickets (4.6.1–4.6.3) are implemented and accepted.
+- [x] Search is permission-safe end-to-end; UI is discoverable (**visible entry + keyboard shortcut + shortcut hint** where applicable).
+- [x] **Persona A bar:** match on **title and resource description**; **recent queries**; **title highlight** in results; disambiguating **description preview** in API/UI as specified.
+- [x] Organizations ([Milestone 5](./milestone_5.md)) can later extend the same API to include org-scoped resources without redesigning personal search.

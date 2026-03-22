@@ -9,13 +9,13 @@
 
 ## Context
 
-Today [`apps/mobile`](../../apps/mobile) is effectively a **placeholder** (e.g. health check / branding) while [`apps/web`](../../apps/web) implements the full product: Google OAuth, JWT session, dashboard with recent activity, brainstorm board, idea flows, tabbed detail pages (chat, research, PRD, wireframes, etc.), global search, and invitations.
+Today [`apps/mobile`](../../apps/mobile) ships **personal-workspace parity** with [`apps/web`](../../apps/web): Google OAuth, JWT session, dashboard with recent activity, brainstorm and idea flows, tabbed detail pages, global search, and invitations.
 
 This milestone is **feature parity for solo / personal workspace** on iOS and Android (simulator and device), not a separate product direction. Prefer **shared contracts** with web: same API endpoints, same env naming patterns (`EXPO_PUBLIC_API_URL` mirroring `NEXT_PUBLIC_API_URL`), and documentation updates in the root [README](../../README.md) for running mobile against local API.
 
 **Explicit scope notes:**
 
-- **Wireframes (Excalidraw):** Web embeds `@excalidraw/excalidraw`. On mobile, choose one: embedded **WebView** with excalidraw bundle, **read-only** export preview, or **“Edit on web”** deep link until a native-quality editor exists. Document the choice in the ticket and in app UI.
+- **Wireframes (Excalidraw):** **Not included on mobile** — canvas editing remains web-only. See [Web → mobile parity](../mobile-parity.md).
 - **Rich editors (Tiptap, etc.):** Prefer parity where feasible; **Markdown/plain** fallbacks are acceptable if called out in acceptance criteria.
 - **Org URLs (`/o/...`):** Out of scope; revisit after [Milestone 5](./milestone_5.md).
 
@@ -29,12 +29,12 @@ This milestone is **feature parity for solo / personal workspace** on iOS and An
 
 **Tasks:**
 
-- [ ] Wire **OAuth** to match web: redirect URI / callback handling appropriate for Expo (expo-auth-session or equivalent), exchange for API session/JWT per existing API contract.
-- [ ] Persist token securely (e.g. SecureStore); implement sign-out and session refresh behavior consistent with web.
-- [ ] **Username claim** flow if required after first login (mirror web `/auth/set-username`).
-- [ ] Central **API base URL** from `EXPO_PUBLIC_API_URL`; handle device vs simulator (LAN IP) per [README](../../README.md).
-- [ ] Root layout: navigation structure for **Dashboard / Brainstorms / Ideas / Profile** (or equivalent), safe areas, loading gate when token is unknown.
-- [ ] Use **`lucide-react-native`** for icons per [AGENTS.md](../../AGENTS.md); no other icon sets without approval.
+- [x] Wire **OAuth** to match web: redirect URI / callback handling appropriate for Expo (expo-auth-session or equivalent), exchange for API session/JWT per existing API contract.
+- [x] Persist token securely (e.g. SecureStore); implement sign-out and session refresh behavior consistent with web.
+- [x] **Username claim** flow if required after first login (mirror web `/auth/set-username`).
+- [x] Central **API base URL** from `EXPO_PUBLIC_API_URL`; handle device vs simulator (LAN IP) per [README](../../README.md).
+- [x] Root layout: navigation structure for **Dashboard / Brainstorms / Ideas / Profile** (or equivalent), safe areas, loading gate when token is unknown.
+- [x] Use **`lucide-react-native`** for icons per [AGENTS.md](../../AGENTS.md); no other icon sets without approval.
 
 **Acceptance criteria:**
 
@@ -55,11 +55,11 @@ This milestone is **feature parity for solo / personal workspace** on iOS and An
 
 **Tasks:**
 
-- [ ] **Dashboard** (or home): entry to brainstorms and ideas; show recent access when API returns items; empty states.
-- [ ] **Brainstorms** list: mirror web split of owned vs shared if applicable; navigate to `/:username/brainstorms/:slug`.
-- [ ] **Ideas** list: navigate to `/:username/ideas/:slug`.
-- [ ] **Global search:** search field + results list (brainstorms / ideas groups), title + description preview when API returns `description_preview`; navigate on select.
-- [ ] **Profile** screen: basic user info and link-out or in-app path to username-scoped lists.
+- [x] **Dashboard** (or home): entry to brainstorms and ideas; show recent access when API returns items; empty states.
+- [x] **Brainstorms** list: mirror web split of owned vs shared if applicable; navigate to `/:username/brainstorms/:slug`.
+- [x] **Ideas** list: navigate to `/:username/ideas/:slug`.
+- [x] **Global search:** search field + results list (brainstorms / ideas groups), title + description preview when API returns `description_preview`; navigate on select.
+- [x] **Profile** screen: basic user info and link-out or in-app path to username-scoped lists.
 
 **Acceptance criteria:**
 
@@ -79,12 +79,12 @@ This milestone is **feature parity for solo / personal workspace** on iOS and An
 
 **Tasks:**
 
-- [ ] Load brainstorm by owner + slug; handle **404** as non-existent (no existence leak).
-- [ ] **Chat** UI with @ideabot trigger behavior parity (or document minimal subset if blocked).
-- [ ] **Research** list/create/open; **Notes** editor; **Resources** list/add.
-- [ ] **Sharing:** list members, invite flow if available on API, align with web permissions.
-- [ ] **Create idea from brainstorm** entry point if web exposes it (modal → API).
-- [ ] Status / visibility controls if editable on web for the same roles.
+- [x] Load brainstorm by owner + slug; handle **404** as non-existent (no existence leak).
+- [x] **Chat** UI with @ideabot trigger behavior parity (or document minimal subset if blocked).
+- [x] **Research** list/create/open; **Notes** editor; **Resources** list/add.
+- [x] **Sharing:** list members, invite flow if available on API, align with web permissions.
+- [x] **Create idea from brainstorm** entry point if web exposes it (modal → API).
+- [x] Status / visibility controls if editable on web for the same roles.
 
 **Acceptance criteria:**
 
@@ -100,16 +100,16 @@ This milestone is **feature parity for solo / personal workspace** on iOS and An
 
 ### Ticket 4.7.4 — Idea detail (tabs & PRD / wireframes strategy)
 
-**Description:** Implement idea detail with tabs aligned to web: **Discussion**, **Analysis**, **Wireframes**, **PRD**, **Notes**, **Tasks**, **Sharing**. For **wireframes**, implement the strategy chosen in Context (WebView, read-only, or deep link) and document limitations in-app.
+**Description:** Implement idea detail with tabs aligned to web: **Discussion**, **Analysis**, **Notes**, **Tasks**, **PRD**, **Sharing**. Wireframes are **web-only** (not shipped on mobile).
 
 **Tasks:**
 
-- [ ] Discussion chat session; **Analysis** run/view results per API.
-- [ ] **Notes** and **Tasks** CRUD aligned with web capabilities.
-- [ ] **PRD:** view generated versions; generation trigger if API supports from mobile.
-- [ ] **Wireframes:** implement chosen approach; if not full editor, clear CTA for web.
-- [ ] **Pinned message** / overview parity if shown on web idea header.
-- [ ] Sharing and invites for ideas consistent with web.
+- [x] Discussion chat session; **Analysis** run/view results per API.
+- [x] **Notes** and **Tasks** CRUD aligned with web capabilities.
+- [x] **PRD:** view generated versions; generation trigger if API supports from mobile.
+- [x] **Wireframes:** **omitted on mobile** — use web for Excalidraw (documented in [mobile-parity.md](../mobile-parity.md)).
+- [x] **Pinned message** / overview parity if shown on web idea header.
+- [x] Sharing and invites for ideas consistent with web.
 
 **Acceptance criteria:**
 
@@ -118,7 +118,7 @@ This milestone is **feature parity for solo / personal workspace** on iOS and An
 
 **Test plan (manual):**
 
-1. Open idea with existing PRD and wireframe data; confirm display path works.
+1. Open idea with existing PRD data; confirm display path works.
 2. Create task and note; verify persistence via refresh.
 
 ---
@@ -129,12 +129,12 @@ This milestone is **feature parity for solo / personal workspace** on iOS and An
 
 **Tasks:**
 
-- [ ] Invitations list; accept/decline flows per API.
-- [ ] Optional: **universal links** / app scheme for `ideamode.ai` paths (document if deferred).
-- [ ] **Read-only** UX when `canEdit` is false (mirror web messaging).
-- [ ] Theming: light/dark if web supports both; contrast and touch targets.
-- [ ] **Parity checklist** doc section or spreadsheet: web page → mobile screen mapping; mark N/A with reason.
-- [ ] Root [README](../../README.md): mobile section reflects full setup, not placeholder.
+- [x] Invitations list; accept/decline flows per API (`POST /invites/:token/decline`).
+- [x] Optional: **universal links** / app scheme for `ideamode.ai` paths (document if deferred).
+- [x] **Read-only** UX when `canEdit` is false (mirror web messaging).
+- [x] Theming: light/dark if web supports both; contrast and touch targets.
+- [x] **Parity checklist** doc section or spreadsheet: [mobile-parity.md](../mobile-parity.md).
+- [x] Root [README](../../README.md): mobile section reflects full setup, not placeholder.
 
 **Acceptance criteria:**
 
@@ -150,7 +150,7 @@ This milestone is **feature parity for solo / personal workspace** on iOS and An
 
 ## Milestone 4.7 completion checklist
 
-- [ ] All five tickets (4.7.1–4.7.5) are implemented and accepted.
-- [ ] Mobile app is a credible alternative to web for **personal** brainstorms and ideas (pre-org).
-- [ ] [README](../../README.md) and env examples describe running mobile against a local API.
-- [ ] Organizations and `/o/...` routes remain explicitly out of scope until [Milestone 5](./milestone_5.md) (and a future mobile milestone if needed).
+- [x] All five tickets (4.7.1–4.7.5) are implemented and accepted.
+- [x] Mobile app is a credible alternative to web for **personal** brainstorms and ideas (pre-org).
+- [x] [README](../../README.md) and env examples describe running mobile against a local API.
+- [x] Organizations and `/o/...` routes remain explicitly out of scope until [Milestone 5](./milestone_5.md) (and a future mobile milestone if needed).

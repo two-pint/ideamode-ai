@@ -113,7 +113,13 @@ cp .env.example .env
 pnpm exec expo start
 ```
 
-Optional: **`EXPO_PUBLIC_WEB_APP_URL`** points to the Next.js app for “open in browser” (e.g. wireframes); default in dev is `http://localhost:8080`.
+**Expo Go vs SDK 55:** This app uses **Expo SDK 55**. The Expo Go builds on the **public App Store / Play Store** may still be on **SDK 54** for a while after each major release, which triggers *“Project is incompatible with this version of Expo Go”* even when Expo Go is “up to date” in the store. Options:
+
+- **iOS:** Join Expo’s [TestFlight External Beta for Expo Go (SDK 55)](https://testflight.apple.com/join/GZJxxfUU) and use that build to scan the dev server QR code.
+- **Android:** Install the SDK-appropriate Expo Go via [Expo’s docs](https://docs.expo.dev/get-started/expo-go/) / `expo start` prompts (CLI can install on a connected device).
+- **Longer term:** Use a [development build](https://docs.expo.dev/develop/development-builds/introduction/) (`expo-dev-client`) so your native shell always matches the project SDK.
+
+See also the [SDK 55 changelog — Expo Go transition](https://expo.dev/changelog/sdk-55).
 
 ---
 
@@ -150,7 +156,6 @@ Copy from `apps/mobile/.env.example`.
 | Variable | Purpose |
 |----------|---------|
 | `EXPO_PUBLIC_API_URL` | Base URL of the Rails API (use LAN IP for a real device) |
-| `EXPO_PUBLIC_WEB_APP_URL` | Origin of the web app for deep links such as “open in browser” (wireframes, full editor); defaults to `http://localhost:8080` in `.env.example` |
 
 ---
 

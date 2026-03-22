@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -13,7 +13,8 @@ import { FolderKanban, Lightbulb } from "lucide-react-native";
 import { recentAccessApi, type RecentAccessItem } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { renderLucide } from "@/lib/render-lucide";
-import { theme } from "@/lib/theme";
+import type { AppTheme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 
 function formatAccessedAt(iso: string) {
   try {
@@ -30,6 +31,8 @@ function formatAccessedAt(iso: string) {
 export default function HomeTab() {
   const { token, user } = useAuth();
   const router = useRouter();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [items, setItems] = useState<RecentAccessItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -153,124 +156,126 @@ export default function HomeTab() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.background },
-  content: { padding: 16, paddingBottom: 32 },
-  pageSubtitle: {
-    fontSize: 14,
-    color: theme.mutedForeground,
-    marginBottom: 20,
-  },
-  ctaRow: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 24 },
-  btnPrimary: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.primary,
-    minHeight: 44,
-  },
-  btnPrimaryText: {
-    color: theme.primaryForeground,
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  btnSecondary: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.secondary,
-    minHeight: 44,
-  },
-  btnSecondaryText: {
-    color: theme.secondaryForeground,
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  pressed: { opacity: 0.9 },
-  card: {
-    backgroundColor: theme.card,
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    borderColor: theme.border,
-    overflow: "hidden",
-  },
-  cardHeader: {
-    padding: 20,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.border,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: theme.cardForeground,
-    letterSpacing: -0.2,
-  },
-  cardDescription: {
-    fontSize: 14,
-    color: theme.mutedForeground,
-    marginTop: 6,
-    lineHeight: 20,
-  },
-  cardBody: { paddingHorizontal: 0 },
-  loadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    padding: 20,
-  },
-  loadingText: { fontSize: 14, color: theme.mutedForeground },
-  empty: {
-    fontSize: 14,
-    color: theme.mutedForeground,
-    padding: 20,
-    paddingTop: 12,
-  },
-  listRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-  },
-  listRowBorder: {
-    borderTopWidth: 1,
-    borderTopColor: theme.border,
-  },
-  listRowLeft: { flex: 1, minWidth: 0 },
-  listTitle: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: theme.foreground,
-  },
-  listSlug: {
-    fontSize: 12,
-    color: theme.mutedForeground,
-    marginTop: 4,
-  },
-  listRowRight: {
-    alignItems: "flex-end",
-    gap: 6,
-    paddingTop: 2,
-  },
-  badge: {
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  badgeBrainstorm: { backgroundColor: theme.badgeBrainstormBg },
-  badgeIdea: { backgroundColor: theme.badgeIdeaBg },
-  badgeText: { fontSize: 11, fontWeight: "600", letterSpacing: 0.5 },
-  badgeTextBrainstorm: { color: theme.badgeBrainstormText },
-  badgeTextIdea: { color: theme.badgeIdeaText },
-  time: { fontSize: 12, color: theme.mutedForeground },
-});
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: theme.background },
+    content: { padding: 16, paddingBottom: 32 },
+    pageSubtitle: {
+      fontSize: 14,
+      color: theme.mutedForeground,
+      marginBottom: 20,
+    },
+    ctaRow: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 24 },
+    btnPrimary: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.primary,
+      minHeight: 44,
+    },
+    btnPrimaryText: {
+      color: theme.primaryForeground,
+      fontSize: 15,
+      fontWeight: "600",
+    },
+    btnSecondary: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.secondary,
+      minHeight: 44,
+    },
+    btnSecondaryText: {
+      color: theme.secondaryForeground,
+      fontSize: 15,
+      fontWeight: "600",
+    },
+    pressed: { opacity: 0.9 },
+    card: {
+      backgroundColor: theme.card,
+      borderRadius: theme.radius.lg,
+      borderWidth: 1,
+      borderColor: theme.border,
+      overflow: "hidden",
+    },
+    cardHeader: {
+      padding: 20,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    cardTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: theme.cardForeground,
+      letterSpacing: -0.2,
+    },
+    cardDescription: {
+      fontSize: 14,
+      color: theme.mutedForeground,
+      marginTop: 6,
+      lineHeight: 20,
+    },
+    cardBody: { paddingHorizontal: 0 },
+    loadingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      padding: 20,
+    },
+    loadingText: { fontSize: 14, color: theme.mutedForeground },
+    empty: {
+      fontSize: 14,
+      color: theme.mutedForeground,
+      padding: 20,
+      paddingTop: 12,
+    },
+    listRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: 12,
+      paddingVertical: 14,
+      paddingHorizontal: 20,
+    },
+    listRowBorder: {
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+    },
+    listRowLeft: { flex: 1, minWidth: 0 },
+    listTitle: {
+      fontSize: 15,
+      fontWeight: "500",
+      color: theme.foreground,
+    },
+    listSlug: {
+      fontSize: 12,
+      color: theme.mutedForeground,
+      marginTop: 4,
+    },
+    listRowRight: {
+      alignItems: "flex-end",
+      gap: 6,
+      paddingTop: 2,
+    },
+    badge: {
+      borderRadius: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    badgeBrainstorm: { backgroundColor: theme.badgeBrainstormBg },
+    badgeIdea: { backgroundColor: theme.badgeIdeaBg },
+    badgeText: { fontSize: 11, fontWeight: "600", letterSpacing: 0.5 },
+    badgeTextBrainstorm: { color: theme.badgeBrainstormText },
+    badgeTextIdea: { color: theme.badgeIdeaText },
+    time: { fontSize: 12, color: theme.mutedForeground },
+  });
+}

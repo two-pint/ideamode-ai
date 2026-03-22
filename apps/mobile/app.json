@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "ideamode",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "backgroundColor": "#fafafa"
     },
@@ -21,9 +21,6 @@
       "package": "ai.ideamode.app",
       "jsEngine": "jsc"
     },
-    "plugins": ["expo-router"],
-    "extra": {
-      "webAppUrl": "http://localhost:8080"
-    }
+    "plugins": ["expo-router"]
   }
 }

@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,11 +10,14 @@ import {
 } from "react-native";
 import { ApiError, authApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { theme } from "@/lib/theme";
+import type { AppTheme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 
 export default function SetUsernameScreen() {
   const router = useRouter();
   const { token, user, setAuth } = useAuth();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -81,45 +84,47 @@ export default function SetUsernameScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  outer: {
-    flex: 1,
-    padding: 16,
-    paddingTop: 40,
-    backgroundColor: theme.background,
-    justifyContent: "center",
-  },
-  card: {
-    maxWidth: 400,
-    width: "100%",
-    alignSelf: "center",
-    backgroundColor: theme.card,
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    borderColor: theme.border,
-    padding: 24,
-  },
-  title: { fontSize: 20, fontWeight: "600", color: theme.foreground, marginBottom: 8 },
-  sub: { fontSize: 14, color: theme.mutedForeground, marginBottom: 20, lineHeight: 20 },
-  input: {
-    borderWidth: 1,
-    borderColor: theme.input,
-    borderRadius: theme.radius.md,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: theme.card,
-    marginBottom: 16,
-    color: theme.foreground,
-  },
-  button: {
-    backgroundColor: theme.primary,
-    borderRadius: theme.radius.md,
-    paddingVertical: 14,
-    alignItems: "center",
-    minHeight: 44,
-    justifyContent: "center",
-  },
-  disabled: { opacity: 0.6 },
-  buttonText: { color: theme.primaryForeground, fontSize: 16, fontWeight: "600" },
-  error: { color: theme.destructive, marginBottom: 12, fontSize: 14 },
-});
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    outer: {
+      flex: 1,
+      padding: 16,
+      paddingTop: 40,
+      backgroundColor: theme.background,
+      justifyContent: "center",
+    },
+    card: {
+      maxWidth: 400,
+      width: "100%",
+      alignSelf: "center",
+      backgroundColor: theme.card,
+      borderRadius: theme.radius.lg,
+      borderWidth: 1,
+      borderColor: theme.border,
+      padding: 24,
+    },
+    title: { fontSize: 20, fontWeight: "600", color: theme.foreground, marginBottom: 8 },
+    sub: { fontSize: 14, color: theme.mutedForeground, marginBottom: 20, lineHeight: 20 },
+    input: {
+      borderWidth: 1,
+      borderColor: theme.input,
+      borderRadius: theme.radius.md,
+      padding: 12,
+      fontSize: 16,
+      backgroundColor: theme.card,
+      marginBottom: 16,
+      color: theme.foreground,
+    },
+    button: {
+      backgroundColor: theme.primary,
+      borderRadius: theme.radius.md,
+      paddingVertical: 14,
+      alignItems: "center",
+      minHeight: 44,
+      justifyContent: "center",
+    },
+    disabled: { opacity: 0.6 },
+    buttonText: { color: theme.primaryForeground, fontSize: 16, fontWeight: "600" },
+    error: { color: theme.destructive, marginBottom: 12, fontSize: 14 },
+  });
+}
