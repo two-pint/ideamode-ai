@@ -10,22 +10,28 @@
     "start": "node ../../node_modules/expo/bin/cli start"
   },
   "dependencies": {
+    "@babel/runtime": "^7.26.0",
     "@ideamode/assets": "workspace:*",
     "expo": "^55.0.0",
+    "expo-auth-session": "~55.0.8",
+    "expo-linking": "~55.0.7",
     "expo-router": "~55.0.0",
-    "expo-status-bar": "~2.0.0",
+    "expo-secure-store": "~55.0.8",
+    "expo-status-bar": "~55.0.4",
+    "expo-web-browser": "~55.0.9",
+    "lucide-react-native": "^0.460.0",
     "react": "19.2.0",
     "react-native": "0.83.0",
-    "react-native-safe-area-context": "~5.0.0",
-    "react-native-screens": "~4.10.0",
-    "@babel/runtime": "^7.26.0",
-    "lucide-react-native": "^0.460.0",
+    "react-native-safe-area-context": "~5.6.2",
+    "react-native-screens": "~4.23.0",
+    "react-native-svg": "15.15.3",
     "react-native-web": "~0.19.13"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@expo/metro-runtime": "~55.0.0",
     "@types/react": "~19.0.0",
-    "typescript": "~5.3.0"
+    "eslint-config-expo": "~55.0.0",
+    "typescript": "~5.6.0"
   }
 }

@@ -1,0 +1,2 @@
+# Same as repo root when cwd is apps/web. Keep in sync with ../../.tool-versions.
+nodejs 20.18.0

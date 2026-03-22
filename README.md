@@ -43,7 +43,7 @@ The repo includes a **`.tool-versions`** file for [asdf](https://asdf-vm.com) so
    asdf install
    ```
 
-4. **pnpm** is not managed by default `.tool-versions`; use Node’s **Corepack** (ships with Node 16.13+):
+4. **pnpm** is not listed in `.tool-versions` (use Node’s **Corepack**; ships with Node 16.13+):
 
    ```bash
    corepack enable
@@ -51,6 +51,8 @@ The repo includes a **`.tool-versions`** file for [asdf](https://asdf-vm.com) so
    ```
 
    Confirm: `pnpm -v` should print **9.14.x**.
+
+   If you use **asdf** and see **“No version is set for command pnpm”**, the **asdf `pnpm` plugin** is probably installed. This repo does **not** pin pnpm in `.tool-versions`; use **Corepack** for pnpm instead: **`asdf plugin remove pnpm`**, then **`corepack enable`** and **`corepack prepare pnpm@9.14.2 --activate`** with your active Node. Per-app **`.tool-versions`** files under **`apps/*`** only set **Ruby** / **Node** so versions resolve when your cwd is an app directory (e.g. **`apps/api`**).
 
 ### PostgreSQL
 
@@ -102,12 +104,16 @@ pnpm run dev
 
 ### Mobile (`apps/mobile`)
 
+The Expo app targets **personal-workspace parity** with the web app (auth, lists, search, brainstorm/idea detail tabs, invitations). Copy `apps/mobile/.env.example` to `.env` and set **`EXPO_PUBLIC_API_URL`** to your Rails API. On a **physical device**, use your computer’s LAN IP (same Wi‑Fi as the phone), not `localhost`. For **Google sign-in**, the API’s **`FRONTEND_URL`** must match the OAuth redirect your app uses (Expo dev client / redirect URI); see `apps/mobile/app/login.tsx` and the API `.env.example`.
+
 ```bash
 cd apps/mobile
 cp .env.example .env
-# For a physical device, use your machine's LAN IP, e.g. http://192.168.1.10:3000
+# Device example: EXPO_PUBLIC_API_URL=http://192.168.1.10:3000
 pnpm exec expo start
 ```
+
+Optional: **`EXPO_PUBLIC_WEB_APP_URL`** points to the Next.js app for “open in browser” (e.g. wireframes); default in dev is `http://localhost:8080`.
 
 ---
 
@@ -144,6 +150,7 @@ Copy from `apps/mobile/.env.example`.
 | Variable | Purpose |
 |----------|---------|
 | `EXPO_PUBLIC_API_URL` | Base URL of the Rails API (use LAN IP for a real device) |
+| `EXPO_PUBLIC_WEB_APP_URL` | Origin of the web app for deep links such as “open in browser” (wireframes, full editor); defaults to `http://localhost:8080` in `.env.example` |
 
 ---
 

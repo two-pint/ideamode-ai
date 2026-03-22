@@ -1,0 +1,3 @@
+# Same as repo root when cwd is apps/api. Keep in sync with ../../.tool-versions.
+ruby 3.3.5
+nodejs 20.18.0

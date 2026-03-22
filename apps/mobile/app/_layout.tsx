@@ -1,9 +1,16 @@
 import { Stack } from "expo-router";
+import { AuthProvider } from "@/lib/auth-context";
 
 export default function RootLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ title: "IdeaMode" }} />
-    </Stack>
+    <AuthProvider>
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: "#fafafa" },
+          headerTintColor: "#18181b",
+          headerTitleStyle: { fontWeight: "600" },
+        }}
+      />
+    </AuthProvider>
   );
 }
