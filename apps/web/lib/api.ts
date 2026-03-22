@@ -306,6 +306,39 @@ export type RecentAccessItem = {
 
 export type RecentAccessListResponse = { items: RecentAccessItem[] }
 
+/** Matches `GlobalSearch::MAX_QUERY_LENGTH` in the API (`apps/api/app/services/global_search.rb`). */
+export const MAX_SEARCH_QUERY_LENGTH = 200
+
+export type GlobalSearchResultItem = {
+  type: "brainstorm" | "idea"
+  id: number
+  title: string
+  slug: string
+  owner_username: string
+  updated_at: string
+}
+
+export type GlobalSearchResponse = {
+  results: GlobalSearchResultItem[]
+  meta: {
+    page: number
+    per_page: number
+    total: number
+    total_pages: number
+    sort: string
+  }
+}
+
+export const searchApi = {
+  search(token: string, q: string, opts?: { page?: number; limit?: number }) {
+    const params = new URLSearchParams()
+    params.set("q", q)
+    if (opts?.page != null) params.set("page", String(opts.page))
+    if (opts?.limit != null) params.set("limit", String(opts.limit))
+    return apiFetch<GlobalSearchResponse>(`/me/search?${params.toString()}`, { token })
+  },
+}
+
 export const recentAccessApi = {
   list(token: string) {
     return apiFetch<RecentAccessListResponse>("/me/recent_access", { token })

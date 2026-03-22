@@ -33,6 +33,9 @@ Rails.application.routes.draw do
   get "users/:username/ideas", to: "users#ideas"
   get "users/:username/brainstorms", to: "users#brainstorms"
 
+  # Global search (brainstorms + ideas the user can access)
+  get "me/search", to: "search#index"
+
   # Recent activity (brainstorm / idea opens)
   get "me/recent_access", to: "recent_access#index"
   post "me/recent_access", to: "recent_access#create"
