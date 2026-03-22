@@ -13,6 +13,7 @@ This folder breaks the [High-Level Design](../ideamode-hld.md) into **logical mi
 | 4 | [milestone_4.md](./milestone_4.md) | **Productivity layer** — Notes (ideas), Tasks, Wireframes, PRD generator | M3 |
 | 4.5 | [milestone_4_5.md](./milestone_4_5.md) | **UI standardization** — Semantic colors, buttons, Lucide icons, mutation toasts | M4 |
 | 4.6 | [milestone_4_6.md](./milestone_4_6.md) | **Global search** — Permission-aware search across brainstorms & ideas, command palette / UI | M4.5 |
+| 4.7 | [milestone_4_7.md](./milestone_4_7.md) | **Mobile parity** — Expo app aligned with web for personal workspace (auth, lists, detail tabs, search, invites) | M4.6 |
 | 5 | [milestone_5.md](./milestone_5.md) | **Organizations** — Orgs, org membership, org-scoped brainstorms & ideas (`/o/...`) | M4.6 |
 | 6 | [milestone_6.md](./milestone_6.md) | **Polish & beta** — Onboarding, responsive/error polish, beta invite gate | M4.5 |
 
@@ -33,7 +34,8 @@ This folder breaks the [High-Level Design](../ideamode-hld.md) into **logical mi
 - **Milestone 4:** 4 tickets (Notes ideas, Tasks, Wireframes, PRD)
 - **Milestone 4.5:** 4 tickets (Design tokens, Buttons, Lucide icons, Toasts)
 - **Milestone 4.6:** 3 tickets (Search API, Global search UI, Polish & limits)
+- **Milestone 4.7:** 5 tickets (Mobile foundation, Lists & search, Brainstorm detail, Idea detail, Invitations & polish)
 - **Milestone 5:** 3 tickets (Organizations & membership backend, Org-scoped brainstorms & ideas backend, Organizations UI)
 - **Milestone 6:** 3 tickets (Onboarding, Responsive/error, Beta gate)
 
-**Total: 9 milestone docs, 35 tickets.**
+**Total: 10 milestone docs, 40 tickets.**
